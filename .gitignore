@@ -1,0 +1,5 @@
+# Ignore everything in root except ".gitignore" and “scripts”
+/*
+!*.gitignore
+!README.md
+!scripts/
