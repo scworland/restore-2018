@@ -1,6 +1,6 @@
 # Ignore everything in root except ".gitignore" and “scripts”
 /*
 !*.gitignore
-!README.Rmd
+!README.md
 !scripts/
 .Rproj.user
