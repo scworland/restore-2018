@@ -1,9 +1,8 @@
----
-title: "Predictions in ungaged basins workplan FY2018"
-author: "Scott Worland, William Asquith, and Rodney Knight"
-date: "10/7/2017"
-output: html_document
----
+
+## Predictions in ungaged basins workplan FY2018
+**Scott Worland, William Asquith, and Rodney Knight**,
+**U.S. Geological Survey**,
+**October 2017**
 
 ### Overview
 
