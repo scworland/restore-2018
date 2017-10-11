@@ -60,7 +60,7 @@ Below is a basic outline for FY2018. The specifics of the project will by manage
 | Task             | Oct-Nov | Dec-Jan | Feb-March | April-May | June-July | Aug-Sept |
 |------------------|---------|---------|-----------|-----------|-----------|----------|
 | Gather data      | xxxxxxx |         |           |           |           |          |
-| Build models     |         | xxxxxxx | xxxxxxx   | xxxxxxx   |           |          |
+| Build models     | xxxxxxx | xxxxxxx | xxxxxxx   | xxxxxxx   |           |          |
 | Analyze models   |         |         |           |           | xxxxxxx   |          |
 | Make predictions |         |         |           |           | xxxxxxx   | xxxxxxx  |
 
