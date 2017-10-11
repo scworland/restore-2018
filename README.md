@@ -6,7 +6,7 @@
 
 ### Overview
 
-The primary goal of the RESTORE project is to produce quantative and qualitative measurements of watershed alteration for XXXX watersheds in the RESTORE footprint. Accomplishing this goal is dependent on a suite of basin characterisics for each watershed. These basin characteristics include streamflow statistics calculated from a hydrograph. However, XX% of the watersheds in the RESTORE footprint do not have a streamgage and the streamflow statistics need to be estimated for these basins. There are two primary ways to estimate streamflow statistics in ungaged basins: (1) predict a full hydrograph for a basin and calculate the statistics using the estimated hydrograph, or (2) directly predict the streamflow statistics. We are using the second approach.
+The primary goal of the RESTORE project is to produce quantative and qualitative measurements of watershed alteration for 1320 watersheds in the RESTORE footprint. Accomplishing this goal is dependent on a suite of basin characterisics for each watershed. These basin characteristics include streamflow statistics calculated from a hydrograph. However, XX% of the watersheds in the RESTORE footprint do not have a streamgage and the streamflow statistics need to be estimated for these basins. There are two primary ways to estimate streamflow statistics in ungaged basins: (1) predict a full hydrograph for a basin and calculate the statistics using the estimated hydrograph, or (2) directly predict the streamflow statistics. We are using the second approach.
 
 ### Basic idea behind direct prediction
 
