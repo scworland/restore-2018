@@ -6,11 +6,11 @@
 
 ### Overview
 
-The primary goal of the RESTORE project is to produce quantative and qualitative measurements of watershed alteration for 1320 watersheds in the RESTORE footprint. Accomplishing this goal is dependent on a suite of basin characterisics for each watershed. These basin characteristics include streamflow statistics calculated from a hydrograph. However, XX% of the watersheds in the RESTORE footprint do not have a streamgage and the streamflow statistics need to be estimated for these basins. There are two primary ways to estimate streamflow statistics in ungaged basins: (1) predict a full hydrograph for a basin and calculate the statistics using the estimated hydrograph, or (2) directly predict the streamflow statistics. We are using the second approach.
+The primary goal of the RESTORE project is to produce quantative and qualitative measurements of watershed alteration for 1,320 watersheds in the RESTORE footprint. Accomplishing the goal is dependent on a suite of basin characterisics for each watershed. These basin characteristics include streamflow statistics calculated from a hydrograph. However, XX% of the watersheds in the RESTORE footprint do not have a streamgage and the streamflow statistics need to be estimated for these basins. There are two primary ways to estimate streamflow statistics in ungaged basins: (1) predict a full hydrograph for a basin and calculate the statistics using the estimated hydrograph, or (2) directly predict the streamflow statistics. We are using the second approach.
 
 ### Basic idea behind direct prediction
 
-In the simplest terms, direct prediction involves predicting streamflow statistics using basin characteristics derived primarily from gridded products. Examples of streamflow statistics that can be estimated are mean-annual flow, low streamflow values (i.e., 7Q10, minimum October flow, etc), high streamflow values (i.e., 100 year flood discharge), or any number of other values along a flow duration curve. These predictions are made using some form of multivariate regression. This could range from simple linear regression models such as ordinary least squares or censored regression to non-linear machine learning methods such as random forest models or neural networks. 
+In the simplest terms, direct prediction involves predicting streamflow statistics using basin characteristics derived primarily from gridded products. Examples of streamflow statistics that can be estimated are mean-annual flow, low streamflow values (i.e., 7Q10, minimum October flow, etc), high streamflow values (i.e., 100 year flood discharge), or any number of other values along a flow duration curve. These predictions are made using some form of multivariate regression. This could range from simple linear regression models such as ordinary least squares or censored regression to non-linear machine learning methods such as random forest models or neural networks.
 
 ### Data needed for direct prediction
 
@@ -47,10 +47,11 @@ There will be separate matrices for each of the response variables. Several of t
 * Root mean squared error (RMSE)
 * Decomposed RMSE (bias, variance, and covariance)
 * Unit-area RMSE
-* Nash-Sutcliffe coefficient 
+* Nash-Sutcliffe coefficient
 * Coefficient of determination
 * Mean percent error
 * Custom combination of the above
+* Re-transformation bias correction coefficients
 * etc
 
 ### Timeline
