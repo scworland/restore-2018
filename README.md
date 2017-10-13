@@ -14,22 +14,34 @@ In the simplest terms, direct prediction involves predicting streamflow statisti
 
 ### Data needed for direct prediction
 
-All of the data needed for direct prediction can be in the form of one large matrix where the required columns are:
+All of the data needed for direct prediction can be in the form of two large matrices. One matrix would contain the flow statistics (the left-hand side of the regression equation):
 
 * Unique ID for watershed
-* Coordinates (centroid of watershed)
 * Response variables: streamflow statistics to calculate (for the basins without a gage the values for this column will be NA)
+
+
+| ID  | 7Q10 | 7Q2  | MAF | ... | Ym  | 
+|-----|------|------|-----|-----|-----|
+| 001 | 10.2 | 14.8 | xxx | ... | xxx | 
+| 002 | 4.1  | 11.5 | xxx | ... | xxx | 
+| 003 | 21.7 | 40.0 | xxx | ... | xxx | 
+| 004 | NA   | NA   | NA  | ... | xxx | 
+| ... | ...  | ...  | ... | ... | ... | 
+| 00n | 3.8  | 6.7  | xxx | ... | xxx |
+
+The design matrix (right-hand side of the regression equation) will have the following columns:
+
+* Unique ID for watershed
 * Explanatory variables: basin characteristics for every basin (including for basins without the streamflow statistics--we will need them for the final predictions)
 
-The matrix will have the following form:
-
-| ID  | 7Q10 | 7Q2  | MAF | ... | X1  | X2  | X3  | ... |
-|-----|------|------|-----|-----|-----|-----|-----|-----|
-| 001 | 10.2 | 14.8 | xxx | ... | xxx | xxx | xxx | ... |
-| 002 | 4.1  | 11.5 | xxx | ... | xxx | xxx | xxx | ... |
-| 003 | 21.7 | 40.0 | xxx | ... | xxx | xxx | xxx | ... |
-| 004 | NA   | NA   | NA  | ... | xxx | xxx | xxx | ... |
-| ... | ...  | ...  | ... | ... | ... | ... | ... | ... |
+| ID  | X1   | X2   | X3  | ... | Xm  | 
+|-----|------|------|-----|-----|-----|
+| 001 | xxx  | xxx  | xxx | ... | xxx | 
+| 002 | xxx  | xxx  | xxx | ... | xxx | 
+| 003 | xxx  | xxx  | xxx | ... | xxx | 
+| 004 | xxx  | xxx  | xxx | ... | xxx | 
+| ... | ...  | ...  | ... | ... | ... |
+| 00n | xxx  | xxx  | xxx | ... | xxx |
 
 ### Workplan for direct prediction
 
