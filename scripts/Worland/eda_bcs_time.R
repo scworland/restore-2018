@@ -42,14 +42,16 @@ for (i in 1:length(list_file)){
   options(warn=0) # turn on warnings
 }
 
-lulc_rand <- lulc_comb %>%
+set.seed(5)
+lulc_comb %>%
   mutate(siteno=as.factor(SITE_NO)) %>%
-  select(-SITE_NO) %>%
-  filter(siteno %in% sample(levels(siteno),5)) %>%
+  select(-SITE_NO,-Perennial_) %>%
+  select(-contains("Mechanic")) %>%
+  filter(siteno %in% sample(levels(siteno),10)) %>%
   arrange(siteno) %>%
   gather(key,value,-year,-siteno) %>%
   ggplot() + 
-  geom_line(aes(year,value)) + 
+  geom_line(aes(year,value,color=siteno)) + 
   facet_wrap(~key, scale="free")
 
 
