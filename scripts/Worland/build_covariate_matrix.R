@@ -1,6 +1,7 @@
 
 library(tidyverse)
 library(lubridate)
+library(feather)
 
 d <- read_feather("data/basinchars/BASIN_CHAR_TOT.feather") 
 
@@ -62,9 +63,6 @@ por_window <- data.frame(window=period,
 
 
 
-                 
-                 
-                 
                  
                  
                  
