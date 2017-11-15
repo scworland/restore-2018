@@ -39,7 +39,6 @@ ggplot() + geom_polygon(data=state,aes(long,lat,group=group),color = "black", fi
   theme(legend.position = "bottom")
 
 # sliding window
-
 num <- numeric()
 period <- character()
 for (i in 1:16) {
