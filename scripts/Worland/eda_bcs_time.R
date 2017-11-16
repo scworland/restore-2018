@@ -6,6 +6,8 @@ setwd("~/Documents/Restore")
 # extract LULC file names
 list_file <- list.files(path="data/basinchars/",pattern = glob2rx("*LULC*.feather"))
 
+hold <- read_feather("data/basinchars/ALL_CLIM.feather")
+
 # average basins for each year ----
 
 lulc_comb <- NULL

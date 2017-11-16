@@ -4,5 +4,7 @@
 !README.md
 !scripts/
 !data/
-data/basinchars/geodatabases
+data/ecoregions
+data/nhd_wbd
+data/restore_hucs
 .Rproj.user
