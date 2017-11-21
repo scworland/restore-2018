@@ -123,6 +123,9 @@ precip_job <- geoknife(stencil=huc_stencil, fabric=precip, wait = F, email = 'sc
 tmax_job <- geoknife(stencil=huc_stencil, fabric=tmax, wait = F, email = 'scworland@usgs.gov')
 tmin_job <- geoknife(stencil=huc_stencil, fabric=tmin, wait = F, email = 'scworland@usgs.gov')
 
+dmppt <- result(precip_job)
+write_feather(dmppt,"data/dvs/daymet_ppt.feather")
+
 dmppt <- read_csv("data/dvs/geoknife_out/daymet_ppt.csv",skip=1)
 dmtmax <- read_csv("data/dvs/geoknife_out/daymet_ppt.csv",skip=1)
 dmtmin <- read_csv("data/dvs/geoknife_out/daymet_ppt.csv",skip=1)
