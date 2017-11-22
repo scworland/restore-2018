@@ -1,8 +1,7 @@
-# Ignore everything in root except ".gitignore", "README", “scripts”, and "data"
 /*
 !*.gitignore
 !README.md
 !scripts/
-scripts/*.ipynb_checkpoints
+**/*.ipynb_checkpoints/
 scripts/*.Rapp.history
 .Rproj.user
