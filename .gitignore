@@ -1,7 +1,10 @@
-/*
-!*.gitignore
-!README.md
-!scripts/
-**/*.ipynb_checkpoints/
-scripts/*.Rapp.history
-.Rproj.user
+
+/* 				# ignore everything
+!*.gitignore 			# except gitignore
+!README.md 			# except readme
+!scripts/ 			# except scripts folder
+
+# ignore other hidden files 
+**/*.ipynb_checkpoints
+**/*.Rapp.history
+**/*.Rproj.user
