@@ -6,11 +6,13 @@ source('scripts/worland/nldi_funs.R')
 # NHD+ basin characteristics ----
 
 # load HUC12s for restore footprint
-rest_huc12 <- st_read('data/restore_hucs/restoreHUC12s.shp', stringsAsFactors = F)
+rest_huc12 <- st_read('data/shapefiles/restore_hucs/restoreHUC12s.shp', stringsAsFactors = F)
 
 # subset mobile basin
 mobile <- filter(rest_huc12, str_detect(HUC_8, '0316')) %>%
   distinct(HUC_12, .keep_all=T)
+
+st_write(mobile,'data/shapefiles/mobile_shpfiles/mobileHUC12s.shp')
 
 # load gages site list
 sites <- read_csv("data/full_site_list.csv") %>%
@@ -23,6 +25,8 @@ site_info <- readNWISdata(sites=sites$siteno, service="site") %>%
   st_intersection(mobile) %>%
   select(siteno,lon,lat,HUC_12) %>%
   na.omit() 
+
+st_write(site_info, 'data/shapefiles/mobile_shpfiles/mobile_gages.shp')
 
 # extract basin characteristics for nwis sites
 gage_chars <- NULL
@@ -43,7 +47,8 @@ for(i in 1:nrow(site_info)){
   }
 }
 
-# write_feather(gage_chars,"data/basinchars/nldi/mobile_gage_chars.feather")
+gage_chars <- mutate_at(gage_chars, vars(-comid,-siteno), funs(as.numeric))
+write_feather(gage_chars,"data/basinchars/nldi/mobile_gage_chars.feather")
 
 # extract basin characteristics for hucs
 huc_chars <- NULL
@@ -64,7 +69,8 @@ for(i in 1:nrow(mobile)){
   }
 }
 
-# write_feather(huc_chars,"data/basinchars/nldi/mobile_huc_chars.feather")
+huc_chars <- mutate_at(huc_chars, vars(-comid,-HUC_12), funs(as.numeric))
+write_feather(huc_chars,"data/basinchars/nldi/mobile_huc_chars.feather")
 
 # DAYMET climate data ----
 
@@ -118,23 +124,20 @@ tmin <- webdata(list(
 #   url = 'https://thredds.daac.ornl.gov/thredds/dodsC/daymet-v3-agg/na.ncml',
 #   variables = 'srad'))
 
-# download data
+# create webprocesses
 precip_job <- geoknife(stencil=huc_stencil, fabric=precip, wait = F, email = 'scworland@usgs.gov')
 tmax_job <- geoknife(stencil=huc_stencil, fabric=tmax, wait = F, email = 'scworland@usgs.gov')
 tmin_job <- geoknife(stencil=huc_stencil, fabric=tmin, wait = F, email = 'scworland@usgs.gov')
 
+# download data and save local copy
 dmppt <- result(precip_job)
+dmtmax <- result(tmax_job)
+dmtmin <- result(tmin_job)
 write_feather(dmppt,"data/dvs/daymet_ppt.feather")
-
-dmppt <- read_csv("data/dvs/geoknife_out/daymet_ppt.csv",skip=1)
-dmtmax <- read_csv("data/dvs/geoknife_out/daymet_ppt.csv",skip=1)
-dmtmin <- read_csv("data/dvs/geoknife_out/daymet_ppt.csv",skip=1)
+write_feather(dmtmax,"data/dvs/daymet_tmax.feather")
+write_feather(dmtmin,"data/dvs/daymet_tmin.feather")
 
 
-
-
-huc_chars <- read_feather("data/basinchars/nldi/mobile_huc_chars.feather")
-gage_chars <- read_feather("data/basinchars/nldi/mobile_gage_chars.feather")
 
 
 

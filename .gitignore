@@ -3,8 +3,6 @@
 !*.gitignore
 !README.md
 !scripts/
-!data/
-data/ecoregions
-data/nhd_wbd
-data/restore_hucs
+scripts/*.ipynb_checkpoints
+scripts/*.Rapp.history
 .Rproj.user
