@@ -3,6 +3,8 @@
 !*.gitignore 			# except gitignore
 !README.md 			# except readme
 !scripts/ 			# except scripts folder
+!data/full_site_list.csv	# except site list
+!data/gage			# except gage data
 
 # ignore other hidden files 
 **/*.ipynb_checkpoints
