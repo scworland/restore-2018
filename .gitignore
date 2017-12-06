@@ -5,8 +5,10 @@
 !scripts/ 			# except scripts folder
 !data/full_site_list.csv	# except site list
 !data/gage			# except gage data
+!data/dvs			# except dvs 
 
 # ignore other hidden files 
 **/*.ipynb_checkpoints
 **/*.Rapp.history
 **/*.Rproj.user
+.Rproj.user
