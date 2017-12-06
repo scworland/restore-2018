@@ -30,4 +30,5 @@ prob <- pnorm(q=c(28,100), mean=50, sd=20)
 # quantile associated with prob
 quant <- qnorm(p=0.8,mean=50,sd=20)
 
+# small change
 
