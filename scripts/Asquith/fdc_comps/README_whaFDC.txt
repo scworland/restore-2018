@@ -1,0 +1,3 @@
+This directory contains the script and RData results and other supporting output of the statistical computations related to the flow-duration curve (FDC). This includes, but is not limited too, the L-moments of the FDC for each year of record upto 7 missing days per year. Calendar year is being used. Trend analysis through Kendall's Tau of the ordinates of the FDC are also included and a PDF output as well.
+
+-wha  2017/12/05

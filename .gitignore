@@ -10,3 +10,8 @@
 **/*.ipynb_checkpoints
 **/*.Rapp.history
 **/*.Rproj.user
+
+
+# Desktop files created in OSX
+.DS_Store
+**/.DS_Store
