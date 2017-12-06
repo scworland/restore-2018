@@ -24,13 +24,25 @@ FDClmrdf.nolog <- lmrfdc_table(FDCLMRnolog)
 save(FDCLMRlog, FDCLMRnolog, FDClmrdf.log, FDClmrdf.nolog, file="FDCLMR.RData")
 load("FDCLMR.RData")
 
-L <- FDClmrdf.log; N <- FDClmrdf.nolog
-plotlmrdia(lmrdia())
-points(L$T3, L$T4, cex=0.3, col=rgb(.5,.3,0,.2), pch=16)
-mtext("log-transform of DV+1cfs")
-plotlmrdia(lmrdia())
-points(N$T3, N$T4, cex=0.3, col=rgb(.5,.3,0,.2), pch=16)
-mtext("no transformation")
+pdf("lmrdia.pdf", useDingbats=FALSE)
+  L <- FDClmrdf.log
+  L$color <- rgb(.5,.3,0,.3)
+  L$color[L$nzero > 30 ] <- rgb(.3, 0.8, 0.1, 0.5) # greenish towards
+  L$color[L$nzero > 60 ] <- rgb(.3, 0.6, 0.2, 0.5)
+  L$color[L$nzero > 90 ] <- rgb(.3, 0.4, 0.3, 0.5)
+  L$color[L$nzero > 120] <- rgb(.3, 0.2, 0.4, 0.5)
+  L$color[L$nzero > 180] <- rgb(.3, 0,.5,0.5) # purple
+
+  plotlmrdia(lmrdia(), xlim=c(-.6,.9), ylim=c(-.2,0.6))
+  points(L$T3, L$T4, cex=0.3, col=L$color, pch=16, lwd=0.3)
+  mtext("log-transform of (DV+1cfs)")
+
+  N <- FDClmrdf.nolog
+  plotlmrdia(lmrdia(), xlim=c(-.4,1), ylim=c(-.2,1))
+  points(N$T3, N$T4, cex=0.3, col=rgb(.5,.3,0,.3), pch=16, lwd=0.3)
+  mtext("no transformation")
+dev.off()
+
 
 stop()  # experimental material follows below
 
