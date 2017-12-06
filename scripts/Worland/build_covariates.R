@@ -4,7 +4,6 @@ pacman::p_load(tidyverse,stringr,lubridate,feather,geoknife,sf,sp,dataRetrieval)
 source('scripts/worland/nldi_funs.R')
 
 # NHD+ basin characteristics ----
-
 # load HUC12s for restore footprint
 rest_huc12 <- st_read('data/shapefiles/restore_hucs/restoreHUC12s.shp', stringsAsFactors = F)
 
@@ -15,8 +14,7 @@ mobile <- filter(rest_huc12, str_detect(HUC_8, '0316')) %>%
 st_write(mobile,'data/shapefiles/mobile_shpfiles/mobileHUC12s.shp')
 
 # load gages site list
-sites <- read_csv("data/full_site_list.csv") %>%
-  mutate(siteno=paste0("0",siteno)) 
+sites <- read_csv("data/full_site_list.csv") 
 
 # find coordinates of gages in mobile
 site_info <- readNWISdata(sites=sites$siteno, service="site") %>%
@@ -73,7 +71,6 @@ huc_chars <- mutate_at(huc_chars, vars(-comid,-HUC_12), funs(as.numeric))
 write_feather(huc_chars,"data/basinchars/nldi/mobile_huc_chars.feather")
 
 # DAYMET climate data ----
-
 # create huc12 stencil for geoknife
 huc_stencil <- as_Spatial(mobile$geometry,IDs=as.character(mobile$HUC_12)) %>%
   sp::spTransform(CRSobj = CRS("+proj=longlat +datum=WGS84")) %>%

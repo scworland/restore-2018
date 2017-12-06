@@ -41,16 +41,15 @@ mobile_dvs <- dv_list[sites[which(sites %in% site_info$siteno)]]
 
 dvs <- do.call("rbind", mobile_dvs) %>%
   filter(year >= 1980 & year <= 2015) %>%
-  select(siteno=site_no,date=Date,Q=Flow,
-         cd=Flow_cd,year,month,decade,wyear)
+  rename(siteno=site_no,date=Date,Q=Flow,
+         cd=Flow_cd)
 
 gage_time <- dvs %>%
   left_join(site_info,by="siteno") %>%
   left_join(ppt,by=c("HUC_12","date")) %>%
   left_join(tmin,by=c("HUC_12","date")) %>%
   left_join(tmax,by=c("HUC_12","date")) %>%
-  select(siteno,lat,lon,HUC_12,date,
-         year,month,Q,ppt,tmin,tmax)
+  select(-geometry)
 
 gage_static <- gage_chars %>%
   rename_all(tolower) %>%
@@ -73,5 +72,13 @@ huc12_static <- huc_chars %>%
 
 write_feather(huc12_time,"data/huc12/huc12_time.feather")
 write_feather(huc12_static,"data/huc12/huc12_static.feather")
+
+# temporary maps
+plot_huc <- hucs %>%
+  left_join(huc_chars) %>%
+  filter(AreaHUC12 < max(AreaHUC12))
+
+plot(plot_huc[c("AreaHUC12","CAT_AREA_SQKM","TOT_BASIN_AREA")])
+plot(plot_huc[c("TOT_PPT7100_ANN","TOT_TMAX7100","TOT_RECHG")])
 
 
