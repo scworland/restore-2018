@@ -39,6 +39,9 @@ dv_list <- remove_aux(dv_list)
 # subset for mobile gages and daymet years
 mobile_dvs <- dv_list[sites[which(sites %in% site_info$siteno)]]
 
+# this drops sites that only have flow after 1980
+# to keep sites but have NA for climate data comment
+# the filter line and run lines 45-55
 dvs <- do.call("rbind", mobile_dvs) %>%
   filter(year >= 1980 & year <= 2015) %>%
   rename(siteno=site_no,date=Date,Q=Flow,

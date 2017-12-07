@@ -1,6 +1,5 @@
 
 library(tidyverse)
-library(dataRetrieval)
 library(lmomco)
 library(lubridate)
 library(feather)
@@ -9,11 +8,26 @@ source("scripts/worland/utils.R")
 gt <- read_feather("data/gage/gage_time.feather")
 gs <- read_feather("data/gage/gage_static.feather")
 
-test <- gt %>%
+n = length(unique(gt$siteno))
+
+lmom3 <- gt %>%
   select(siteno,date,Q) %>%
-  filter(siteno %in% unique(siteno)[10:21]) %>%
-  group_by(siteno) %>%
-  mutate(p = sw_efdc(log(Q)),
+  mutate(Q=log(Q+0.001)) %>%
+  group_by(siteno) %>% 
+  do(lms=lmoms(.$Q, nmom=3)$lambdas) %>%
+  ungroup() %>%
+  unnest(lms) %>%
+  mutate(names = rep(c("lm1","lm2","lm3"),n)) %>%
+  spread(names,lms) %>%
+  left_join(gs,by="siteno")
+
+write_feather(lmom3,"data/gage/lmom3.feather")
+
+test <- gt %>%
+    select(siteno,date,Q) %>%
+    filter(siteno %in% unique(siteno)[1:3]) %>%
+    group_by(siteno) %>%    
+    mutate(p = sw_efdc(log(Q)),
          p2 = sw_lmoms(log(Q),type="pe3"))
 
 ggplot(test) + 

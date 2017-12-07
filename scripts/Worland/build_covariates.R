@@ -20,11 +20,12 @@ sites <- read_csv("data/full_site_list.csv")
 site_info <- readNWISdata(sites=sites$siteno, service="site") %>%
   select(siteno=site_no,lon=dec_long_va,lat=dec_lat_va) %>%
   st_as_sf(coords=c("lon","lat"), crs=st_crs(rest_huc12), remove=F) %>%
-  st_intersection(mobile) %>%
+  #st_intersection(mobile) %>%
   select(siteno,lon,lat,HUC_12) %>%
   na.omit() 
 
 st_write(site_info, 'data/shapefiles/mobile_shpfiles/mobile_gages.shp')
+st_write(site_info, 'data/shapefiles/gages/restore_gages.shp')
 
 # extract basin characteristics for nwis sites
 gage_chars <- NULL

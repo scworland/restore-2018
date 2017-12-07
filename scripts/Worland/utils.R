@@ -24,7 +24,7 @@ sw_efdc <- function(Q){
   p <- as.numeric(df$p)
 }
 
-# generate quantiles over range based of L-moments
+# generate quantiles over range based on L-moments
 sw_lmoms <- function(x, type="pe3") { 
   moms <- lmomco::lmoms(x, no.stop=TRUE)
   if(!are.lmom.valid(moms)) return(NULL) 

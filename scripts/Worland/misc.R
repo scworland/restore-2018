@@ -104,6 +104,32 @@ X <- df_list %>%
   left_join(ppt) %>%
   left_join(lulc)
 
+# PCA regression
+d <- read_feather("data/gage/lmom3.feather")
+
+X <- select(d,siteno,cat_area_sqkm:tot_wildfire_2011) %>%
+  gather(variable,value,-siteno) %>%
+  group_by(siteno) %>%
+  filter(value > 0) %>% 
+  ungroup() %>%
+  spread(variable, value) %>%
+  select_if(~!any(is.na(.))) %>%
+  select(-siteno)
+
+
+pcs <- prcomp(X, scale=T)
+
+# screeplot(pcs,npcs=20,type="lines")
+
+Xpc <- cbind(select(d,siteno:comid),pcs$x[,1:8])
+
+lm1 <- lm(lm1 ~., data=select(Xpc,lm1,PC1:PC8))
+lm2 <- lm(lm2 ~., data=select(Xpc,lm2,PC1:PC8))
+lm3 <- lm(lm3 ~., data=select(Xpc,lm3,PC1:PC8))
+
+resid <- data.frame(lm1r = residuals(lm1),
+                    lm2r = residuals(lm2),
+                    lm3r = residuals(lm3))
 
 
 
