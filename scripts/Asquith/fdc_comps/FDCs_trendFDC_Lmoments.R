@@ -43,6 +43,42 @@ pdf("lmrdia.pdf", useDingbats=FALSE)
   mtext("no transformation")
 dev.off()
 
+#pdf("massive.pdf")
+FF <- (1:365)/366; qFF <- qnorm(FF)
+plot(qnorm(c(1/366, 365/366)), c(1E-3, 1000), type="n",
+     xlab="STANDARD NORMAL VARIATE", ylab="log10(cfs+1cfs)")
+lmrDF <- FDClmrdf.nolog
+for(i in sample(1:length(lmrDF$site), size=10, replace=FALSE)) {
+   if(is.na(lmrDF$L1[i])) next
+   lmr <- c(lmrDF$L1[i], lmrDF$L2[i],
+            lmrDF$T3[i], lmrDF$T4[i], lmrDF$T5[i])
+   lmr <- vec2lmom(lmr, checklmom=FALSE)
+   if(! are.lmom.valid(lmr)) next;
+   par <- lmom2par(lmr, type="wak")
+   col <- ifelse(par$ifail == 2, rgb(0,0,1,.4),
+          ifelse(par$ifail == 3, rgb(0,1,0,.4), rgb(1,0,0, .4)))
+   lines(qFF, qlmomco(FF, par), lwd=0.4, col=col)
+}
+
+
+FF <- (1:365)/366; qFF <- qnorm(FF)
+plot(qnorm(c(1/366, 365/366)), c(1E-3, 10), type="n",
+     xlab="STANDARD NORMAL VARIATE", ylab="log10(cfs+1cfs)")
+lmrDF <- FDClmrdf.log
+for(i in sample(1:length(lmrDF$site), size=10000, replace=FALSE)) {
+   if(is.na(lmrDF$L1[i])) next
+   lmr <- c(lmrDF$L1[i], lmrDF$L2[i],
+            lmrDF$T3[i], lmrDF$T4[i], lmrDF$T5[i])
+   lmr <- vec2lmom(lmr, checklmom=FALSE)
+   if(! are.lmom.valid(lmr)) next;
+   par <- lmom2par(lmr, type="wak")
+   col <- ifelse(par$ifail == 2, rgb(0,0,1,.4),
+          ifelse(par$ifail == 3, rgb(0,1,0,.4), rgb(1,0,0, .4)))
+   lines(qFF, qlmomco(FF, par), lwd=0.4, col=col)
+}
+
+#dev.off()
+
 
 stop()  # experimental material follows below
 
