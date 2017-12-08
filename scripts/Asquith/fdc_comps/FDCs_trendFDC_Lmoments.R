@@ -1,4 +1,4 @@
-library(akqdecay); library(sp); library(lmomco)
+library(akqdecay); library(lmomco)
 
 load("DV.RData")
 
