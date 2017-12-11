@@ -16,6 +16,8 @@ spSites$CDA <- spSites$contrib_drain_area_va
 spSites$CDA[is.na(spSites$CDA)] <- spSites$drain_area_va[is.na(spSites$CDA)]
 spSites$CDA[spSites$CDA == 0] <- spSites$drain_area_va[spSites$CDA == 0]
 
+spModSites$instruments_cd  <- NULL
+spModSites$construction_dt <- NULL
 spSites$gw_file_cd    <- NULL
 spSites$nat_aqfr_cd   <- NULL
 spSites$aqfr_cd       <- NULL
