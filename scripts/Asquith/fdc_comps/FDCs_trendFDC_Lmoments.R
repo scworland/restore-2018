@@ -73,9 +73,14 @@ if(length(ls(modFDCLMRlog)) != length(ls(modFDCLMRnolog)) ) {
 save(modFDCLMRlog, modFDCLMRnolog, modFDClmrdf.log, modFDClmrdf.nolog, file="modFDCLMR.RData")
 load("modFDCLMR.RData")
 
+fdc_lmr_pplo <- modFDClmrdf.nolog
+library(feather)
+write_feather(fdc_lmr_pplo, "fdc_lmr_pplo.feather")
+
+
 
 ModelSites <- data.frame(site_no=ModelSites)
-write.table(ModelSites, file="ModSiteList.txt", row.names=FALSE)
+write.table(ModelSites, file="decade1950plus_site_list.csv", row.names=FALSE)
 
 pdf("mod_lmrdia.pdf", useDingbats=FALSE)
   L <- modFDClmrdf.log; N <- modFDClmrdf.nolog
