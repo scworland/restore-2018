@@ -14,9 +14,9 @@ sitesWOcompleteFDC <- c("02295163", "02300082", "02388350", "02432500",
 
 
 FDCLMRlog <- new.env()
-fill_lmrfdcenv(dvenv=DV, envir=FDCLMRlog,   log=TRUE,  todecade=TRUE)
+fill_lmrfdcenv2(dvenv=DV, envir=FDCLMRlog,   log=TRUE,  decade=TRUE)
 FDCLMRnolog <- new.env()
-fill_lmrfdcenv(dvenv=DV, envir=FDCLMRnolog, log=FALSE, todecade=TRUE)
+fill_lmrfdcenv2(dvenv=DV, envir=FDCLMRnolog, log=FALSE, decade=TRUE)
 
 FDClmrdf.log   <- lmrfdc_table(FDCLMRlog)
 FDClmrdf.nolog <- lmrfdc_table(FDCLMRnolog)
@@ -27,11 +27,11 @@ load("FDCLMR.RData")
 pdf("lmrdia.pdf", useDingbats=FALSE)
   L <- FDClmrdf.log; N <- FDClmrdf.nolog
   L$color <- N$color <- rgb(.5,.3,0,.3) # zeros will go greenish towards purple
-  L$color[L$nzero > 30 ] <- N$color[L$nzero > 30 ] <- rgb(.3,.8,.1,.5) # green
-  L$color[L$nzero > 60 ] <- N$color[L$nzero > 60 ] <- rgb(.3,.6,.2,.5)
-  L$color[L$nzero > 90 ] <- N$color[L$nzero > 90 ] <- rgb(.3,.4,.3,.5)
-  L$color[L$nzero > 120] <- N$color[L$nzero > 120] <- rgb(.3,.2,.4,.5)
-  L$color[L$nzero > 180] <- N$color[L$nzero > 180] <- rgb(.3,.0,.5,.5) # purple
+  L$color[L$nzero > 30 ] <- N$color[N$nzero > 30 ] <- rgb(.3,.8,.1,.5) # green
+  L$color[L$nzero > 60 ] <- N$color[N$nzero > 60 ] <- rgb(.3,.6,.2,.5)
+  L$color[L$nzero > 90 ] <- N$color[N$nzero > 90 ] <- rgb(.3,.4,.3,.5)
+  L$color[L$nzero > 120] <- N$color[N$nzero > 120] <- rgb(.3,.2,.4,.5)
+  L$color[L$nzero > 180] <- N$color[N$nzero > 180] <- rgb(.3,.0,.5,.5) # purple
 
   plotlmrdia(lmrdia(), xlim=c(-.5,.9), ylim=c(-.1,0.6))
   points(L$T3, L$T4, cex=0.3, col=L$color, pch=16, lwd=0.3)
@@ -43,12 +43,12 @@ pdf("lmrdia.pdf", useDingbats=FALSE)
 dev.off()
 
 modFDClmrdf.log <- FDClmrdf.log[! is.na(FDClmrdf.log$site), ]
-modFDClmrdf.log <- modFDClmrdf.log[! is.na(FDClmrdf.log$min),  ]
-modFDClmrdf.log <- modFDClmrdf.log[FDClmrdf.log$decade >= 1950,]
+modFDClmrdf.log <- modFDClmrdf.log[! is.na(modFDClmrdf.log$min),  ]
+modFDClmrdf.log <- modFDClmrdf.log[modFDClmrdf.log$decade >= 1950,]
 
 modFDClmrdf.nolog <- FDClmrdf.nolog[! is.na(FDClmrdf.nolog$site),]
-modFDClmrdf.nolog <- modFDClmrdf.nolog[! is.na(FDClmrdf.nolog$min), ]
-modFDClmrdf.nolog <- modFDClmrdf.nolog[FDClmrdf.nolog$decade >= 1950,]
+modFDClmrdf.nolog <- modFDClmrdf.nolog[! is.na(modFDClmrdf.nolog$min), ]
+modFDClmrdf.nolog <- modFDClmrdf.nolog[modFDClmrdf.nolog$decade >= 1950,]
 
 ModelSitesA <- unique(modFDClmrdf.log$site)
 ModelSitesB <- unique(modFDClmrdf.nolog$site)
@@ -76,6 +76,25 @@ load("modFDCLMR.RData")
 
 ModelSites <- data.frame(site_no=ModelSites)
 write.table(ModelSites, file="ModSiteList.txt", row.names=FALSE)
+
+pdf("mod_lmrdia.pdf", useDingbats=FALSE)
+  L <- modFDClmrdf.log; N <- modFDClmrdf.nolog
+  L$color <- N$color <- rgb(.5,.3,0,.3) # zeros will go greenish towards purple
+  L$color[L$nzero > 30 ] <- N$color[N$nzero > 30 ] <- rgb(.3,.8,.1,.5) # green
+  L$color[L$nzero > 60 ] <- N$color[N$nzero > 60 ] <- rgb(.3,.6,.2,.5)
+  L$color[L$nzero > 90 ] <- N$color[N$nzero > 90 ] <- rgb(.3,.4,.3,.5)
+  L$color[L$nzero > 120] <- N$color[N$nzero > 120] <- rgb(.3,.2,.4,.5)
+  L$color[L$nzero > 180] <- N$color[N$nzero > 180] <- rgb(.3,.0,.5,.5) # purple
+
+  plotlmrdia(lmrdia(), xlim=c(-.5,.9), ylim=c(-.1,0.6))
+  points(L$T3, L$T4, cex=0.3, col=L$color, pch=16, lwd=0.3)
+  mtext("log-transform of (DV+1cfs)")
+
+  plotlmrdia(lmrdia(), xlim=c(-.05,1), ylim=c(0,1))
+  points(N$T3, N$T4, cex=0.3, col=N$color, pch=16, lwd=0.3)
+  mtext("no transformation")
+dev.off()
+
 
 
 stop()  # experimental material follows below
