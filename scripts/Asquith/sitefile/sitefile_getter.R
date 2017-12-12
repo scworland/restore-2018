@@ -1,8 +1,9 @@
 library(akqdecay); library(sp)
-load("DV.RData")
+
+sites <- NA # needs definition from ~restore-2018/data/gage
 
 ExtraSiteFileStuff <- read.table("ExtraSiteFileStuff.txt", sep="\t", header=TRUE,
-                    colClasses="character")
+                                 colClasses="character")
 ExtraSiteFileStuff$count_dvs      <- as.numeric(ExtraSiteFileStuff$count_dvs)
 ExtraSiteFileStuff$approx_por_pct <- as.numeric(ExtraSiteFileStuff$approx_por_pct)
 ExtraSiteFileStuff$begin_cal_year <- as.numeric(ExtraSiteFileStuff$begin_cal_year)
