@@ -1,0 +1,26 @@
+library(lmomco)
+08167000 Guadalupe River Comfort, 1950s
+These are the L-moments of ***NONZERO*** flow.
+
+lmr <- lmomco::vec2lmom(c(114.5072, 80.29483, 0.6901283, 0.5524655))
+kap <- lmomco::lmom2par(lmr, type="kap") # estimate the kappa distribution
+pplo <- 0.078 # probability of zero flow for the entire decade
+FF <- seq(0.001,.999,by=.001) # convenience nonexceedance probabilities
+
+To begin, naively plot the fitted distribution to the L-moments
+
+plot(qnorm(FF), lmomco::qlmomco(FF, kap), type="l", log="y", xaxt="n",
+     xlab="", ylab="QUANTILE, CFS")
+
+but this curve is wrong and over estimates the low end! So now we plot the distribution
+via a conditional probability offset or truncation. The key is in f2flo() and the
+transform (f - pp)/(1 - pp), which maps a [pplo, 1] interval into a [0,1] for purposes of
+computing the quantiles. For example, if the probability of zero flow is 0.078 as in this
+example, then the first fitted quantile at 0.078+eps in the real work is the 0th-percent
+probability in the fitted distribution world. (The domain on which the L-moments were
+originally computed, which here means the nonzero flows.)
+
+lines(qnorm(  lmomco::f2f(  FF, pp=pplo)),
+      qlmomco(lmomco::f2flo(FF, pp=pplo), kap), col=2, lwd=3)
+add.lmomco.axis(las=2, tcl=0.5, side.type="NPP", npp.as.aep=TRUE) # x-axis
+mtext("Probability of zeroflow is at 0.078, RED CURVE IS CORRECT, BLACK IS WRONG")
