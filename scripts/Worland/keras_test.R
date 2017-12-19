@@ -42,7 +42,6 @@ model_fit <- model %>%
       epochs=130, 
       batch_size = 5, 
       validation_split = 0.2, 
-      callbacks = callbacks,
       verbose=0)
 
 plot(model_fit)

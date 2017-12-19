@@ -73,7 +73,7 @@ sites <- ls(DV)
 dv_list <- as.list(DV)
 
 # LULC files
-pth = "data/basinchars"
+pth = "data/basinchars/sciencebase"
 lulc_files <- list.files(path=pth, pattern = glob2rx("*LULC*.feather"),full.names = T)
 temp_files <- list.files(path=pth, pattern = glob2rx("*TAV*.feather"),full.names = T)[2:13]
 ppt_files <- list.files(path=pth, pattern = glob2rx("*PPT*.feather"),full.names = T)
@@ -131,5 +131,40 @@ resid <- data.frame(lm1r = residuals(lm1),
                     lm2r = residuals(lm2),
                     lm3r = residuals(lm3))
 
+
+# download FTP data
+library(curl)
+url = "ftp://ftpext.usgs.gov/pub/er/wi/middleton/dblodgett/catchment_chars/rds/"
+h = new_handle(dirlistonly=TRUE)
+con = curl(url, "r", h)
+tbl = read.table(con, stringsAsFactors=TRUE, fill=TRUE)
+close(con)
+head(tbl)
+
+urls <- paste0(url, tbl[1,1])
+fls = basename(urls)
+curl_fetch_disk(urls[1], fls[1])
+
+library(readr)
+library(sbtools)
+hold <- read_delim("data/basinchars/nhd_sb/SOHL60_TOT_CONUS.txt",",")
+
+sw_get_files <- function(token){
+  
+  files <- item_list_files(token) %>%
+    filter(grepl("TOT",fname))
+  
+  for (i in 1:nrow(files)){
+    pth <- file.path("data/basinchars/nhd_sb",files$fname[i])
+    
+    item_file_download(token, 
+                       names = files$fname[i], 
+                       destinations = pth)
+    
+    unzip(pth,exdir="data/basinchars/nhd_sb")
+  }
+}
+
+sw_get_files('58cbeef2e4b0849ce97dcd61')
 
 

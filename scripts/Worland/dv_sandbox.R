@@ -44,5 +44,16 @@ prob <- pnorm(q=c(28,100), mean=50, sd=20)
 # quantile associated with prob
 quant <- qnorm(p=0.8,mean=50,sd=20)
 
-# small change
+x <- 5
+y <- 3
+
+alpha <- rnorm(10,2,0.5)
+beta <- (y-alpha)/x
+
+ggplot() + 
+  geom_point(aes(x,y)) +
+  coord_cartesian(xlim=c(0,10),ylim=c(0,10)) +
+  theme_bw() +
+  geom_abline(intercept=alpha,slope=beta)
+
 

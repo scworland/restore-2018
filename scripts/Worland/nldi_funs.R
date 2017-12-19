@@ -83,10 +83,11 @@ get_basin_nldi <- function(f_source, f_id, tier = "prod") {
 
 get_nldi_url <- function(tier = "prod") {
   if(tier=="prod") {
-    "https://cida.usgs.gov/nldi"
+      "https://cida.usgs.gov/nldi"
   } else if(tier=="test") {
     "https://cida-test.er.usgs.gov/nldi"
   } else if(tier=="local") {
     "http://localhost:8080/nldi"
   }
 }
+

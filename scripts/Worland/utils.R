@@ -33,3 +33,21 @@ sw_lmoms <- function(x, type="pe3") {
   return(1-plmomco(x, pars))
 }
 
+# download and unzip files from sciencebase
+sw_get_files <- function(token){
+  
+  library(sbtools)
+  
+  files <- item_list_files(token) %>%
+    filter(grepl("TOT",fname))
+  
+  for (i in 1:nrow(files)){
+    pth <- file.path("data/basinchars/nhd_sb",files$fname[i])
+    
+    item_file_download(token, 
+                       names = files$fname[i], 
+                       destinations = pth)
+    
+    unzip(pth,exdir="data/basinchars/nhd_sb")
+  }
+}
