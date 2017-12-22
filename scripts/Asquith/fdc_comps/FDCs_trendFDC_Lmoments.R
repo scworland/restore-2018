@@ -14,9 +14,9 @@ sitesWOcompleteFDC <- c("02295163", "02300082", "02388350", "02432500",
 
 
 FDCLMRlog <- new.env()
-fill_lmrfdcenv2(dvenv=DV, envir=FDCLMRlog,   log=TRUE,  decade=TRUE)
+fill_lmrfdcenv(dvenv=DV, envir=FDCLMRlog,   log=TRUE,  decade=TRUE)
 FDCLMRnolog <- new.env()
-fill_lmrfdcenv2(dvenv=DV, envir=FDCLMRnolog, log=FALSE, decade=TRUE)
+fill_lmrfdcenv(dvenv=DV, envir=FDCLMRnolog, log=FALSE, decade=TRUE)
 
 FDClmrdf.log   <- lmrfdc_table(FDCLMRlog)
 FDClmrdf.nolog <- lmrfdc_table(FDCLMRnolog)
