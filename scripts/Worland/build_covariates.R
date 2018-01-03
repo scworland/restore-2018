@@ -24,7 +24,7 @@ site_info <- readNWISdata(sites=sites$siteno, service="site") %>%
   select(siteno,lon,lat,HUC_12) %>%
   na.omit() 
 
-st_write(site_info, 'data/shapefiles/mobile_shpfiles/mobile_gages.shp')
+#st_write(site_info, 'data/shapefiles/mobile_shpfiles/mobile_gages.shp')
 st_write(site_info, 'data/shapefiles/gages/restore_gages.shp')
 
 # extract basin characteristics for nwis sites

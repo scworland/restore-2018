@@ -33,21 +33,63 @@ sw_lmoms <- function(x, type="pe3") {
   return(1-plmomco(x, pars))
 }
 
+# find column name with max value
+find_max <- function(df) {
+  colnames(df)[max.col(df,ties.method="first")]
+}
+
 # download and unzip files from sciencebase
-sw_get_files <- function(token){
+#' @example sw_sb_extract("5835cad4e4b0d9329c801b22")
+sw_sb_extract <- function(item,type="TOT",path="data/basinchars/nhd_sb",group=0){
   
   library(sbtools)
   
-  files <- item_list_files(token) %>%
-    filter(grepl("TOT",fname))
+  fnames <- item_list_files(item)$fname
   
-  for (i in 1:nrow(files)){
-    pth <- file.path("data/basinchars/nhd_sb",files$fname[i])
-    
-    item_file_download(token, 
-                       names = files$fname[i], 
-                       destinations = pth)
-    
-    unzip(pth,exdir="data/basinchars/nhd_sb")
+  if(any(grepl(type,fnames))) {
+    files <- item_list_files(item) %>%
+      filter(grepl(type,fname))
+  } else {
+    files <- item_list_files(item) 
   }
+  
+  files <- filter(files,!grepl("xml",fname))
+  
+  gages <- select(sites,COMID=comid)
+  hucs <- select(huc12s,COMID=comid)
+  for (i in 1:nrow(files)){
+    
+    pth <- file.path(path,files$fname[i])
+    
+    dat <- item_file_download(item, 
+                              names=files$fname[i], 
+                              destinations=pth,
+                              overwrite_file = T)
+    
+    if(group==1){
+      
+      d <- read_delim(unzip(dat,exdir=path,overwrite=T),",",guess_max = 20000) %>%
+        mutate(COMID = as.character(COMID)) %>%
+        mutate_at(vars(-COMID), funs(as.numeric)) %>%
+        mutate(dominant_group=find_max(.[,-1])) %>%
+        select(COMID,dominant_group)
+      
+      colnames(d)[2] <- str_extract(files$fname[1], ".+?(?=_)")
+      
+    }else{
+    
+    d <- read_delim(unzip(dat,exdir=path,overwrite=T),",",guess_max = 20000) %>%
+      mutate(COMID = as.character(COMID)) %>%
+      mutate_at(vars(-COMID), funs(as.numeric))
+    
+    }
+    
+    gages <- left_join(gages,d,by="COMID")
+    hucs <-  left_join(hucs,d,by="COMID")
+
+  }
+  
+  out <- list(gages=gages,hucs=hucs)
+  return(out)
 }
+

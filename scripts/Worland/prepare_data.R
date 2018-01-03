@@ -4,6 +4,9 @@ pacman::p_load(tidyverse,stringr,lubridate,feather,sf)
 source("scripts/worland/utils.R")
 
 # Load covariate data
+immutable_gage_df <- read_feather("data/basinchars/nhd_sb/immutable_gage.feather")
+immutable_huc_df <- read_feather("data/basinchars/nhd_sb/immutable_huc12.feather")
+
 hucs <- st_read('data/shapefiles/mobile_shpfiles/mobileHUC12s.shp', stringsAsFactors = F)
 site_info <- st_read('data/shapefiles/mobile_shpfiles/mobile_gages.shp', stringsAsFactors = F)
 huc_chars <- read_feather("data/basinchars/nldi/mobile_huc_chars.feather")
@@ -76,12 +79,5 @@ huc12_static <- huc_chars %>%
 write_feather(huc12_time,"data/huc12/huc12_time.feather")
 write_feather(huc12_static,"data/huc12/huc12_static.feather")
 
-# temporary maps
-plot_huc <- hucs %>%
-  left_join(huc_chars) %>%
-  filter(AreaHUC12 < max(AreaHUC12))
-
-plot(plot_huc[c("AreaHUC12","CAT_AREA_SQKM","TOT_BASIN_AREA")])
-plot(plot_huc[c("TOT_PPT7100_ANN","TOT_TMAX7100","TOT_RECHG")])
 
 

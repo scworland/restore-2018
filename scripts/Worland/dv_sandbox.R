@@ -56,4 +56,4 @@ ggplot() +
   theme_bw() +
   geom_abline(intercept=alpha,slope=beta)
 
-
+hold <- read_feather("data/gage/fdc_lmr_pplo.feather")
