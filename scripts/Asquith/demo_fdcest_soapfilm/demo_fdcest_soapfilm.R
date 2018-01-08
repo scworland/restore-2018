@@ -1,11 +1,13 @@
 library(feather)
-pplo <- read_feather(file.choose()) # "fdc_lmr_pplo.feather" or "fdc_lmr_pplo2010-15.feather"
-# I am using fdc_lmr_pplo2010-15.feather for the testing here.
-
+library(proxy)
 library(akqdecay)
 library(mgcv)
 library(sp)
 library(rgeos)
+library(lmomco)
+
+pplo <- read_feather(file.choose()) # "fdc_lmr_pplo.feather" or "fdc_lmr_pplo2010-15.feather"
+# I am using fdc_lmr_pplo2010-15.feather for the testing here.
 
 sites <- unique(pplo$site)
 sitefile <- dataRetrieval::readNWISsite(sites)
