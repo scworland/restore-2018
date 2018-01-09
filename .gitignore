@@ -12,3 +12,12 @@
 **/*.Rproj.user
 **/*.DS_Store
 .Rproj.user
+scripts/Asquith/fdc_model/DEMO.RData
+scripts/Asquith/fdc_model/L1.pdf
+scripts/Asquith/fdc_model/PPLO.pdf
+scripts/Asquith/fdc_model/T2.pdf
+scripts/Asquith/fdc_model/T3.pdf
+scripts/Asquith/fdc_model/T4.pdf
+scripts/Asquith/fdc_model/T5.pdf
+scripts/Asquith/fdc_model/T6.pdf
+scripts/Asquith/fdc_model/ZERO.pdf
