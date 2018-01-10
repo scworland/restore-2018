@@ -5,37 +5,53 @@ library(lubridate)
 library(feather)
 source("scripts/worland/utils.R")
 
-gt <- read_feather("data/gage/gage_time.feather")
-gs <- read_feather("data/gage/gage_static.feather")
+# Load daily streamflow
+load("data/dvs/DV.RData")
+sites <- ls(DV)
+dv_list <- as.list(DV)
+dv_list <- remove_aux(dv_list) 
 
-n = length(unique(gt$siteno))
+# randomly sample several sites
+set.seed(1)
+dv_sublist <- dv_list[sample(1:length(dv_list),12)]
 
-lmom3 <- gt %>%
-  select(siteno,date,Q) %>%
-  mutate(Q=log(Q+0.001)) %>%
-  group_by(siteno) %>% 
-  do(lms=lmoms(.$Q, nmom=3)$lambdas) %>%
-  ungroup() %>%
-  unnest(lms) %>%
-  mutate(names = rep(c("lm1","lm2","lm3"),n)) %>%
-  spread(names,lms) %>%
-  left_join(gs,by="siteno")
+# create data frame
+dvs <- do.call("rbind", dv_sublist) %>%
+  rename(siteno=site_no,date=Date,Q=Flow,
+         cd=Flow_cd)
 
-write_feather(lmom3,"data/gage/lmom3.feather")
+n = length(unique(dvs$siteno))
 
-test <- gt %>%
-    select(siteno,date,Q) %>%
-    filter(siteno %in% unique(siteno)[1:3]) %>%
-    group_by(siteno) %>%    
-    mutate(p = sw_efdc(log(Q)),
-         p2 = sw_lmoms(log(Q),type="pe3"))
+# lmom3 <- dvs %>%
+#   select(siteno,date,Q) %>%
+#   mutate(Q=log(Q+0.001)) %>%
+#   group_by(siteno) %>% 
+#   do(lms=lmoms(.$Q, nmom=3)$lambdas) %>%
+#   ungroup() %>%
+#   unnest(lms) %>%
+#   mutate(names = rep(c("lm1","lm2","lm3"),n)) %>%
+#   spread(names,lms) %>%
+#   left_join(gs,by="siteno")
 
-ggplot(test) + 
-  geom_line(aes(p,Q)) + 
-  geom_line(aes(p2,Q),linetype="dashed",color="dodgerblue") +
-  facet_wrap(~siteno, scales="free_y") +
+fdcs <- dvs %>%
+  select(siteno,date,decade,Q) %>%
+  mutate(decade=as.character(decade)) %>%
+  group_by(siteno,decade) %>%    
+  mutate(p = sw_efdc(Q+0.001))
+
+ggplot(fdcs) + 
+  geom_line(aes(p,Q,color=decade)) + 
+  facet_wrap(~siteno, scales="free_y", ncol=3) +
   scale_y_continuous(trans='log2') +
-  theme_bw()
+  scale_color_brewer(palette = "YlOrRd") +
+  theme_dark()
+
+# ggplot(fdcs) + 
+#   geom_line(aes(p,Q)) + 
+#   geom_line(aes(p2,Q),linetype="dashed",color="dodgerblue") +
+#   facet_wrap(~siteno, scales="free_y") +
+#   scale_y_continuous(trans='log2') +
+#   theme_bw()
 
 
 # prob x < value 

@@ -38,7 +38,7 @@ model <- keras_model_sequential()  %>%
   
 model_fit <- model %>% 
   fit(Xtrain, 
-      ytrain[,1], 
+      Ytrain[,1], 
       epochs=130, 
       batch_size = 5, 
       validation_split = 0.2, 
@@ -48,7 +48,7 @@ plot(model_fit)
 
 # make predictions
 yhat <- predict(model, Xtest)
-preds <- data.frame(y=ytest[,1],yhat)
+preds <- data.frame(y=Ytest[,1],yhat)
 plot(preds)
 
 # Build model for multiple outputs

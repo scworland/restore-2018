@@ -18,19 +18,31 @@ remove_aux <- function(l){
 sw_efdc <- function(Q){
   df <- data.frame(Q) %>%
     mutate(n = nrow(.),
-           m = min_rank(desc(Q)),
+           m = min_rank(Q),
            p = m/(n+1)) 
   
   p <- as.numeric(df$p)
 }
 
-# generate quantiles over range based on L-moments
+# generate ep over range based on L-moments
 sw_lmoms <- function(x, type="pe3") { 
+  library(lmomco)
   moms <- lmomco::lmoms(x, no.stop=TRUE)
   if(!are.lmom.valid(moms)) return(NULL) 
   pars <- lmomco::lmom2par(moms, type=type)
   if(is.null(pars)) return(NULL) 
   return(1-plmomco(x, pars))
+}
+
+# generate quantiles over range based on L-moments
+sw_lmoms2 <- function(x,type="gno") { 
+  library(lmomco)
+  moms <- vec2lmom(as.numeric(x))
+  if(!are.lmom.valid(moms)) return(NULL) 
+  pars <- lmomco::lmom2par(moms, type=type)
+  if(is.null(pars)) return(NULL) 
+  FF <- nonexceeds()
+  return(qlmomco(FF, pars))
 }
 
 # find column name with max value
@@ -93,3 +105,43 @@ sw_sb_extract <- function(item,type="TOT",path="data/basinchars/nhd_sb",group=0)
   return(out)
 }
 
+# return sites in same kcluster as given site
+obs_in_cluster <- function(site,kmeans_df) {
+  
+  site_df <- kmeans_df %>%
+    filter(site_no==site)
+  
+  n <- nrow(site_df)
+  
+  datalist <- list()
+  for (i in 1:n){
+    df  <- kmeans_df %>%
+      select(site_no,decade,kclust) %>%
+      filter(kclust==site_df$kclust[i] & decade==site_df$decade[i])
+    
+    datalist[[i]] <- df
+  }
+  
+  out_df <- data.frame(dplyr::bind_rows(datalist)) %>%
+    select(site_no,decade)
+}
+
+# nearest neighbors
+nn <- function(df,n) {
+  
+  # make matrix
+  X <- as.matrix(df)
+  
+  # find Euclidian distances
+  d1 <- as.matrix(dist(X, method = "euclidean"))
+  diag(d1) <- Inf
+  
+  # find region of influence nearest neighbors (n)
+  nearest_neighbors <- matrix(NA, nrow=nrow(X), ncol=n)
+  for (i in 1:ncol(d1)){
+    nearest_neighbors[i,] <- order(d1[,i])[1:n]
+  }
+  
+  # return nearest neighbors
+  return(nearest_neighbors)
+}
