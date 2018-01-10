@@ -1,3 +1,8 @@
+# This script is a demonstration of an optimizer combining two three-parameter
+# distributions to attempt a fit to six L-moments (just the lambdas and not
+# ratios) by minimization of
+
+
 "optimLmoms" <-
 function(para, lmr=NULL, minF=0, maxF=1, type1="wei", type2="gev", verbose=FALSE) {
   nmom <- length(para)
@@ -33,7 +38,8 @@ function(para, lmr=NULL, minF=0, maxF=1, type1="wei", type2="gev", verbose=FALSE
 
 
 library(lmomco)
-lmr <- lmomco::vec2lmom(c(305, 263, 0.815, 0.631, 0.473, 0.353))
+lmr <- vec2lmom(c(305, 263, 0.815, 0.631, 0.473, 0.353))
+plotlmrdia(lmrdia()); points(lmr$ratios[3], lmr$ratios[4], pch=16, cex=3)
 
 type1a <- "wei"; type2a <- "gev"
 par1 <- lmomco::lmom2par(lmr, type=type1a)
@@ -70,3 +76,7 @@ FF <- lmomco::nonexceeds(); qFF <- qnorm(FF)
 ylim <- c(pmax(0.01, min(c(XX1, XX2))), max(c(XX1, XX2)))
 plot(qFF, XX1, col=2, type="l", log="y", ylab="QUANTILE", ylim=ylim, lwd=3)
 lines(qFF, XX2, col=4)
+
+
+aep4 <- paraep4(lmr, snap.tau4=TRUE)
+lines(qFF, quaaep4(FF, aep4), col=6)
