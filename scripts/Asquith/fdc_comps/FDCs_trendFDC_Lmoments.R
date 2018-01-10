@@ -76,7 +76,7 @@ load("modFDCLMR.RData")
 fdc_lmr_pplo <- modFDClmrdf.nolog
 library(feather)
 write_feather(fdc_lmr_pplo, "fdc_lmr_pplo.feather")
-
+fdc_lmr_pplo <- read_feather("fdc_lmr_pplo.feather")
 
 
 ModelSites <- data.frame(site_no=ModelSites)
