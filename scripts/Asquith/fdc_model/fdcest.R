@@ -97,10 +97,13 @@ DD[DD$flood_storage < 0,] # two sites: 02295420 and 02296750
 DD$flood_storage[DD$flood_storage < 0] <- (DD$tot_norm_storage[DD$flood_storage < 0] -
                                             DD$tot_nid_storage[DD$flood_storage < 0]) /
                                                      10^DD$CDA[DD$flood_storage < 0]
+
+
+
 DD$tot_basin_slope <- log10(DD$tot_basin_slope)
 DD$decade <- as.factor(DD$decade)
 DD$aquifers <- as.factor(DD$aquifers)
-mf <- (DD$mixed_forest/100)/(1-DD$mixed_forest/100)
+
 D <- DD;
 
 # [45] "ppt_mean"            "ppt_sd"              "temp_mean"           "temp_sd"
@@ -125,10 +128,9 @@ Z <- D[D$nzero > 0,]
 #CDA <- Z$CDA; ANN_DNI <- Z$ANN_DNI; MAY <- Z$MAY; DEC <- Z$DEC
 Z$z <- D$pplo; Z$mf <- mf
 PPLO <- gam(z~s(CDA, bs="cr", k=6)+s(ANN_DNI, bs="cr", k=6)+
-              te(ppt_mean, temp_mean)+mf+
+              te(ppt_mean, temp_mean)+mixed_forest+developed+
               s(MAY, DEC, bs="tp", k=6)+
-              s(x, y, bs="so", xt=list(bnd=bnd))+
-              developed,
+              s(x, y, bs="so", xt=list(bnd=bnd)),
               knots=knots_pplo, data=Z, family="quasibinomial")
 pdf("PPLO.pdf", useDingbats=FALSE)
   plot(Z$ANN_DNI, Z$z, pch=16, col=8)
