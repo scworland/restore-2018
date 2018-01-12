@@ -45,7 +45,7 @@ model <- keras_model(input,list(l1_pred,l2_pred,t3_pred)) %>%
   compile(optimizer = "rmsprop",
           loss="mse",
           metrics="mae",
-          loss_weights=c(1,1,1))
+          loss_weights=c(0.8,0.8,1))
 
 model_fit <- model %>% 
   fit(x=Xtrain,
@@ -62,9 +62,7 @@ yhat <- predict(model, Xtest) %>%
   data.frame() %>%
   setNames(c("L1","L2","T3")) %>%
   gather(lmom,est) %>%
-  mutate(obs = gather(data.frame(Ytest),lmom,obs)$obs) # %>%
-  # mutate(est = ifelse(lmom %in% c("L1","L2"),10^est,est),
-  #        obs = ifelse(lmom %in% c("L1","L2"),10^obs,obs))
+  mutate(obs = gather(data.frame(Ytest),lmom,obs)$obs) 
 
 ggplot(yhat) + 
   geom_point(aes(obs,est),alpha=0.2) + 
