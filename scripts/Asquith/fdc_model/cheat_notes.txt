@@ -1,0 +1,71 @@
+https://www.sciencebase.gov/catalog/item/5835cad4e4b0d9329c801b22
+NHDV2_PrincipleAquifer_and_RockTypes_CONUS.xml
+
+TOT_AQ107:
+    High Plains aquifer
+TOT_AQ109:
+    Mississippi River Valley alluvial aquifer.
+TOT_AQ111:
+    Surficial aquifer system
+TOT_AQ201:
+    Coastal lowlands aquifer system
+TOT_AQ202:
+    Texas coastal uplands aquifer system.
+TOT_AQ203:
+    Mississippi embayment aquifer system
+TOT_AQ204:
+    Southeastern Coastal Plain aquifer system.
+TOT_AQ310:
+    Pennsylvanian aquifers
+TOT_AQ405:
+    Ozark Plateaus aquifer system.
+TOT_AQ406:
+    Blaine aquifer
+TOT_AQ413:
+    Floridan aquifer system.
+TOT_AQ501:
+    Edwards-Trinity aquifer system
+TOT_AQ502:
+    Valley and Ridge aquifers
+TOT_AQ505:
+    Valley and Ridge carbonate-rock aquifers
+TOT_AQ611:
+    Piedmont and Blue Ridge crystalline-rock aquifers
+TOT_AQ999:
+    other rocks
+
+
+-------------------------------------------
+08181400 Helotes Ck at Helotes, TX
+08184000 Cibolo Ck nr Bulverde, TX
+08185000 Cibolo Ck at Selma, TX
+08190500 W Nueces Rv nr Brackettville, TX
+08192000 Nueces Rv bl Uvalde, TX
+#08194200 San Casimiro Ck nr Freer, TX
+08197500 Frio Rv bl Dry Frio Rv nr Uvalde, TX
+08198500 Sabinal Rv at Sabinal, TX
+08200700 Hondo Ck at King Waterhole nr Hondo, TX
+08202700 Seco Ck at Rowe Rh nr D'Hanis, TX
+#08205500 Frio Rv nr Derby, TX
+#08212400 Los Olmos Ck nr Falfurrias, TX
+
+
+DD$texas_special <- 0
+DD$texas_special[DD$site_no == "08181400"] <- 1
+DD$texas_special[DD$site_no == "08184000"] <- 1
+DD$texas_special[DD$site_no == "08185000"] <- 1
+DD$texas_special[DD$site_no == "08190500"] <- 1
+#DD$texas_special[DD$site_no == "08194200"] <- 1
+DD$texas_special[DD$site_no == "08192000"] <- 1
+DD$texas_special[DD$site_no == "08197500"] <- 1
+DD$texas_special[DD$site_no == "08198500"] <- 1
+DD$texas_special[DD$site_no == "08200700"] <- 1
+DD$texas_special[DD$site_no == "08202700"] <- 1
+#DD$texas_special[DD$site_no == "08205500"] <- 1
+#DD$texas_special[DD$site_no == "08212400"] <- 1
+#DD$texas_special[DD$site_no == "08205500"] <- 1
+DD$texas_special <- as.factor(DD$texas_special)
+
+plot(DD$x, DD$y)
+points(DD$x[DD$texas_special == 1], DD$y[DD$texas_special == 1], col=2)
+
