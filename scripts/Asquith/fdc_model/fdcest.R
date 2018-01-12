@@ -7,6 +7,7 @@ library(rgeos)
 library(lmomco)
 library(Lmoments)
 
+# https://www.sciencebase.gov/catalog/item/5669a79ee4b08895842a1d47
 FDC <- read_feather(file.choose()) # "all_gage_data.feather"
 load(file.choose()) # "spRESTORE_MGCV_BND.RData"
 load(file.choose()) # spDNI_1998to2009.RData
@@ -17,6 +18,7 @@ sitefile <- sitefile[sitefile$agency_cd != "USCE",]
 
 CDA <- sitefile$contrib_drain_area_va
 CDA[is.na(CDA)] <- sitefile$drain_area_va[is.na(CDA)]
+CDA <- pmin(sitefile$drain_area_va, sitefile$contrib_drain_area_va, na.rm=TRUE)
 sitefile$contrib_drain_area_va <- CDA
 
 
@@ -32,7 +34,6 @@ DD <- data.frame(site_no=sitefile$site_no,
                  dec_long_va=sitefile$dec_long_va,
                  CDA=log10(CDA), stringsAsFactors=FALSE)
 DD <- merge(FDC, DD, all=TRUE)
-DD <- DD[complete.cases(DD),]
 
 DD <- SpatialPointsDataFrame(cbind(DD$dec_long_va, DD$dec_lat_va), DD,
                             proj4string=LATLONG)
@@ -92,19 +93,68 @@ plogit <- function(eta) as.numeric(exp(eta)/(exp(eta)+1))
 duan_smearing_estimator <- function(model) { sum(10^residuals(L1))/length(residuals(L1)) }
 
 DD$x <- DD$east; DD$y <- DD$north
+
+#dd <- slot(DD, name="data")
+#for(i in c(4:5, 45:79))
+#n     <- aggregate(DD$n,     by=list(DD$site_no), sum)$x
+#nzero <- aggregate(DD$nzero, by=list(DD$site_no), sum)$x
+
+
+
+
+
+
+
+
+
+
 DD$flood_storage <- (DD$tot_nid_storage - DD$tot_norm_storage)/10^DD$CDA
 DD[DD$flood_storage < 0,] # two sites: 02295420 and 02296750
 DD$flood_storage[DD$flood_storage < 0] <- (DD$tot_norm_storage[DD$flood_storage < 0] -
                                             DD$tot_nid_storage[DD$flood_storage < 0]) /
                                                      10^DD$CDA[DD$flood_storage < 0]
-
-
+DD$flood_storage[DD$flood_storage > 3000] <- 3000
+DD$flood_storage <- log10(DD$flood_storage+0.01)
 
 DD$tot_basin_slope <- log10(DD$tot_basin_slope)
 DD$decade <- as.factor(DD$decade)
+DD$bedperm <- as.factor(DD$bedperm)
 DD$aquifers <- as.factor(DD$aquifers)
+DD$soller <- as.factor(DD$soller)
+DD$hlr <- as.factor(DD$hlr)
+DD$ecol3 <- as.factor(DD$ecol3)
+DD$physio <- as.factor(DD$physio)
+DD$statsgo <- as.factor(DD$statsgo)
+
+DD$isWest <- 0
+DD$isWest[DD$x < 0] <- 1
+DD$isFL <- 0
+DD$isFL[DD$x > 1200 & DD$y < 750] <- 1
+DD$isWest <- as.logical(DD$isWest)
+DD$isFL <- as.logical(DD$isFL)
+
+
+
+
+DD$alt_ecol3 <- "1"
+#DD$alt_ecol3[DD$ecol3 == "TOT_ECOL3_30"] <- "30"
+#DD$alt_ecol3[DD$ecol3 == "TOT_ECOL3_31"] <- "31"
+#DD$alt_ecol3[DD$ecol3 == "TOT_ECOL3_32"] <- "32"
+DD$alt_ecol3[DD$ecol3 == "TOT_ECOL3_33"] <- "33"
+#DD$alt_ecol3[DD$ecol3 == "TOT_ECOL3_36"] <- "36"
+DD$alt_ecol3 <- as.factor(DD$alt_ecol3)
+
+DD$trimmed_aquifers <- "aother"
+DD$trimmed_aquifers[DD$aquifers == "TOT_AQ111"] <- "TOT_AQ111(surficial aquifer system)"
+DD$trimmed_aquifers[DD$aquifers == "TOT_AQ413"] <- "TOT_AQ413(Floridan aquifer system)"
+DD$trimmed_aquifers[DD$aquifers == "TOT_AQ201"] <- "TOT_AQ201(coastal lowlands aquifer system)"
+DD$trimmed_aquifers <- as.factor(DD$trimmed_aquifers)
+
+
 
 D <- DD;
+
+save(D, file="DEMO.RData")
 
 # [45] "ppt_mean"            "ppt_sd"              "temp_mean"           "temp_sd"
 # [49] "tot_hdens"           "tot_major"           "tot_ndams"           "tot_nid_storage"
@@ -123,41 +173,67 @@ D <- DD;
 # the x, y must be passed as same names in to the s(...). The x,y is not
 # the critical piece, it is that they are all the same literal string.
 # For example, v,w would work too.
-Z <- D[D$nzero > 0,]
+plot(bnd[[1]]$x,bnd[[1]]$y,type="l", col=8, lwd=.6)
+points(D$east[D$nzero == 0], D$north[D$nzero == 0], pch=4, lwd=.5, cex=0.9, col=rgb(0,.5,0.5,.2))
+points(D$east[D$nzero > 0 & D$nzero <= 800], D$north[D$nzero > 0 & D$nzero <= 800], pch=4, lwd=.5, cex=0.9, col=rgb(1,0,0.5,.2))
+points(D$east[D$nzero > 2000], D$north[D$nzero > 2000], pch=16, lwd=.5, cex=0.9, col=rgb(0.5,0,1,.4))
+
+Z <- D
+#Z <- Z[Z$nzero > 0,]
 #x <- Z$east; y <- Z$north # Please see the extraction and setting to x,y
 #CDA <- Z$CDA; ANN_DNI <- Z$ANN_DNI; MAY <- Z$MAY; DEC <- Z$DEC
-Z$z <- D$pplo; Z$mf <- mf
+Z$z <- cbind(Z$nzero, Z$n)
 PPLO <- gam(z~s(CDA, bs="cr", k=6)+s(ANN_DNI, bs="cr", k=6)+
-              te(ppt_mean, temp_mean)+mixed_forest+developed+
+              ecol3+isFL+isWest+decade+texas_special+
               s(MAY, DEC, bs="tp", k=6)+
               s(x, y, bs="so", xt=list(bnd=bnd)),
               knots=knots_pplo, data=Z, family="quasibinomial")
 pdf("PPLO.pdf", useDingbats=FALSE)
-  plot(Z$ANN_DNI, Z$z, pch=16, col=8)
-  points(Z$ANN_DNI, fitted.values(PPLO))
+  plot(asin(sqrt(Z$pplo)), asin(sqrt(fitted.values(PPLO)))); abline(0,1)
+  plot(Z$CDA, Z$pplo, pch=16, col=8)
+  points(Z$CDA, fitted.values(PPLO))
   plot(PPLO, scheme=2)
   points(Z$x, Z$y, pch=4, lwd=.5, cex=0.9, col=8)
   points(knots_pplo$x, knots_pplo$y, pch=16, cex=1.1, col=4)
   text(100, 500, "Probability level of noflows", pos=4)
 dev.off()
 
-
-Z <- D
-z <- Z$prob_has_noflow
-ZERO <- gam(z~s(CDA, bs="cr", k=6)+s(ANN_DNI, bs="cr", k=6)+
-              te(ppt_mean, temp_mean)+
-              s(MAY, DEC, bs="tp", k=6)+
-              s(x, y, bs="so", xt=list(bnd=bnd))+
-              developed,
+ZEROSenv <- new.env()
+for(decade in levels(D$decade)) {
+  file <- paste0("ZERO",decade,".pdf"); message(file)
+  pdf(file, useDingbats=FALSE)
+  Z <- D[D$decade == decade,]; Z$ecol3 <- relevel(Z$ecol3, "TOT_ECOL3_65")
+  Z$z <- Z$prob_has_noflow
+  ZERO <- gam(z~CDA+I(2*asin(sqrt(developed/100)))+
+                s(ANN_DNI, bs="cr", k=8)+
+                s(MAY, DEC, bs="tp", k=8)+s(x, y, bs="so", xt=list(bnd=bnd)),
               knots=knots_pplo, data=Z, family="quasibinomial")
-pdf("ZERO.pdf", useDingbats=FALSE)
-  plot(Z$ANN_DNI, z, pch=16, col=8);
-  points(Z$ANN_DNI, fitted.values(ZERO))
-  plot(ZERO, scheme=2)
-  points(x, y, pch=4, lwd=.5, cex=0.9, col=8)
-  points(knots_pplo$x, knots_pplo$y, pch=16, cex=1.1, col=4)
-  text(100, 500, "Probability model of site having at least one noflow", pos=4)
-dev.off()
+  ZERO$the.Z <- Z
+  assign(decade, ZERO, envir=ZEROSenv)
+  print(ZERO$coefficients[1:3])
+
+  fv <- fitted.values(ZERO); atem <- rep(0.04, length(Z$z)); atem[fv > 0.5] <- 0.96
+  plot(Z$prob_has_noflow, fv, xlab="Has some no flow", ylab="Fitted value")
+  mtext(paste0("Decade ",decade))
+  plot(Z$ANN_DNI, jitter(Z$z, amount=0.02), pch=16, col=rgb(0,0,1,.3),
+       xlab="Annual irradiance (not actually in the model)",
+       ylab="Has some no flow (red is the model inset a few percent)")
+  n <- length(Z$prob_has_noflow)
+  j <- sum(Z$prob_has_noflow[Z$prob_has_noflow == 0 & atem == 0.04]+1)
+  k <- sum(Z$prob_has_noflow[Z$prob_has_noflow == 1 & atem == 0.96])
+  coherence <- 100*(j + k)/n; message("coherence ", as.integer(coherence))
+  mtext(paste0("Decade ",decade, " with coeherence = ", round(coherence, digits=2),
+               " percent (correct decision)"))
+  points(Z$ANN_DNI, jitter(atem, amount=0.02), pch=16, col=rgb(1,0,0,.3))
+
+  plot(ZERO, scheme=2, residuals=TRUE, pch=16, cex=0.5)
+  #points(Z$x, Z$y, pch=4, lwd=.5, cex=0.9, col=8)
+  #points(knots_pplo$x, knots_pplo$y, pch=16, cex=1.1, col=4)
+  text(100, 550, decade)
+  text(100, 500, "Probability model of site having at least one noflow", pos=4, cex=0.7)
+  dev.off()
+}
+
 
 
 z <- log10(D$L1)
