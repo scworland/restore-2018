@@ -1,3 +1,39 @@
+
+T3s (1950-2000 < 0.30) -----------------------------------------------------------------
+canal? + Floridian aquifer (TOT_AQ413)|02312640|JUMPER CREEK CANAL NEAR BUSHNELL, FL
+canal? + Floridian aquifer (TOT_AQ413)|02312645|JUMPER CREEK CANAL NEAR WAHOO, FL
+below Lake Panasoffkee + Floridian aquifer (TOT_AQ413)|02312700|OUTLET RIVER AT PANACOOCHEE RETREATS, FL
+Florida aquifer influence?|02322500|SANTA FE RIVER NEAR FORT WHITE, FLA.
+somewhat below Lake Miccosukee|02326900|ST. MARKS RIVER NEAR NEWPORT, FLA.
+dam, Lake Sidney Lanier|02334430|CHATTAHOOCHEE RIVER AT BUFORD DAM, NEAR BUFORD, GA  (DAM)
+impact of Lake Sidney Lanier|02334500|CHATTAHOOCHEE RIVER NEAR BUFORD, GA
+impact of Lake Sidney Lanier|02335000|CHATTAHOOCHEE RIVER NEAR NORCROSS, GA
+impact of Lake Sidney Lanier (getting really far downstream), Atlanta return flows|02339500|CHATTAHOOCHEE RIVER AT WEST POINT, GA
+unknown why in this list|02349000|WHITEWATER CR BELOW RAMBULETTE CR, NR BUTLER, GA
+low gradient near coast, Lake Seminole|02359170|APALACHICOLA RIVER NR SUMATRA,FLA.
+low gradient near coast|02359500|ECONFINA CREEK NEAR BENNETT, FLA.
+low gradient near coast|02367310|JUNIPER CREEK AT STATE HWY 85 NR NICEVILLE, FLA.
+dam, Allatoona Lake|02394000|ETOWAH RIVER AT ALLATOONA DAM, ABV CARTERSVILLE,GA
+dam, above Tallassee and then Lake Martin|02418500|TALLAPOOSA RIVER BELOW TALLASSEE AL
+MAP, regulated peaks|07047500|ST FRANCIS RIVER AT MARKED TREE, ARK.
+MAP, regulated peaks|07077000|White River at DeValls Bluff, AR
+dam, Sardis Lake (eastern edge MAP)|07272500|LITTLE TALLAHATCHIE RIVER AT SARDIS DAM, MS
+dam, Enid Lake (eastern edge MAP)|07275000|YOCONA RIVER AT ENID DAM, MS                    
+dam, Arkabutla Lake (eastern edge MAP)|07278500|COLDWATER RIVER AT ARKABUTLA DAM, MS
+MAP, regulated peaks|07281000|TALLAHATCHIE RIVER AT SWAN LAKE, MS
+MAP, regulated peaks|07281600|TALLAHATCHIE RIVER AT MONEY, MS
+dam, Grenada Lake (eastern edge MAP)|07285000|YALOBUSHA RIVER AT GRENADA DAM NR GRENADA, MS  
+dam, Grenada Lake (eastern edge MAP)|07285500|YALOBUSHA RIVER AT GRENADA, MS
+MAP, regulated peaks|07287000|YAZOO RIVER AT GREENWOOD, MS
+low gradient near coast|07385500|BAYOU TECHE @ ARNAUDVILLE, LA
+dam, Lake Livingston|08066191|Livingston Res Outflow Weir nr Goodrich, TX (DAM)
+dam, Lake Travis|08154510|Colorado Rv bl Mansfield Dam, Austin, TX
+dam + Barton Springs, Lake Travis|08158000|Colorado Rv at Austin, TX
+major spring|08169000|Comal Rv at New Braunfels, TX
+major spring|08170500|San Marcos Rv at San Marcos, TX
+
+
+
 https://www.sciencebase.gov/catalog/item/5835cad4e4b0d9329c801b22
 NHDV2_PrincipleAquifer_and_RockTypes_CONUS.xml
 
