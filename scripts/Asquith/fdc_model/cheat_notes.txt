@@ -1,9 +1,9 @@
 
 T3s (1950-2000 < 0.30) -----------------------------------------------------------------
-canal? + Floridian aquifer (TOT_AQ413)|02312640|JUMPER CREEK CANAL NEAR BUSHNELL, FL
-canal? + Floridian aquifer (TOT_AQ413)|02312645|JUMPER CREEK CANAL NEAR WAHOO, FL
-below Lake Panasoffkee + Floridian aquifer (TOT_AQ413)|02312700|OUTLET RIVER AT PANACOOCHEE RETREATS, FL
-Florida aquifer influence?|02322500|SANTA FE RIVER NEAR FORT WHITE, FLA.
+canal? + Floridian aquifer (TOT_AQ413, cat_aq413)|02312640|JUMPER CREEK CANAL NEAR BUSHNELL, FL
+canal? + Floridian aquifer (TOT_AQ413, cat_aq413)|02312645|JUMPER CREEK CANAL NEAR WAHOO, FL
+below Lake Panasoffkee + Floridian aquifer (TOT_AQ413, cat_aq413)|02312700|OUTLET RIVER AT PANACOOCHEE RETREATS, FL
+Floridian aquifer (cat_aq413)|02322500|SANTA FE RIVER NEAR FORT WHITE, FLA.
 somewhat below Lake Miccosukee|02326900|ST. MARKS RIVER NEAR NEWPORT, FLA.
 dam, Lake Sidney Lanier|02334430|CHATTAHOOCHEE RIVER AT BUFORD DAM, NEAR BUFORD, GA  (DAM)
 impact of Lake Sidney Lanier|02334500|CHATTAHOOCHEE RIVER NEAR BUFORD, GA
@@ -32,7 +32,7 @@ dam + Barton Springs, Lake Travis|08158000|Colorado Rv at Austin, TX
 major spring|08169000|Comal Rv at New Braunfels, TX
 major spring|08170500|San Marcos Rv at San Marcos, TX
 
-
+unique(FDC$site_no[FDC$T3 < 0.3 & FDC$aquifers == "TOT_AQ413"])
 
 https://www.sciencebase.gov/catalog/item/5835cad4e4b0d9329c801b22
 NHDV2_PrincipleAquifer_and_RockTypes_CONUS.xml
