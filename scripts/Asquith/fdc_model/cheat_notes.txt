@@ -32,7 +32,26 @@ dam + Barton Springs, Lake Travis|08158000|Colorado Rv at Austin, TX
 major spring|08169000|Comal Rv at New Braunfels, TX
 major spring|08170500|San Marcos Rv at San Marcos, TX
 
-unique(FDC$site_no[FDC$T3 < 0.3 & FDC$aquifers == "TOT_AQ413"])
+T3s (2010-15 < 0.30) -----------------------------------------------------------------
+canal? + Floridian aquifer (TOT_AQ413, cat_aq413)|02312645|JUMPER CREEK CANAL NEAR WAHOO, FL
+below Lake Panasoffkee + Floridian aquifer (TOT_AQ413, cat_aq413)|02312700|OUTLET RIVER AT PANACOOCHEE RETREATS, FL
+low gradient near coast, Floridian aquifer?|02313000|WITHLACOOCHEE RIVER NEAR HOLDER, FL
+Floridian aquifer (cat_aq413)|02322500|SANTA FE RIVER NEAR FORT WHITE, FLA.
+Floridian aquifer?|02322800|SANTA FE RIVER NR HILDRETH FLA
+Floridian aquifer?|02323000|SUWANNEE RIVER NEAR BELL, FLORIDA
+Floridian aquifer?|02323500|SUWANNEE RIVER NEAR WILCOX, FLA.
+spurious, short record?, flat morphology?|02354475|SPRING CREEK NEAR LEARY, GA
+low gradient near coast|02359500|ECONFINA CREEK NEAR BENNETT, FLA.
+low gradient near coast|02369600|YELLOW RIVER NR MILTON, FLA.
+MAP, regulated peaks|07076750|White River at Georgetown, AR
+MAP, regulated peaks|07077000|White River at DeValls Bluff, AR
+MAP, regulated peaks|07281600|TALLAHATCHIE RIVER AT MONEY, MS
+dam, Grenada Lake (eastern edge MAP)|07285500|YALOBUSHA RIVER AT GRENADA, MS
+coastal plain Texas|08116400|Dry Ck nr Rosenberg, TX
+spurious, often dry, why out west|08130700|Spring Ck abv Twin Buttes Res nr San Angelo, TX
+major spring|08169000|Comal Rv at New Braunfels, TX
+
+
 
 https://www.sciencebase.gov/catalog/item/5835cad4e4b0d9329c801b22
 NHDV2_PrincipleAquifer_and_RockTypes_CONUS.xml
