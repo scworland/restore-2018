@@ -67,8 +67,8 @@ sw_sb_extract <- function(item,type="TOT",path="data/basinchars/nhd_sb",group=0)
   
   files <- filter(files,!grepl("xml",fname))
   
-  gages <- select(sites,COMID=comid)
-  hucs <- select(huc12s,COMID=comid)
+  gages <- select(sites,comid)
+  hucs <- select(huc12s,comid)
   for (i in 1:nrow(files)){
     
     pth <- file.path(path,files$fname[i])
@@ -81,23 +81,25 @@ sw_sb_extract <- function(item,type="TOT",path="data/basinchars/nhd_sb",group=0)
     if(group==1){
       
       d <- read_delim(unzip(dat,exdir=path,overwrite=T),",",guess_max = 20000) %>%
-        mutate(COMID = as.character(COMID)) %>%
-        mutate_at(vars(-COMID), funs(as.numeric)) %>%
+        rename_all(tolower) %>%
+        mutate(comid = as.character(comid)) %>%
+        mutate_at(vars(-comid), funs(as.numeric)) %>%
         mutate(dominant_group=find_max(.[,-1])) %>%
-        select(COMID,dominant_group)
+        select(comid,dominant_group)
       
       colnames(d)[2] <- str_extract(files$fname[1], ".+?(?=_)")
       
     }else{
     
     d <- read_delim(unzip(dat,exdir=path,overwrite=T),",",guess_max = 20000) %>%
-      mutate(COMID = as.character(COMID)) %>%
-      mutate_at(vars(-COMID), funs(as.numeric))
+      rename_all(tolower) %>%
+      mutate(comid = as.character(comid)) %>%
+      mutate_at(vars(-comid), funs(as.numeric))
     
     }
     
-    gages <- left_join(gages,d,by="COMID")
-    hucs <-  left_join(hucs,d,by="COMID")
+    gages <- left_join(gages,d,by="comid")
+    hucs <-  left_join(hucs,d,by="comid")
 
   }
   

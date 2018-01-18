@@ -4,26 +4,26 @@ library(lubridate)
 library(feather)
 library(geoknife)
 
-d <- read_feather("data/basinchars/BASIN_CHAR_TOT.feather") 
+d <- read_feather("data/basinchars/old_sb/BASIN_CHAR_TOT.feather") 
+sites <- read_csv("data/decade1950plus_site_list.csv")
 
 por <- d %>%
   select(siteno,min_date,max_date,lat=dec_lat_va,lon=dec_long_v) %>%
-  mutate(start = year(min_date),
+  mutate(siteno = paste0("0",siteno),
+         start = year(min_date),
          end = year(max_date),
-         full = ifelse(start<=1990 & end >= 2015,"1980-2010 (28%)","partial (72%)")) %>%
-  arrange(full) %>%
+         length = end-start,
+         kept = ifelse(siteno %in% sites$site_no,"retained","removed")) %>%
+  arrange(start,length) %>%
   na.omit() %>%
-  mutate(id=1:nrow(.)) 
+  mutate(id=rev(1:nrow(.)))
 
 ggplot(por) + 
-  geom_segment(aes(x = start, y = id, xend = end, yend = id,color=full),alpha=0.2) +
-  scale_color_manual(values=c("dodgerblue","black"),name="period of record") +
-  geom_vline(xintercept=1990, linetype="dashed",color="black",size=1) +
-  geom_vline(xintercept=2015, linetype="dashed",color="black",size=1) +
+  geom_segment(aes(x = start, y = id, xend = end, yend = id,color=kept),alpha=0.5) +
+  scale_color_manual(values=c("orange","dodgerblue"),name="period of record") +
   labs(x="years",y="Individual gages") +
-  ggtitle("Period of record for 1316 streamgages",
-          subtitle="dashed lines = 1980-2010 coverage of daymet climate data") +
-  theme(axis.text.y=element_blank(),
+  theme(legend.position = c(.3, .15),
+        axis.text.y=element_blank(),
         axis.ticks.y=element_blank(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),

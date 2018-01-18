@@ -18,33 +18,37 @@ item_list <- read_csv("data/basinchars/nhd_sb/basin_sb_items.csv") %>%
 
 items <- item_list$item
 group <- item_list$grouping_var
+sb_type <- item_list$sb_type
 
 immutable_chars <- list()
 immutable_gages <- list()
 immutable_hucs <- list()
 for (i in 1:length(items)){
-  immutable_chars[[i]] <- sw_sb_extract(items[i],group=group[i])
+  immutable_chars[[i]] <- sw_sb_extract(items[i],type=sb_type[i],group=group[i])
   immutable_gages[[i]] <- immutable_chars[[i]]$gages
   immutable_hucs[[i]] <- immutable_chars[[i]]$hucs
   print(paste0("completed ",item_list$description[i]," = ",i, "/13"))
 }
 
+
 immutable_gage_df <- as.data.frame(immutable_gages) %>%
+  rename(COMID=comid) %>%
+  select(-contains("comid",ignore.case = F)) %>%
   rename(comid=COMID) %>%
-  select(-contains("COMID",ignore.case = F)) %>%
   left_join(sites, by="comid") %>%
   distinct(site_no, .keep_all = T) %>%
-  select(-matches("CAT|ACC|NODATA|TOT_S|X1")) %>%
+  select(-matches("cat|acc|nodata|tot_s|x1")) %>%
   select(comid, site_no, everything())
 
 write_feather(immutable_gage_df,"data/basinchars/nhd_sb/immutable_gage.feather")
 
 immutable_huc12_df <- as.data.frame(immutable_hucs) %>%
+  rename(COMID=comid) %>%
+  select(-contains("comid",ignore.case = F)) %>%
   rename(comid=COMID) %>%
-  select(-contains("COMID",ignore.case = F)) %>%
   left_join(huc12s, by="comid") %>%
   distinct(huc12, .keep_all = T) %>%
-  select(-matches("CAT|ACC|NODATA|TOT_S|X1")) %>%
+  select(-matches("cat|acc|nodata|tot_s|x1")) %>%
   select(comid, huc12, everything())
 
 write_feather(immutable_huc12_df,"data/basinchars/nhd_sb/immutable_huc12.feather")

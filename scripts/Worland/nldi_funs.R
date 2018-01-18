@@ -91,3 +91,32 @@ get_nldi_url <- function(tier = "prod") {
   }
 }
 
+
+GetURL <- function(service, host = "basemap.nationalmap.gov") {
+  sprintf("https://%s/arcgis/services/%s/MapServer/WmsServer", host, service)
+}
+
+get_base_map <- function(options = leaflet::leafletOptions()) {
+  map <- leaflet::leaflet(options = options)
+  grp <- c("USGS Topo", "USGS Imagery Only", "USGS Imagery Topo",
+           "USGS Shaded Relief", "Hydrography")
+  att <- paste0("<a href='https://www.usgs.gov/'>",
+                "U.S. Geological Survey</a> | ",
+                "<a href='https://www.usgs.gov/laws/policies_notices.html'>",
+                "Policies</a>")
+  map <- leaflet::addWMSTiles(map, GetURL("USGSTopo"),
+                              group = grp[1], attribution = att, layers = "0")
+  map <- leaflet::addWMSTiles(map, GetURL("USGSImageryOnly"),
+                              group = grp[2], attribution = att, layers = "0")
+  map <- leaflet::addWMSTiles(map, GetURL("USGSImageryTopo"),
+                              group = grp[3], attribution = att, layers = "0")
+  map <- leaflet::addWMSTiles(map, GetURL("USGSShadedReliefOnly"),
+                              group = grp[4], attribution = att, layers = "0")
+  opt <- leaflet::WMSTileOptions(format = "image/png", transparent = TRUE)
+  map <- leaflet::addWMSTiles(map, GetURL("USGSHydroCached"),
+                              group = grp[5], options = opt, layers = "0")
+  map <- leaflet::hideGroup(map, grp[5])
+  opt <- leaflet::layersControlOptions(collapsed = FALSE)
+  map <- leaflet::addLayersControl(map, baseGroups = grp[1:4],
+                                   overlayGroups = grp[5], options = opt)
+}
