@@ -81,13 +81,13 @@ text(knots$x, knots$y, row.names(knots))
 # errors of knots outside the boundary when they seem inside.
 # Internally, the mgcv logic must have some type of fuzzy test but
 # I have not found any documentation.
-knots <- knots[-c(3, 13, 10, 11, 12, 29, 21, 22, 27, 16, 6, 5),]
+knots <- knots[-c(1, 3, 5, 6, 13, 10, 11, 12, 16, 21, 22, 27, 28, 29),]
 x <- knots$x; y <- knots$y
 knots <- data.frame(x=c(x, 1375), y=c(y, 600)); rm(x,y)
 points(knots$x, knots$y, pch=16, cex=1.1, col=4)
 
 knots_pplo <- knots[-17, ]
-
+knots_pplo <- knots
 # The as.numeric() is needed head of pplo use later
 plogit <- function(eta) as.numeric(exp(eta)/(exp(eta)+1))
 duan_smearing_estimator <- function(model) { sum(10^residuals(L1))/length(residuals(L1)) }
@@ -150,11 +150,41 @@ DD$trimmed_aquifers[DD$aquifers == "TOT_AQ413"] <- "TOT_AQ413(Floridan aquifer s
 DD$trimmed_aquifers[DD$aquifers == "TOT_AQ201"] <- "TOT_AQ201(coastal lowlands aquifer system)"
 DD$trimmed_aquifers <- as.factor(DD$trimmed_aquifers)
 
+# This is the coastal plain
+DD$physio <- relevel(DD$physio, "cat_physio_3")
+DD$alt_physio <- "other"
+DD$alt_physio[DD$physio == "cat_physio_3"] <- "Coastal Plain"
+DD$alt_physio[DD$physio == "cat_physio_12"] <- "Central Lowland"
+DD$alt_physio[DD$physio == "cat_physio_13"] <- "Great Plains"
+DD$alt_physio <- as.factor(DD$alt_physio)
+DD$alt_physio <- relevel(DD$alt_physio, "other")
+
+
+
+
+
+DD$texas_special <- 0
+DD$texas_special[DD$site_no == "08181400"] <- 1
+DD$texas_special[DD$site_no == "08184000"] <- 1
+DD$texas_special[DD$site_no == "08185000"] <- 1
+DD$texas_special[DD$site_no == "08190500"] <- 1
+#DD$texas_special[DD$site_no == "08194200"] <- 1
+DD$texas_special[DD$site_no == "08192000"] <- 1
+DD$texas_special[DD$site_no == "08197500"] <- 1
+DD$texas_special[DD$site_no == "08198500"] <- 1
+DD$texas_special[DD$site_no == "08200700"] <- 1
+DD$texas_special[DD$site_no == "08202700"] <- 1
+#DD$texas_special[DD$site_no == "08205500"] <- 1
+#DD$texas_special[DD$site_no == "08212400"] <- 1
+#DD$texas_special[DD$site_no == "08205500"] <- 1
+DD$texas_special <- as.factor(DD$texas_special)
+
+
 
 
 D <- DD;
 
-save(D, file="DEMO.RData")
+save(D, DD, knots, knots_pplo, bnd, file="DEMO.RData")
 
 # [45] "ppt_mean"            "ppt_sd"              "temp_mean"           "temp_sd"
 # [49] "tot_hdens"           "tot_major"           "tot_ndams"           "tot_nid_storage"
@@ -179,17 +209,112 @@ points(D$east[D$nzero > 0 & D$nzero <= 800], D$north[D$nzero > 0 & D$nzero <= 80
 points(D$east[D$nzero > 2000], D$north[D$nzero > 2000], pch=16, lwd=.5, cex=0.9, col=rgb(0.5,0,1,.4))
 
 Z <- D
-#Z <- Z[Z$nzero > 0,]
+Z <- Z[Z$nzero > 0,]
 #x <- Z$east; y <- Z$north # Please see the extraction and setting to x,y
 #CDA <- Z$CDA; ANN_DNI <- Z$ANN_DNI; MAY <- Z$MAY; DEC <- Z$DEC
-Z$z <- cbind(Z$nzero, Z$n)
-PPLO <- gam(z~s(CDA, bs="cr", k=6)+s(ANN_DNI, bs="cr", k=6)+
-              ecol3+isFL+isWest+decade+texas_special+
-              s(MAY, DEC, bs="tp", k=6)+
-              s(x, y, bs="so", xt=list(bnd=bnd)),
-              knots=knots_pplo, data=Z, family="quasibinomial")
-pdf("PPLO.pdf", useDingbats=FALSE)
-  plot(asin(sqrt(Z$pplo)), asin(sqrt(fitted.values(PPLO)))); abline(0,1)
+Z$z <- log10(Z$nzero)
+kap <- parkap(lmoms(Z$z))
+plot(pp(Z$z), sort(Z$z)); FF <- nonexceeds(); lines(FF, qlmomco(FF, kap), col=2)
+Z$z <- qnorm(plmomco(Z$z, kap))
+#Z$z <- cbind(Z$nzero, Z$n)
+
+# I(2*asin(sqrt(developed/100)))+I(sqrt(tot_hdens))
+#s(ANN_DNI, bs="cr", k=5)
+PPLO <- gam(z~s(CDA, bs="cr", k=4)+
+              s(ppt_mean)+alt_physio,
+              knots=knots_pplo,
+              data=Z)
+PPLO <- gam(z~CDA+log10(ppt_mean)+alt_physio+decade,
+              knots=knots_pplo,
+              data=Z)
+
+Z <- D
+Z <- Z[Z$nzero > 0,]
+
+L1s <- T2s <- T3s <- T4s <- Ns <- coeBs <- coeCDAs <- ppts <- units <- coedevs <- rep(NA, length(levels(Z$decade)))
+PPLOSenv <- new.env(); decades <- levels(Z$decade)
+for(i in 1:length(decades)) {
+  decade <- decades[i]
+  file <- paste0("PPLO",decade,".pdf"); message(file)
+  pdf(file, useDingbats=FALSE)
+  Z <-  D[D$decade == decade,]; nZ <- Z[Z$nzero > 0,]; n <- length(nZ$pplo)
+  nZ$z <- log10(nZ$nzero); lmr <- lmoms(nZ$z)
+  Ns[i] <- n; L1s[i] <- lmr$lambdas[1]
+  T2s[i] <- lmr$ratios[2]; T3s[i] <- lmr$ratios[3]; T4s[i] <- lmr$ratios[4]
+  kap <- parkap(lmr); print(kap$para)
+  plot(pp(nZ$z), sort(nZ$z)); FF <- nonexceeds(); lines(FF, qlmomco(FF, kap), col=2)
+  nZ$z <- plmomco(nZ$z, kap)
+  nZ$z[nZ$z == 1] <- 0.9999; nZ$z[nZ$z == 0] <- 1-0.9999
+  nZ$z <- qnorm(nZ$z)
+
+  mtext(paste0("Decade ",decade))
+  z <- nZ$z; CDA <- nZ$CDA; ppt_mean <- log10(nZ$ppt_mean); unitL1 <- log10(nZ$L1/nZ$nzero)
+  developed <- 2*asin(sqrt(nZ$developed/100))
+  PPLO <- gam(z~CDA+ppt_mean+unitL1+developed)
+  #              s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=nZ)#++I(2*asin(sqrt(developed/100)))+alt_physio, data=nZ)
+  #PPLO <- gam(z~CDA+I(2*asin(sqrt(developed/100)))+
+  #              s(ANN_DNI, bs="cr", k=8)+
+  #              s(MAY, DEC, bs="tp", k=8)+
+  #              s(x, y, bs="so", xt=list(bnd=bnd)),
+  #              knots=knots_pplo, data=Z)
+  coes <- coefficients(PPLO)[1:5]
+  coeBs[i] <- coes[1]; coeCDAs[i] <- coes[2]; ppts[i] <- coes[3]; units[i] <- coes[4]; coedevs[i] <- coes[5]
+  PPLO$the.Z <- nZ; PPLO$the.kap <- kap; PPLO$the.lmr <- lmr
+  assign(decade, PPLO, envir=PPLOSenv)
+  print(summary(PPLO))
+  #plot(nZ$nzero, 10^qlmomco(pnorm(fitted.values(PPLO)), kap), log="xy"); abline(0,1)
+  #mtext(paste0("Decade ",decade))
+  plot(nZ$CDA, nZ$nzero, pch=16, col=8, cex=developed+0.4)
+  points(nZ$CDA, 10^qlmomco(pnorm(fitted.values(PPLO)), kap), cex=developed+0.4)
+  mtext(paste0("Decade ",decade))
+  #plot(PPLO, scheme=2, residuals=TRUE, pch=16, cex=0.5)
+  #points(nZ$x, nZ$y, pch=4, lwd=.5, cex=0.9, col=8)
+  #points(knots$x, knots$y, pch=16, cex=1.1, col=4)
+  #text(100, 500, "Z-score of number of noflow days", pos=4)
+  dev.off()
+}
+DF <- data.frame(decade=decades, n=Ns, L1=L1s, T2=T2s, T3=T3s, T4=T4s,
+                 intercept=coeBs, cda=coeCDAs, ppt_mean=ppts, unitL1CDA=units, dev=coedevs)
+assign("data.summary", DF, envir=PPLOSenv)
+save(PPLOSenv, file="PPLOS.RData")
+
+weighted.mean(DF$L1, DF$n)
+weighted.mean(DF$T2, DF$n)
+weighted.mean(DF$T3, DF$n)
+weighted.mean(DF$T4, DF$n)
+weighted.mean(DF$intercept, DF$n)
+weighted.mean(DF$cda, DF$n)
+weighted.mean(DF$ppt_mean, DF$n)
+weighted.mean(DF$unitL1CDA, DF$n)
+weighted.mean(DF$dev, DF$n)
+
+solve.pplo <- function(cda=NA, ppt_mean=NA, L1=NA, developed=NA) {
+  intercept   <- -7.7014393
+  cda.c       <-  0.6338891
+  ppt_mean.c  <-  1.9915757
+  unitL1CDA.c <- -1.0132245
+  developed.c <-  0.1665043
+  developed <- 2*asin(sqrt(developed/100))
+  z.score <- intercept +  cda.c      * log10(cda)    + ppt_mean.c  * log10(ppt_mean) +
+                          unitL1CDA.c* log10(L1/cda) + developed.c * developed
+  lmr  <- lmomco::vec2lmom(c(2.256159, 0.2025797, -0.1334176, 0.08901554), lscale=FALSE)
+  kap  <- lmomco::parkap(lmr)
+  pplo <- lmomco::qlmomco(pnorm(z.score), kap)
+  if(pplo < 0) pplo <- 0
+  if(pplo > 365.25*10) {
+     warning("it nevers flows, later computations will fall apart")
+     pplo <- 1
+  }
+  return(10^pplo)
+}
+solve.pplo(cda=10^2.58, ppt_mean=1293.2, L1=263.45, developed=8.84)
+
+
+
+
+
+  #plot(asin(sqrt(Z$pplo)), asin(sqrt(fitted.values(PPLO)))); abline(0,1)
+  plot(Z$nzero, 10^qlmomco(pnorm(fitted.values(PPLO)), kap), log="xy"); abline(0,1)
   plot(Z$CDA, Z$pplo, pch=16, col=8)
   points(Z$CDA, fitted.values(PPLO))
   plot(PPLO, scheme=2)
