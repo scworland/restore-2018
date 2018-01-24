@@ -91,6 +91,9 @@ TOT_AQ999:
 
 
 -------------------------------------------
+08156800 Shoal Ck at W 12th St, Austin, TX
+08155300 Barton Ck at Loop 360, Austin, TX
+08155400 Barton Ck abv Barton Spgs at Austin, TX
 08181400 Helotes Ck at Helotes, TX
 08184000 Cibolo Ck nr Bulverde, TX
 08185000 Cibolo Ck at Selma, TX
@@ -106,6 +109,9 @@ TOT_AQ999:
 
 
 DD$texas_special <- 0
+DD$texas_special[DD$site_no == "08156800"] <- 1
+DD$texas_special[DD$site_no == "08155300"] <- 1
+DD$texas_special[DD$site_no == "08155400"] <- 1
 DD$texas_special[DD$site_no == "08181400"] <- 1
 DD$texas_special[DD$site_no == "08184000"] <- 1
 DD$texas_special[DD$site_no == "08185000"] <- 1
