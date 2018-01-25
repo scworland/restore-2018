@@ -128,22 +128,72 @@ obs_in_cluster <- function(site,kmeans_df) {
     select(site_no,decade)
 }
 
-# nearest neighbors
-nn <- function(df,n) {
+# Find reference site
+find_ref <- function(all_x,ref_x,site,distance){
   
-  # make matrix
-  X <- as.matrix(df)
+  library(proxy)
   
-  # find Euclidian distances
-  d1 <- as.matrix(dist(X, method = "euclidean"))
-  diag(d1) <- Inf
+  decades <- unique(all_x$decade)
   
-  # find region of influence nearest neighbors (n)
-  nearest_neighbors <- matrix(NA, nrow=nrow(X), ncol=n)
-  for (i in 1:ncol(d1)){
-    nearest_neighbors[i,] <- order(d1[,i])[1:n]
+  ref_site <- NULL
+  for(i in 1:length(decades)){
+    
+    # extract rows for site (simulate ungaged)
+    site_data <- filter(all_x,site_no==site & decade==decades[i])
+    
+    # subset possible reference by decade
+    ref_xd <- filter(ref_x,decade==decades[i])
+    
+    # possible donor sites
+    ref_sites <- ref_xd$site_no
+    lon <- ref_xd$lon
+    lat <- ref_xd$lat
+    
+    # find sites with streamflow and within distance
+    neighbors <- geo_dist(site_data,ref_sites,lon,lat,distance=200)
+    
+    # find site that is the most similar in Euclidean space
+    sub_xd <- ref_xd %>%
+      filter(site_no %in% neighbors$neighbor) 
+    
+    dists <- proxy::dist(select(sub_xd,ppt_mean:tot_rdx),
+                         select(site_data,ppt_mean:tot_rdx))
+    
+    ref_site[i] <- sub_xd$site_no[which(dists==min(dists))]
   }
   
-  # return nearest neighbors
-  return(nearest_neighbors)
+  result <- data.frame(decade=decades,ref_site)
 }
+
+# find sites within geographic distance
+geo_dist <- function(site_data,ref_sites,lon,lat,distance=100){
+  
+  library(geosphere)
+  
+  site_coords <- c(site_data$lon,site_data$lat)
+  
+  coord_mat <- cbind(lon,lat)
+  
+  dmat <- distm(coord_mat,site_coords,fun = distHaversine)/1000
+  
+  neighbors <- data.frame(site=site_data$site_no,
+                          neighbor=ref_sites[which(dmat <= distance)],
+                          stringsAsFactors = F)
+
+  
+  return(neighbors)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
