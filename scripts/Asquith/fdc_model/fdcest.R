@@ -6,7 +6,7 @@ library(sp)
 library(rgeos)
 library(lmomco)
 library(Lmoments)
-
+library(survival)
 # https://www.sciencebase.gov/catalog/item/5669a79ee4b08895842a1d47
 FDC <- read_feather(file.choose()) # "all_gage_data.feather"
 load(file.choose()) # "spRESTORE_MGCV_BND.RData"
@@ -36,7 +36,7 @@ DD <- data.frame(site_no=sitefile$site_no,
 DD <- merge(FDC, DD, all=TRUE)
 
 DD <- SpatialPointsDataFrame(cbind(DD$dec_long_va, DD$dec_lat_va), DD,
-                            proj4string=LATLONG)
+                             proj4string=LATLONG)
 DD <- spTransform(DD, ALBEA)
 XY <- coordinates(DD)
 DD$east <- XY[,1]/1000; DD$north <- XY[,2]/1000; rm(XY)
@@ -90,7 +90,7 @@ knots_pplo <- knots[-17, ]
 knots_pplo <- knots
 # The as.numeric() is needed head of pplo use later
 plogit <- function(eta) as.numeric(exp(eta)/(exp(eta)+1))
-duan_smearing_estimator <- function(model) { sum(10^residuals(L1))/length(residuals(L1)) }
+duan_smearing_estimator <- function(model) { sum(10^residuals(model))/length(residuals(model)) }
 
 DD$x <- DD$east; DD$y <- DD$north
 
@@ -136,12 +136,16 @@ DD$isFL <- as.logical(DD$isFL)
 
 
 
-DD$alt_ecol3 <- "1"
-#DD$alt_ecol3[DD$ecol3 == "TOT_ECOL3_30"] <- "30"
-#DD$alt_ecol3[DD$ecol3 == "TOT_ECOL3_31"] <- "31"
-#DD$alt_ecol3[DD$ecol3 == "TOT_ECOL3_32"] <- "32"
-DD$alt_ecol3[DD$ecol3 == "TOT_ECOL3_33"] <- "33"
-#DD$alt_ecol3[DD$ecol3 == "TOT_ECOL3_36"] <- "36"
+DD$alt_ecol3 <- "-0"
+#DD$alt_ecol3[DD$ecol3 == "ecol3_26"] <- "-26"
+DD$alt_ecol3[DD$ecol3 == "ecol3_27"] <- "-27"
+#DD$alt_ecol3[DD$ecol3 == "ecol3_30"] <- "-30"
+DD$alt_ecol3[DD$ecol3 == "ecol3_31"] <- "-31"
+#DD$alt_ecol3[DD$ecol3 == "ecol3_32"] <- "-32"
+#DD$alt_ecol3[DD$ecol3 == "ecol3_33"] <- "-33"
+DD$alt_ecol3[DD$ecol3 == "ecol3_34"] <- "-34"
+#DD$alt_ecol3[DD$ecol3 == "ecol3_36"] <- "-36"
+DD$alt_ecol3[DD$ecol3 == "ecol3_75"] <- "-75"
 DD$alt_ecol3 <- as.factor(DD$alt_ecol3)
 
 DD$trimmed_aquifers <- "aother"
@@ -164,6 +168,9 @@ DD$alt_physio <- relevel(DD$alt_physio, "other")
 
 
 DD$texas_special <- 0
+DD$texas_special[DD$site_no == "08156800"] <- 1
+DD$texas_special[DD$site_no == "08155300"] <- 1
+DD$texas_special[DD$site_no == "08155400"] <- 1
 DD$texas_special[DD$site_no == "08181400"] <- 1
 DD$texas_special[DD$site_no == "08184000"] <- 1
 DD$texas_special[DD$site_no == "08185000"] <- 1
@@ -179,10 +186,15 @@ DD$texas_special[DD$site_no == "08202700"] <- 1
 #DD$texas_special[DD$site_no == "08205500"] <- 1
 DD$texas_special <- as.factor(DD$texas_special)
 
-
-
-
 D <- DD;
+
+D <- D[D$site_no != "08066191", ] # Livingston Res Outflow Weir nr Goodrich, TX
+D <- D[D$site_no != "08154510", ] # Colorado Rv bl Mansfield Dam, Austin, TX
+D <- D[D$site_no != "08158000", ] # Colorado Rv at Austin, TX
+D <- D[D$site_no != "08169000", ] # Comal River (major spring)
+D <- D[D$site_no != "08170500", ] # San Marcos River (major spring)
+D <- D[D$texas_special != "1",]
+
 
 save(D, DD, knots, knots_pplo, bnd, file="DEMO.RData")
 
@@ -216,7 +228,7 @@ Z$z <- log10(Z$nzero)
 kap <- parkap(lmoms(Z$z))
 plot(pp(Z$z), sort(Z$z)); FF <- nonexceeds(); lines(FF, qlmomco(FF, kap), col=2)
 Z$z <- qnorm(plmomco(Z$z, kap))
-#Z$z <- cbind(Z$nzero, Z$n)
+#Z$z <- cbind(Z$n-Z$nzero, Z$n)
 
 # I(2*asin(sqrt(developed/100)))+I(sqrt(tot_hdens))
 #s(ANN_DNI, bs="cr", k=5)
@@ -228,8 +240,102 @@ PPLO <- gam(z~CDA+log10(ppt_mean)+alt_physio+decade,
               knots=knots_pplo,
               data=Z)
 
-Z <- D
-Z <- Z[Z$nzero > 0,]
+
+family <- "t"
+CCC <- NULL
+decades <- levels(D$decade)
+for(i in 1:length(decades)) {
+   decade <- decades[i]
+   Z <-  D[D$decade == decade,]
+   developed <- 2*asin(sqrt(Z$developed/100)); ppt_mean <- log10(Z$ppt_mean)
+   Zc <- Surv(log10(Z$n - Z$nzero), Z$nzero != 0, type="right")
+   SM <- survreg(Zc~CDA+ppt_mean+MAY*DEC+
+                    developed+alt_ecol3, data=Z, dist=family)
+   sSM <- summary(SM)
+   #print(sSM)
+
+   PPo <- predict(SM)
+   PP <- 10^PPo
+   daysUntilzero <- Z$n - Z$nzero; nmax <- max(daysUntilzero)
+   PP[PP > nmax] <- nmax
+   PPc <- PP[PP != nmax]
+   residuals <- daysUntilzero - PP
+   lim <- range(c(daysUntilzero, PP))
+   plot(daysUntilzero[PP != daysUntilzero], PP[PP != daysUntilzero],
+        pch=16, col=rgb(0,0,0,.2), log="xy", xlim=lim, ylim=lim, xaxs="i", yaxs="i")
+   abline(0,1); mtext(paste0("Decade ",decade))
+   res <- residuals(SM)
+   xlim <- range(PPo)
+   plot(PPo, res, xlim=xlim, ylim=c(-1.5,1), type="n", xaxs="i", yaxs="i",
+        xlab="log10(predicted days until zero flow)", ylab="Residual, log10")
+   lines(rep(log10(3653), 2), par()$usr[3:4], lty=2, lwd=0.5)
+   X <- 10^seq(2,4, by=.1)
+   lines(log10(X), log10(X) - log10(X-7*10))
+   lines(log10(X), log10(X) - log10(X+7*10))
+   tmp <- sapply(1:length(PPo), function(i) {
+     alive <- ! as.logical(as.numeric(Zc[i])[2])
+     col <- ifelse(PP[i] == daysUntilzero[i], rgb(0,0,1,.3), rgb(1,0,0,.3))
+     if(alive) segments(x0=PPo[i], x1=PPo[i], y0=res[i], y1=1, col=col, lwd=0.8)
+   })
+   points(PPo[PP == daysUntilzero], res[PP == daysUntilzero], lwd=0.6, cex=0.7, col=4)
+   points(PPo[PP != daysUntilzero], res[PP != daysUntilzero], lwd=0.6, cex=0.7, col=2)
+   mtext(paste0("Decade ",decade))
+   correct_decision_rate <- sum(PP == daysUntilzero)/length(PPo)
+   mean(abs(residuals))
+   10^mean(log10(abs(residuals[residuals != 0])))
+   CC <- as.data.frame(t(coefficients(SM)))
+   CC$n <- length(PPo); CC$correct_decision_rate <- correct_decision_rate
+   CC$AIC <- AIC(SM); CC$loglik <- sSM$loglik[1]
+   if(is.null(CCC)) {
+      CCC <- CC
+   } else {
+      CCC <- merge(CCC,CC, all=TRUE)
+   }
+}
+CCC$Intercept <- CCC$"(Intercept)"; CC$"(Intercept)" <- NULL
+CCC$decade <- as.numeric(decades)
+for(i in 1:length(CCC[1,])) {
+  name <- names(CCC)[i]
+  vals <- CCC[,i]
+  wgts <- CCC$n
+  message(name, "  coef=",weighted.mean(vals, wgts))
+}
+
+
+
+
+
+
+
+smTillZero <- function(cda, ppt_mean, may, dec, developed, region) {
+   developed <- 2*asin(sqrt(developed/100))
+   reg <- sapply(region, function(r) {
+          ifelse(r == "-27", -0.0506983267793556,
+          ifelse(r == "-31", -0.239349744350796,
+          ifelse(r == "-34", -0.019268539160105,
+          ifelse(r == "-75", -0.0520274361212289, 0)))) })
+   b <- 0.507511783018764 + reg
+   cda <- log10(cda)
+   ppt_mean <- log10(ppt_mean)
+   tmp <- 0.120918274156018*cda + 0.000244708840447377*ppt_mean + 0.598457705514925*may
+   tmp <- tmp + 0.500690179138596*dec + 0.00419064630207601*developed
+   tmp <- tmp + -0.121810395895812*may*dec + b
+   tmp <- 10^tmp
+   names(tmp) <- NULL
+   return(tmp)
+}
+
+
+G <- smTillZero(10^Z$CDA, Z$ppt_mean, Z$MAY, Z$DEC, Z$developed, Z$alt_ecol3)
+G[G > 3653] <- 3653
+plot(Z$n - Z$nzero, G, log="xy")
+abline(0,1)
+
+
+
+
+
+
 
 L1s <- T2s <- T3s <- T4s <- Ns <- coeBs <- coeCDAs <- ppts <- units <- coedevs <- rep(NA, length(levels(Z$decade)))
 PPLOSenv <- new.env(); decades <- levels(Z$decade)
@@ -237,7 +343,8 @@ for(i in 1:length(decades)) {
   decade <- decades[i]
   file <- paste0("PPLO",decade,".pdf"); message(file)
   pdf(file, useDingbats=FALSE)
-  Z <-  D[D$decade == decade,]; nZ <- Z[Z$nzero > 0,]; n <- length(nZ$pplo)
+  Z <-  D[D$decade == decade,]; nZ <- Z[Z$nzero > 0,]
+  n <- length(nZ$pplo)
   nZ$z <- log10(nZ$nzero); lmr <- lmoms(nZ$z)
   Ns[i] <- n; L1s[i] <- lmr$lambdas[1]
   T2s[i] <- lmr$ratios[2]; T3s[i] <- lmr$ratios[3]; T4s[i] <- lmr$ratios[4]
@@ -246,17 +353,15 @@ for(i in 1:length(decades)) {
   nZ$z <- plmomco(nZ$z, kap)
   nZ$z[nZ$z == 1] <- 0.9999; nZ$z[nZ$z == 0] <- 1-0.9999
   nZ$z <- qnorm(nZ$z)
-
   mtext(paste0("Decade ",decade))
-  z <- nZ$z; CDA <- nZ$CDA; ppt_mean <- log10(nZ$ppt_mean); unitL1 <- log10(nZ$L1/nZ$nzero)
+
+
+  z <- nZ$z; CDA <- nZ$CDA; ppt_mean <- log10(nZ$ppt_mean); unitL1 <- log10(nZ$L1)
+  ANN_DNI <- nZ$ANN_DNI; x <- nZ$x; y <- nZ$y; T3 <- nZ$T3
   developed <- 2*asin(sqrt(nZ$developed/100))
-  PPLO <- gam(z~CDA+ppt_mean+unitL1+developed)
-  #              s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=nZ)#++I(2*asin(sqrt(developed/100)))+alt_physio, data=nZ)
-  #PPLO <- gam(z~CDA+I(2*asin(sqrt(developed/100)))+
-  #              s(ANN_DNI, bs="cr", k=8)+
-  #              s(MAY, DEC, bs="tp", k=8)+
-  #              s(x, y, bs="so", xt=list(bnd=bnd)),
-  #              knots=knots_pplo, data=Z)
+  PPLO <- gam(z~CDA+T3+s(ppt_mean)+developed+s(ANN_DNI)+s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots)#++I(2*asin(sqrt(developed/100)))+alt_physio, data=nZ)
+  PPLO <- gam(z~CDA+developed+
+                s(ANN_DNI, bs="cr", k=8))
   coes <- coefficients(PPLO)[1:5]
   coeBs[i] <- coes[1]; coeCDAs[i] <- coes[2]; ppts[i] <- coes[3]; units[i] <- coes[4]; coedevs[i] <- coes[5]
   PPLO$the.Z <- nZ; PPLO$the.kap <- kap; PPLO$the.lmr <- lmr
@@ -505,4 +610,3 @@ points(qnorm(ffs), fdc)
 legend(-4,10000, c("Biased generalized normal",
                    "Unbiased (Duan smearing) generalized normal",
                    "WHA's moonshot (six L-moment fit)"), bty="n", lwd=c(1,1.2,1.4), col=c(2,4,3))
-
