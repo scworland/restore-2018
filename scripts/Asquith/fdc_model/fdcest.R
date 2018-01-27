@@ -241,16 +241,17 @@ PPLO <- gam(z~CDA+log10(ppt_mean)+alt_physio+decade,
               data=Z)
 
 
-family <- "t"
+family <- "extreme"
 CCC <- NULL
 decades <- levels(D$decade)
 for(i in 1:length(decades)) {
    decade <- decades[i]
    Z <-  D[D$decade == decade,]
    developed <- 2*asin(sqrt(Z$developed/100)); ppt_mean <- log10(Z$ppt_mean)
-   Zc <- Surv(log10(Z$n - Z$nzero), Z$nzero != 0, type="right")
-   SM <- survreg(Zc~CDA+ppt_mean+MAY*DEC+
-                    developed+alt_ecol3, data=Z, dist=family)
+   Zc <- Surv(log(Z$n - Z$nzero), Z$nzero != 0, type="right")
+   plot(survfit(Zc~1)); mtext(paste0("Decade ",decade))
+
+   SM <- survreg(Zc~CDA+ppt_mean, data=Z, dist=family)
    sSM <- summary(SM)
    #print(sSM)
 
@@ -262,37 +263,45 @@ for(i in 1:length(decades)) {
    residuals <- daysUntilzero - PP
    lim <- range(c(daysUntilzero, PP))
    plot(daysUntilzero[PP != daysUntilzero], PP[PP != daysUntilzero],
-        pch=16, col=rgb(0,0,0,.2), log="xy", xlim=lim, ylim=lim, xaxs="i", yaxs="i")
+        pch=16, col=rgb(0,0,0,.2), log="xy", xlim=lim, ylim=lim)
    abline(0,1); mtext(paste0("Decade ",decade))
    res <- residuals(SM)
    xlim <- range(PPo)
-   plot(PPo, res, xlim=xlim, ylim=c(-1.5,1), type="n", xaxs="i", yaxs="i",
+   plot(PPo, res, xlim=xlim, ylim=c(-1.5,0.5), type="n", xaxs="i", yaxs="i",
         xlab="log10(predicted days until zero flow)", ylab="Residual, log10")
-   lines(rep(log10(3653), 2), par()$usr[3:4], lty=2, lwd=0.5)
-   X <- 10^seq(2,4, by=.1)
-   lines(log10(X), log10(X) - log10(X-7*10))
-   lines(log10(X), log10(X) - log10(X+7*10))
+   lines(rep(log10(3653), 2), par()$usr[3:4], lty=1, lwd=0.5)
+   X <- 10^c(seq(par()$usr[1],par()$usr[2], by=.02), par()$usr[2])
+   lines(log10(X), log10(X) - log10(X- 7*10), lty=4, lwd=0.5)
+   lines(log10(X), log10(X) - log10(X+ 7*10), lty=4, lwd=0.5)
+   #lines(log10(X), log10(X) - log10(X-14*10), lty=1, lwd=0.5)
+   #lines(log10(X), log10(X) - log10(X+14*10), lty=1, lwd=0.5)
+   lines(log10(X), log10(X) - log10(X-30*10), lty=1, lwd=0.5)
+   lines(log10(X), log10(X) - log10(X+30*10), lty=1, lwd=0.5)
+   lines(log10(X), log10(X) - log10(X-60*10), lty=2, lwd=0.5)
+   lines(log10(X), log10(X) - log10(X+60*10), lty=2, lwd=0.5)
    tmp <- sapply(1:length(PPo), function(i) {
      alive <- ! as.logical(as.numeric(Zc[i])[2])
      col <- ifelse(PP[i] == daysUntilzero[i], rgb(0,0,1,.3), rgb(1,0,0,.3))
-     if(alive) segments(x0=PPo[i], x1=PPo[i], y0=res[i], y1=1, col=col, lwd=0.8)
+     if(alive) segments(x0=PPo[i], x1=PPo[i], y0=res[i], y1=0.5, col=col, lwd=0.8)
    })
    points(PPo[PP == daysUntilzero], res[PP == daysUntilzero], lwd=0.6, cex=0.7, col=4)
    points(PPo[PP != daysUntilzero], res[PP != daysUntilzero], lwd=0.6, cex=0.7, col=2)
    mtext(paste0("Decade ",decade))
    correct_decision_rate <- sum(PP == daysUntilzero)/length(PPo)
-   mean(abs(residuals))
-   10^mean(log10(abs(residuals[residuals != 0])))
+
    CC <- as.data.frame(t(coefficients(SM)))
+   tmp <- names(CC); tmp[1] <- "Intercept"; names(CC) <- tmp
+   print(CC)
    CC$n <- length(PPo); CC$correct_decision_rate <- correct_decision_rate
-   CC$AIC <- AIC(SM); CC$loglik <- sSM$loglik[1]
+   CC$MAD <- mean(abs(residuals))
+   CC$MAD_nonzero <- 10^mean(log10(abs(residuals[residuals != 0])))
+   CC$AIC <- AIC(SM)
    if(is.null(CCC)) {
       CCC <- CC
    } else {
       CCC <- merge(CCC,CC, all=TRUE)
    }
 }
-CCC$Intercept <- CCC$"(Intercept)"; CC$"(Intercept)" <- NULL
 CCC$decade <- as.numeric(decades)
 for(i in 1:length(CCC[1,])) {
   name <- names(CCC)[i]
@@ -310,24 +319,29 @@ for(i in 1:length(CCC[1,])) {
 smTillZero <- function(cda, ppt_mean, may, dec, developed, region) {
    developed <- 2*asin(sqrt(developed/100))
    reg <- sapply(region, function(r) {
-          ifelse(r == "-27", -0.0506983267793556,
-          ifelse(r == "-31", -0.239349744350796,
-          ifelse(r == "-34", -0.019268539160105,
-          ifelse(r == "-75", -0.0520274361212289, 0)))) })
-   b <- 0.507511783018764 + reg
+          ifelse(r == "-27", -1.39e-02,
+          ifelse(r == "-31", -5.59e-02,
+          ifelse(r == "-34", -8.15e-03,
+          ifelse(r == "-75", -2.78e-02, 0)))) })
+   b <- 4.63e-01 + reg
    cda <- log10(cda)
    ppt_mean <- log10(ppt_mean)
-   tmp <- 0.120918274156018*cda + 0.000244708840447377*ppt_mean + 0.598457705514925*may
-   tmp <- tmp + 0.500690179138596*dec + 0.00419064630207601*developed
-   tmp <- tmp + -0.121810395895812*may*dec + b
-   tmp <- 10^tmp
+   tmp <- 2.28e-02*cda + 5.28e-05*ppt_mean +1.65e-01*may
+   tmp <- tmp + 1.35e-01*dec + 3.47e-04*developed
+   tmp <- tmp + -3.23e-02*may*dec + b
    names(tmp) <- NULL
    return(tmp)
 }
 
+GG <- 10^predict(SM)
+GG[GG > 3653] <- 3653
 
 G <- smTillZero(10^Z$CDA, Z$ppt_mean, Z$MAY, Z$DEC, Z$developed, Z$alt_ecol3)
+G <- 10^G
 G[G > 3653] <- 3653
+plot(G,GG)
+
+
 plot(Z$n - Z$nzero, G, log="xy")
 abline(0,1)
 
@@ -432,11 +446,10 @@ ZEROSenv <- new.env()
 for(decade in levels(D$decade)) {
   file <- paste0("ZERO",decade,".pdf"); message(file)
   pdf(file, useDingbats=FALSE)
-  Z <- D[D$decade == decade,]; Z$ecol3 <- relevel(Z$ecol3, "TOT_ECOL3_65")
+  Z <- D[D$decade == decade,]
   Z$z <- Z$prob_has_noflow
   ZERO <- gam(z~CDA+I(2*asin(sqrt(developed/100)))+
-                s(ANN_DNI, bs="cr", k=8)+
-                s(MAY, DEC, bs="tp", k=8)+s(x, y, bs="so", xt=list(bnd=bnd)),
+                s(ANN_DNI, bs="cr", k=6)+s(MAY, DEC, bs="tp", k=6),
               knots=knots_pplo, data=Z, family="quasibinomial")
   ZERO$the.Z <- Z
   assign(decade, ZERO, envir=ZEROSenv)
