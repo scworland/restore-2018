@@ -19,7 +19,7 @@ sitefile <- sitefile[sitefile$agency_cd != "USCE",]
 CDA <- sitefile$contrib_drain_area_va
 CDA[is.na(CDA)] <- sitefile$drain_area_va[is.na(CDA)]
 CDA <- pmin(sitefile$drain_area_va, sitefile$contrib_drain_area_va, na.rm=TRUE)
-sitefile$contrib_drain_area_va <- CDA
+sitefile$contrib_drain_area_va <- CDA <- CDA*2.589988 # move to km2
 
 
 LATLONG <- paste0("+init=epsg:4269 +proj=longlat +ellps=GRS80 ",
@@ -34,6 +34,7 @@ DD <- data.frame(site_no=sitefile$site_no,
                  dec_long_va=sitefile$dec_long_va,
                  CDA=log10(CDA), stringsAsFactors=FALSE)
 DD <- merge(FDC, DD, all=TRUE)
+
 
 DD <- SpatialPointsDataFrame(cbind(DD$dec_long_va, DD$dec_lat_va), DD,
                              proj4string=LATLONG)
@@ -116,7 +117,13 @@ DD$flood_storage[DD$flood_storage < 0] <- (DD$tot_norm_storage[DD$flood_storage 
 DD$flood_storage[DD$flood_storage > 3000] <- 3000
 DD$flood_storage <- log10(DD$flood_storage+0.01)
 
+DD$tot_basin_area  <- log10(DD$tot_basin_area)
 DD$tot_basin_slope <- log10(DD$tot_basin_slope)
+sites_of_area_bust <- unique(DD$site_no[abs(DD$tot_basin_area - DD$CDA) > 1/3])
+for(site in sites_of_area_bust) {
+  DD <- DD[DD$site_no != site,]
+}
+
 DD$decade <- as.factor(DD$decade)
 DD$bedperm <- as.factor(DD$bedperm)
 DD$aquifers <- as.factor(DD$aquifers)
@@ -241,17 +248,23 @@ PPLO <- gam(z~CDA+log10(ppt_mean)+alt_physio+decade,
               data=Z)
 
 
-family <- "extreme"
+family <- "weibull"
 CCC <- NULL
 decades <- levels(D$decade)
 for(i in 1:length(decades)) {
    decade <- decades[i]
    Z <-  D[D$decade == decade,]
-   developed <- 2*asin(sqrt(Z$developed/100)); ppt_mean <- log10(Z$ppt_mean)
-   Zc <- Surv(log(Z$n - Z$nzero), Z$nzero != 0, type="right")
+   Z <- D
+   cda <- Z$CDA
+   developed <- 2*asin(sqrt(Z$developed/100))
+   tot_hdens <-  log10(Z$tot_hdens)
+   cultivated_cropland <- 2*asin(sqrt(Z$cultivated_cropland/100))
+   ppt_mean <- log10(Z$ppt_mean)
+   flood_storage <- Z$flood_storage; tot_basin_slope <- Z$tot_basin_slope
+   Zc <- Surv(Z$n - Z$nzero, Z$nzero != 0, type="right")
    plot(survfit(Zc~1)); mtext(paste0("Decade ",decade))
 
-   SM <- survreg(Zc~CDA+ppt_mean, data=Z, dist=family)
+   SM <- survreg(Zc~cda+ppt_mean+Z$ANN_DNI+tot_basin_slope+developed+cultivated_cropland+Z$decade, dist=family)
    sSM <- summary(SM)
    #print(sSM)
 
@@ -284,22 +297,22 @@ for(i in 1:length(decades)) {
      col <- ifelse(PP[i] == daysUntilzero[i], rgb(0,0,1,.3), rgb(1,0,0,.3))
      if(alive) segments(x0=PPo[i], x1=PPo[i], y0=res[i], y1=0.5, col=col, lwd=0.8)
    })
-   points(PPo[PP == daysUntilzero], res[PP == daysUntilzero], lwd=0.6, cex=0.7, col=4)
-   points(PPo[PP != daysUntilzero], res[PP != daysUntilzero], lwd=0.6, cex=0.7, col=2)
+   points(PPo[PP == daysUntilzero], res[PP == daysUntilzero], lwd=0.6, cex=0.6, col=4)
+   points(PPo[PP != daysUntilzero], res[PP != daysUntilzero], lwd=0.6, cex=0.8, col=2)
    mtext(paste0("Decade ",decade))
    correct_decision_rate <- sum(PP == daysUntilzero)/length(PPo)
 
    CC <- as.data.frame(t(coefficients(SM)))
    tmp <- names(CC); tmp[1] <- "Intercept"; names(CC) <- tmp
-   print(CC)
    CC$n <- length(PPo); CC$correct_decision_rate <- correct_decision_rate
    CC$MAD <- mean(abs(residuals))
    CC$MAD_nonzero <- 10^mean(log10(abs(residuals[residuals != 0])))
    CC$AIC <- AIC(SM)
+   print(CC)
    if(is.null(CCC)) {
       CCC <- CC
    } else {
-      CCC <- merge(CCC,CC, all=TRUE)
+      CCC <- rbind(CCC,CC)
    }
 }
 CCC$decade <- as.numeric(decades)
@@ -318,31 +331,37 @@ for(i in 1:length(CCC[1,])) {
 
 smTillZero <- function(cda, ppt_mean, may, dec, developed, region) {
    developed <- 2*asin(sqrt(developed/100))
+   return(1.32594940801398 +0.0684549053731752*log10(cda)+
+          0.275911326088305*log10(ppt_mean)+
+          0.336112889429094*may+0.219503899716695*dec-
+          0.0637326522016246*may*dec+0.0605904049010024*developed)
    reg <- sapply(region, function(r) {
-          ifelse(r == "-27", -1.39e-02,
-          ifelse(r == "-31", -5.59e-02,
-          ifelse(r == "-34", -8.15e-03,
-          ifelse(r == "-75", -2.78e-02, 0)))) })
-   b <- 4.63e-01 + reg
+          ifelse(r == "-27", -0.11031,
+          ifelse(r == "-31", -0.23108,
+          ifelse(r == "-34", -0.07966,
+          ifelse(r == "-75", -0.16082, 0)))) })
+   b <- -1.60021 + reg
    cda <- log10(cda)
    ppt_mean <- log10(ppt_mean)
-   tmp <- 2.28e-02*cda + 5.28e-05*ppt_mean +1.65e-01*may
-   tmp <- tmp + 1.35e-01*dec + 3.47e-04*developed
-   tmp <- tmp + -3.23e-02*may*dec + b
+   tmp <- 0.12726*cda + 0.71234*ppt_mean +0.64845*may
+   tmp <- tmp + 0.50603*dec + 0.00226*developed
+   tmp <- tmp + -0.12340*may*dec + b
    names(tmp) <- NULL
    return(tmp)
 }
 
 GG <- 10^predict(SM)
-GG[GG > 3653] <- 3653
+#GG[GG > 3653] <- 3653
 
 G <- smTillZero(10^Z$CDA, Z$ppt_mean, Z$MAY, Z$DEC, Z$developed, Z$alt_ecol3)
 G <- 10^G
-G[G > 3653] <- 3653
+#G[G > 3653] <- 3653
 plot(G,GG)
 
+G <- smTillZero(10^D$CDA, D$ppt_mean, D$MAY, D$DEC, D$developed, D$alt_ecol3)
+G <- 10^G
 
-plot(Z$n - Z$nzero, G, log="xy")
+plot(D$n - D$nzero, G, log="xy")
 abline(0,1)
 
 
