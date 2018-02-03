@@ -117,6 +117,8 @@ DD$flood_storage[DD$flood_storage < 0] <- (DD$tot_norm_storage[DD$flood_storage 
 DD$flood_storage[DD$flood_storage > 3000] <- 3000
 DD$flood_storage <- log10(DD$flood_storage+0.01)
 
+DD$ppt_mean <- log10(DD$ppt_mean)
+
 DD$tot_basin_area  <- log10(DD$tot_basin_area)
 DD$tot_basin_slope <- log10(DD$tot_basin_slope)
 sites_of_area_bust <- unique(DD$site_no[abs(DD$tot_basin_area - DD$CDA) > 1/3])
@@ -248,7 +250,52 @@ PPLO <- gam(z~CDA+log10(ppt_mean)+alt_physio+decade,
               data=Z)
 
 
-family <- "weibull"
+family <- "gaussian"
+
+Z <- D
+x <- Z$x; y <- Z$y
+Z$developed <- 2*asin(sqrt(Z$developed/100))
+Zc <- Surv(log10(Z$n - Z$nzero), Z$nzero != 0, type="right")
+SM <- survreg(Zc~tot_basin_area+ppt_mean+tot_basin_slope+decade+developed, data=Z, dist=family)
+#SM <- gam(Zc[,1]~Z$decade+developed+s(Z$tot_basin_area, Z$ppt_mean, bs="tp")+
+#                 s(Z$ANN_DNI)+s(Z$tot_basin_slope)+s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots)
+P <- predict(SM)
+
+dec_code_count <- c(379, 506, 524, 483, 475, 590)
+dec_coe <- c(0, 1.614894e-02, 2.933379e-02, 3.784553e-02, 3.462950e-03, 1.861015e-05)
+dec_mean <- weighted.mean(dec_coe, dec_code_count)
+G <- -7.199104e-01+1.853178e-01*Z$tot_basin_area+1.253588e+00*Z$ppt_mean+5.869226e-02*Z$tot_basin_slope+1.063092e-01*Z$developed+0.01470326
+
+pplof <- function(tot_basin_area, ppt_mean, tot_basin_slope, developed) {
+  tot_basin_area  <- log10(tot_basin_area )
+  ppt_mean        <- log10(ppt_mean       )
+  tot_basin_slope <- log10(tot_basin_slope)
+  developed <- 2*asin(sqrt(developed/100))
+  fd <- -7.199104e-01 + 1.853178e-01*tot_basin_area +
+         1.253588e+00*ppt_mean + 5.869226e-02*tot_basin_slope +
+         1.063092e-01*developed + 0.01470326
+  print(fd)
+  fd <- 10^fd; fd[fd > 3653] <- 3653; return(1-fd/3653)
+}
+est_pplo <- pplof(10^D$tot_basin_area, 10^D$ppt_mean,
+                  10^D$tot_basin_slope, D$developed)
+plot(D$pplo, est_pplo, xlim=c(0,1), ylim=c(0,1),
+     xlab="Observed fraction percentage decadal no flow",
+     ylab="Predicted fraction percentage decadal no flow",
+     col=rgb(0,0,1,.2), pch=16)
+abline(0,1)
+
+plot(P, G)
+
+GG <- 10^(G); GG[GG > 3653] <- 3653
+PP <- 10^P;   PP[PP > 3653] <- 3653
+plot(PP, GG)
+abline(0,1)
+
+
+plot(10^Zc[,1], PP)
+abline(0,1)
+
 CCC <- NULL
 decades <- levels(D$decade)
 for(i in 1:length(decades)) {
@@ -257,7 +304,7 @@ for(i in 1:length(decades)) {
    Z <- D
    cda <- Z$CDA
    developed <- 2*asin(sqrt(Z$developed/100))
-   tot_hdens <-  log10(Z$tot_hdens)
+   tot_hdens <-  sqrt(Z$tot_hdens)
    cultivated_cropland <- 2*asin(sqrt(Z$cultivated_cropland/100))
    ppt_mean <- log10(Z$ppt_mean)
    flood_storage <- Z$flood_storage; tot_basin_slope <- Z$tot_basin_slope
