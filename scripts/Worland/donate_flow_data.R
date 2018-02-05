@@ -3,87 +3,99 @@ library(pacman)
 pacman::p_load(tidyverse,stringr,lubridate,feather,sf,proxy,lmomco)
 source("scripts/worland/utils.R")
 
-d <- read_feather("data/gage/all_gage_data.feather") %>%
-  filter(decade != 2010)
+d <- read_feather("data/gage/all_gage_data.feather")
 
 # Load daily streamflow
 load("data/dvs/DV.RData")
-# sites <- ls(DV)
 dv_list <- as.list(DV)[d$site_no]
 
 # randomly sample several sites
 set.seed(1)
 dv_sublist <- dv_list[sample(1:length(dv_list),2)]
 
-# create data frame
-dvs <- do.call("rbind", dv_sublist) %>%
-  rename(date=Date,Q=Flow,cd=Flow_cd)
+# fdc for every gage and decade
+all_direct_est <- read_feather("data/gage/all_fdc_direct_est.feather")
 
-n = length(unique(dvs$siteno))
+# CV fdc for gages and decade where observed data is available
+direct_est <- read_feather("data/gage/direct_estimates.feather") %>%
+  select(site_no,decade,f=variable,q_cv=nnet) %>%
+  mutate(decade=as.integer(decade))
 
-estimate_dv <- function(lmoms,basinchars,dv_list){
-  for (i in 1:nrow(lmoms)) {
+# combine and replace all_fdc with CV est
+yhat <- all_direct_est %>%
+  left_join(direct_est,by=c("site_no","decade","f")) %>%
+  mutate(q=ifelse(!is.na(q_cv),q_cv,q),
+         f=f/100) %>%
+  select(site_no,decade,f,q)
+
+test_sites <- unique(yhat$site_no)
+decades <- rev(unique(yhat$decade))
+
+all_x <- read_feather("data/gage/all_gage_covariates.feather") %>%
+  mutate(decade=as.character(decade))
+
+ref_x <- read_feather("data/gage/all_gage_data.feather")  %>%
+  select(comid,site_no,decade) %>%
+  left_join(all_x,by=c("comid","site_no","decade"))
+
+est_dvlist <- list()
+#for(i in 1:length(test_sites)){
+for(i in 1:3){
+  
+  # select site
+  test_site <- test_sites[i]
+  
+  # find reference sites for each decade
+  ref_sites <- sw_find_ref(all_x,ref_x,site=test_site,distance=100)$refs
+  
+  Qest_all <- NULL
+  for(j in 1:length(decades)) {
     
-    print(i)
+    # select decade
+    test_decade <- decades[j]
     
-    # extract site and decade
-    test_site <- lmoms$site_no[i]
-    test_decade <- lmoms$decade[i]
+    # EP time series for reference site
+    ref_site <- ref_sites %>%
+      filter(decade==test_decade) %>%
+      select(ref_site) %>%
+      as.character()
     
-    # subset covariates for decade
-    X <- select(basinchars,site_no,decade,ppt_mean:tot_rdx) %>%
-      mutate_at(vars(-site_no,-decade),funs(as.vector(scale(.)))) %>%
-      select_if(~!any(is.na(.))) %>%
-      filter(decade==test_decade)
-    
-    # find donor site
-    dists <- proxy::dist(X[-i,-c(1,2)],X[i,-c(1,2)])
-    donor_site <- X$site_no[which(dists==min(dists))+1]
-    
-    # generate EPs from donor site
-    donor_ep <- dv_list[donor_site][[1]] %>%
+    donor_ep <- dv_list[ref_site][[1]] %>%
       filter(decade==test_decade) %>%
       mutate(ep = sw_efdc(Flow)) %>%
       select(date=Date,ep)
     
-    # parameterize distribution using lmoments
-    test_lmoms <- lmoms %>%
-      filter(site_no==test_site & decade==test_decade) %>%
-      select(-site_no,-decade)
+    # use estimated FDC to calculate daily flows
+    est_fdc <- yhat %>%
+      filter(site_no==test_site & decade==test_decade)
     
-    test_par <- lmom2par(vec2lmom(as.numeric(test_lmoms)),type="pe3")
-    test_Q <- qlmomco(donor_ep$ep, test_par)
+    fit <- loess(q~f,data=est_fdc,span=0.2)
     
-    est_obs[[i]] <- dv_list[test_site][[1]] %>%
-      filter(decade==test_decade) %>%
-      select(site_no,date=Date,obs_Q=Flow) %>%
-      mutate(est_Q=test_Q) %>%
-      gather(variable,value,-site_no,-date)
+    Q_est <- data.frame(date=donor_ep$date,
+                       Q_est=round(predict(fit,donor_ep$ep),0)) 
+    
+    Qest_all <- rbind(Qest_all,Q_est)
   }
-
-result <- bind_rows(est_obs)
-return(result)
-
+   
+  Q_obs <- dv_list[test_site][[1]] %>%
+    select(date=Date,Q_obs=Flow)
+                    
+  Q_all <- Qest_all %>%
+    arrange(date) %>%
+    left_join(Q_obs,by="date") %>%
+    mutate(decade=year(floor_date(date, years(10))))
+  
+  est_dvlist[[i]] <- Q_all
+  names(est_dvlist)[i] <- eval(test_site)
+  
 }
 
-# example
-estdvs <- estimate_dv(pred_lmoms[1:15,],d,dv_list) 
-
-nse <- estdvs %>%
-  spread(variable,value) %>%
-  group_by(site_no) %>%
-  summarize(nse = NSE(est_Q,obs_Q))
-
-ggplot(estdvs) + 
-  geom_line(aes(date,value,color=variable)) +
-  scale_color_manual(values=c("darkgrey","dodgerblue")) +
-  facet_wrap(~site_no) +
-  theme_bw()
-
-
-
-
-
+ggplot(est_dvlist[[1]]) +
+  geom_line(aes(date,Q_est)) +
+  geom_line(aes(date,Q_obs), color="dodgerblue") +
+  facet_wrap(~decade,scales="free",ncol=1) +
+  theme_bw() +
+  labs(y="Q")
 
 
 
