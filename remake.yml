@@ -1,0 +1,71 @@
+
+# library(remake)
+# library(parallelRemake)
+# makefile(targets = "all", remakefiles = "remake.yml", command = "make", args = c("--jobs=5", "-s"))
+
+
+packages:
+  - tidyr
+  - dplyr
+  - purrr
+  - readr
+  - feather
+  - sf
+  - stringr
+  - lubridate
+  
+sources:
+  - scripts/Worland/clean
+
+targets:
+  all:
+    depends: 
+      - data/gage/all_gage_data.feather2
+      
+  sites:
+    command: read_feather("data/gage_list_comid.feather")
+    
+  huc12s:
+    command: read_feather("data/huc12_list_comid.feather")
+    
+  item_list:
+    command: read_csv("data/basin_sb_items.csv")
+    
+  immutable_vars:
+    command: sw_add_immutable_vars(item_list,sites,huc12s)
+    
+  dams:
+    command: sw_add_dams(item_list,sites,huc12s)
+    
+  housing_density:
+    command: sw_add_housedensity(item_list,sites,huc12s)
+    
+  climate:
+    command: sw_add_climate(item_list,sites,huc12s)
+    
+  historic_class_link:
+    command: read_csv("data/historic_lulc_classes.csv") 
+    
+  lulc:
+    command: sw_add_lulc(historic_class_link,item_list,sites,huc12s)
+    
+  gage_covariates:  
+    command: sw_combine_gage(immutable_vars,dams,housing_density,climate,lulc)
+    
+  huc12_covariates:  
+    command: sw_combine_huc12(immutable_vars,dams,housing_density,climate,lulc)
+    
+  data/gage/all_gage_covariates2.feather:
+    command: write_feather(gage_covariates,target_name)
+    
+  data/huc12/all_huc12_covariates2.feather:
+    command: write_feather(huc12_covariates,target_name)
+    
+  fdc_data:
+    command: read_feather("data/gage/fdc_lmr_pplo.feather")
+    
+  gage_all:
+    command: sw_gage_all(gage_covariates,fdc_data)
+    
+  data/gage/all_gage_data.feather2:
+    command: write_feather(gage_all,target_name)
