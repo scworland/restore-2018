@@ -16,6 +16,11 @@ sites <- unique(FDC$site_no)
 sitefile <- dataRetrieval::readNWISsite(sites)
 sitefile <- sitefile[sitefile$agency_cd != "USCE",]
 
+
+SF <- read.table("sitefile.txt", sep="\t", h=TRUE, colClasses="character")
+SF$site_no[SF$keep == "0"]
+pitch_sites <- SF$site_no[SF$keep == "0"]
+
 CDA <- sitefile$contrib_drain_area_va
 CDA[is.na(CDA)] <- sitefile$drain_area_va[is.na(CDA)]
 CDA <- pmin(sitefile$drain_area_va, sitefile$contrib_drain_area_va, na.rm=TRUE)
@@ -118,6 +123,7 @@ DD$flood_storage[DD$flood_storage > 3000] <- 3000
 DD$flood_storage <- log10(DD$flood_storage+0.01)
 
 DD$ppt_mean <- log10(DD$ppt_mean)
+DD$temp_mean <- log10(DD$temp_mean)
 
 DD$tot_basin_area  <- log10(DD$tot_basin_area)
 DD$tot_basin_slope <- log10(DD$tot_basin_slope)
@@ -185,7 +191,7 @@ DD$texas_special[DD$site_no == "08184000"] <- 1
 DD$texas_special[DD$site_no == "08185000"] <- 1
 DD$texas_special[DD$site_no == "08190500"] <- 1
 #DD$texas_special[DD$site_no == "08194200"] <- 1
-DD$texas_special[DD$site_no == "08192000"] <- 1
+#DD$texas_special[DD$site_no == "08192000"] <- 1
 DD$texas_special[DD$site_no == "08197500"] <- 1
 DD$texas_special[DD$site_no == "08198500"] <- 1
 DD$texas_special[DD$site_no == "08200700"] <- 1
@@ -204,6 +210,10 @@ D <- D[D$site_no != "08169000", ] # Comal River (major spring)
 D <- D[D$site_no != "08170500", ] # San Marcos River (major spring)
 D <- D[D$texas_special != "1",]
 
+D <- D[D$texas_special != 1, ]
+for(p in pitch_sites) {
+  D <- D[D$site_no != p,]
+}
 
 save(D, DD, knots, knots_pplo, bnd, file="DEMO.RData")
 
@@ -225,9 +235,9 @@ save(D, DD, knots, knots_pplo, bnd, file="DEMO.RData")
 # the critical piece, it is that they are all the same literal string.
 # For example, v,w would work too.
 plot(bnd[[1]]$x,bnd[[1]]$y,type="l", col=8, lwd=.6)
-points(D$east[D$nzero == 0], D$north[D$nzero == 0], pch=4, lwd=.5, cex=0.9, col=rgb(0,.5,0.5,.2))
-points(D$east[D$nzero > 0 & D$nzero <= 800], D$north[D$nzero > 0 & D$nzero <= 800], pch=4, lwd=.5, cex=0.9, col=rgb(1,0,0.5,.2))
-points(D$east[D$nzero > 2000], D$north[D$nzero > 2000], pch=16, lwd=.5, cex=0.9, col=rgb(0.5,0,1,.4))
+points(D$east[D$nzero == 0], D$north[D$nzero == 0], pch=4, lwd=.5, cex=0.9, col=rgb(0,.5,0.5,.5))
+points(D$east[D$nzero > 0 & D$nzero <= 800], D$north[D$nzero > 0 & D$nzero <= 800], pch=4, lwd=.5, cex=0.9, col=rgb(1,0,0.5,.5))
+points(D$east[D$nzero > 2000], D$north[D$nzero > 2000], pch=16, lwd=.5, cex=0.9, col=rgb(0.5,0,1,.5))
 
 Z <- D
 Z <- Z[Z$nzero > 0,]
@@ -256,36 +266,49 @@ Z <- D
 x <- Z$x; y <- Z$y
 Z$developed <- 2*asin(sqrt(Z$developed/100))
 Zc <- Surv(log10(Z$n - Z$nzero), Z$nzero != 0, type="right")
-SM <- survreg(Zc~tot_basin_area+ppt_mean+tot_basin_slope+decade+developed, data=Z, dist=family)
+SM <- survreg(Zc~tot_basin_area+ppt_mean+temp_mean+tot_basin_slope+decade+developed+AUG+x, data=Z, dist=family)
 #SM <- gam(Zc[,1]~Z$decade+developed+s(Z$tot_basin_area, Z$ppt_mean, bs="tp")+
 #                 s(Z$ANN_DNI)+s(Z$tot_basin_slope)+s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots)
 P <- predict(SM)
-
-dec_code_count <- c(379, 506, 524, 483, 475, 590)
-dec_coe <- c(0, 1.614894e-02, 2.933379e-02, 3.784553e-02, 3.462950e-03, 1.861015e-05)
+coefficients(SM)
+dec_code_count <- aggregate(data.frame(decade=D$decade),
+                            by=list(D$decade), function(i) length(i))
+dec_code_count <- dec_code_count$decade
+dec_coe <- c(0, 0.01899920, 0.04587601, 0.04831031, 0.04740210, 0.02780173)
 dec_mean <- weighted.mean(dec_coe, dec_code_count)
-G <- -7.199104e-01+1.853178e-01*Z$tot_basin_area+1.253588e+00*Z$ppt_mean+5.869226e-02*Z$tot_basin_slope+1.063092e-01*Z$developed+0.01470326
+G <- 3.88974843+0.11403000*Z$tot_basin_area+0.37052478*Z$ppt_mean-0.88392499*Z$temp_mean+0.07593362*Z$tot_basin_slope+0.08264061*Z$developed-0.12802625*Z$AUG+dec_mean
 
-pplof <- function(tot_basin_area, ppt_mean, tot_basin_slope, developed) {
+plot(P, G)
+
+pplof <- function(tot_basin_area, ppt_mean, temp_mean, tot_basin_slope, developed, aug) {
   tot_basin_area  <- log10(tot_basin_area )
   ppt_mean        <- log10(ppt_mean       )
+  temp_mean       <- log10(temp_mean      )
   tot_basin_slope <- log10(tot_basin_slope)
   developed <- 2*asin(sqrt(developed/100))
-  fd <- -7.199104e-01 + 1.853178e-01*tot_basin_area +
-         1.253588e+00*ppt_mean + 5.869226e-02*tot_basin_slope +
-         1.063092e-01*developed + 0.01470326
+  fd <- 4.69434743 + 0.08662583*tot_basin_area + 0.15617579*ppt_mean +
+    -0.97508550*temp_mean + 0.05167631*tot_basin_slope +
+    0.06239266*developed -0.12047591*aug + 0.03222257
   print(fd)
   fd <- 10^fd; fd[fd > 3653] <- 3653; return(1-fd/3653)
 }
-est_pplo <- pplof(10^D$tot_basin_area, 10^D$ppt_mean,
-                  10^D$tot_basin_slope, D$developed)
+est_pplo <- pplof(10^D$tot_basin_area, 10^D$ppt_mean, 10^D$temp_mean,
+                  10^D$tot_basin_slope, D$developed, D$AUG)
 plot(D$pplo, est_pplo, xlim=c(0,1), ylim=c(0,1),
      xlab="Observed fraction percentage decadal no flow",
      ylab="Predicted fraction percentage decadal no flow",
      col=rgb(0,0,1,.2), pch=16)
 abline(0,1)
 
-plot(P, G)
+
+
+
+PPLO <- gam(log10(n - nzero)~s(tot_basin_area, k=6)+s(temp_mean)+
+            I(2*asin(sqrt(developed/100)))+decade+
+            s(AUG, bs="cr", k=6),
+    knots=knots_pplo, data=Z, family="gaussian")
+
+tot_basin_area+ppt_mean+temp_mean+tot_basin_slope+decade+developed+AUG
 
 GG <- 10^(G); GG[GG > 3653] <- 3653
 PP <- 10^P;   PP[PP > 3653] <- 3653
