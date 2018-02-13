@@ -239,29 +239,8 @@ points(D$east[D$nzero == 0], D$north[D$nzero == 0], pch=4, lwd=.5, cex=0.9, col=
 points(D$east[D$nzero > 0 & D$nzero <= 800], D$north[D$nzero > 0 & D$nzero <= 800], pch=4, lwd=.5, cex=0.9, col=rgb(1,0,0.5,.5))
 points(D$east[D$nzero > 2000], D$north[D$nzero > 2000], pch=16, lwd=.5, cex=0.9, col=rgb(0.5,0,1,.5))
 
-Z <- D
-Z <- Z[Z$nzero > 0,]
-#x <- Z$east; y <- Z$north # Please see the extraction and setting to x,y
-#CDA <- Z$CDA; ANN_DNI <- Z$ANN_DNI; MAY <- Z$MAY; DEC <- Z$DEC
-Z$z <- log10(Z$nzero)
-kap <- parkap(lmoms(Z$z))
-plot(pp(Z$z), sort(Z$z)); FF <- nonexceeds(); lines(FF, qlmomco(FF, kap), col=2)
-Z$z <- qnorm(plmomco(Z$z, kap))
-#Z$z <- cbind(Z$n-Z$nzero, Z$n)
-
-# I(2*asin(sqrt(developed/100)))+I(sqrt(tot_hdens))
-#s(ANN_DNI, bs="cr", k=5)
-PPLO <- gam(z~s(CDA, bs="cr", k=4)+
-              s(ppt_mean)+alt_physio,
-              knots=knots_pplo,
-              data=Z)
-PPLO <- gam(z~CDA+log10(ppt_mean)+alt_physio+decade,
-              knots=knots_pplo,
-              data=Z)
-
 
 family <- "gaussian"
-
 Z <- D
 x <- Z$x; y <- Z$y
 Z$developed <- 2*asin(sqrt(Z$developed/100))
@@ -314,6 +293,33 @@ GG <- 10^(G); GG[GG > 3653] <- 3653
 PP <- 10^P;   PP[PP > 3653] <- 3653
 plot(PP, GG)
 abline(0,1)
+
+
+
+# ------------------------------------------------------
+
+Z <- D
+Z <- Z[Z$nzero > 0,]
+#x <- Z$east; y <- Z$north # Please see the extraction and setting to x,y
+#CDA <- Z$CDA; ANN_DNI <- Z$ANN_DNI; MAY <- Z$MAY; DEC <- Z$DEC
+Z$z <- log10(Z$nzero)
+kap <- parkap(lmoms(Z$z))
+plot(pp(Z$z), sort(Z$z)); FF <- nonexceeds(); lines(FF, qlmomco(FF, kap), col=2)
+Z$z <- qnorm(plmomco(Z$z, kap))
+#Z$z <- cbind(Z$n-Z$nzero, Z$n)
+
+# I(2*asin(sqrt(developed/100)))+I(sqrt(tot_hdens))
+#s(ANN_DNI, bs="cr", k=5)
+PPLO <- gam(z~s(CDA, bs="cr", k=4)+
+              s(ppt_mean)+alt_physio,
+              knots=knots_pplo,
+              data=Z)
+PPLO <- gam(z~CDA+log10(ppt_mean)+alt_physio+decade,
+              knots=knots_pplo,
+              data=Z)
+
+
+
 
 
 plot(10^Zc[,1], PP)
