@@ -98,7 +98,7 @@ TOT_AQ999:
 08184000 Cibolo Ck nr Bulverde, TX
 08185000 Cibolo Ck at Selma, TX
 08190500 W Nueces Rv nr Brackettville, TX
-08192000 Nueces Rv bl Uvalde, TX
+#08192000 Nueces Rv bl Uvalde, TX
 #08194200 San Casimiro Ck nr Freer, TX
 08197500 Frio Rv bl Dry Frio Rv nr Uvalde, TX
 08198500 Sabinal Rv at Sabinal, TX
