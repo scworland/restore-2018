@@ -47,10 +47,6 @@ DD <- spTransform(DD, ALBEA)
 XY <- coordinates(DD)
 DD$east <- XY[,1]/1000; DD$north <- XY[,2]/1000; rm(XY)
 
-DD$prob_has_noflow <- 0
-DD$prob_has_noflow[DD$nzero > 0] <- 1
-
-
 SO <- over(DD, spDNI_1998to2009)
 DD$ANN_DNI <- SO$ANN_DNI
 DD$JAN <- SO$JAN; DD$FEB <- SO$FEB
@@ -124,11 +120,13 @@ DD$flood_storage <- log10(DD$flood_storage+0.01)
 
 DD$ppt_mean <- log10(DD$ppt_mean)
 DD$temp_mean <- log10(DD$temp_mean)
-
 DD$tot_basin_area  <- log10(DD$tot_basin_area)
 DD$tot_basin_slope <- log10(DD$tot_basin_slope)
+plot(DD$CDA, DD$tot_basin_area)
+abline(0,1); abline(1/3,1,lty=2); abline(-1/3,1,lty=2)
 sites_of_area_bust <- unique(DD$site_no[abs(DD$tot_basin_area - DD$CDA) > 1/3])
 for(site in sites_of_area_bust) {
+  points(DD$CDA[DD$site_no == site], DD$tot_basin_area[DD$site_no == site], pch=16, col=2)
   DD <- DD[DD$site_no != site,]
 }
 
@@ -182,35 +180,24 @@ DD$alt_physio <- relevel(DD$alt_physio, "other")
 
 
 
-DD$texas_special <- 0
-DD$texas_special[DD$site_no == "08156800"] <- 1
-DD$texas_special[DD$site_no == "08155300"] <- 1
-DD$texas_special[DD$site_no == "08155400"] <- 1
-DD$texas_special[DD$site_no == "08181400"] <- 1
-DD$texas_special[DD$site_no == "08184000"] <- 1
-DD$texas_special[DD$site_no == "08185000"] <- 1
-DD$texas_special[DD$site_no == "08190500"] <- 1
-#DD$texas_special[DD$site_no == "08194200"] <- 1
-#DD$texas_special[DD$site_no == "08192000"] <- 1
-DD$texas_special[DD$site_no == "08197500"] <- 1
-DD$texas_special[DD$site_no == "08198500"] <- 1
-DD$texas_special[DD$site_no == "08200700"] <- 1
-DD$texas_special[DD$site_no == "08202700"] <- 1
-#DD$texas_special[DD$site_no == "08205500"] <- 1
-#DD$texas_special[DD$site_no == "08212400"] <- 1
-#DD$texas_special[DD$site_no == "08205500"] <- 1
-DD$texas_special <- as.factor(DD$texas_special)
+DD$edwards_rechzone <- 0
+DD$edwards_rechzone[DD$site_no == "08156800"] <- 1
+DD$edwards_rechzone[DD$site_no == "08155300"] <- 1
+DD$edwards_rechzone[DD$site_no == "08155400"] <- 1
+DD$edwards_rechzone[DD$site_no == "08181400"] <- 1
+DD$edwards_rechzone[DD$site_no == "08184000"] <- 1
+DD$edwards_rechzone[DD$site_no == "08185000"] <- 1
+DD$edwards_rechzone[DD$site_no == "08190500"] <- 1
+DD$edwards_rechzone[DD$site_no == "08197500"] <- 1
+DD$edwards_rechzone[DD$site_no == "08198500"] <- 1
+DD$edwards_rechzone[DD$site_no == "08200700"] <- 1
+DD$edwards_rechzone[DD$site_no == "08202700"] <- 1
+DD$edwards_rechzone <- as.factor(DD$edwards_rechzone)
 
 D <- DD;
 
-D <- D[D$site_no != "08066191", ] # Livingston Res Outflow Weir nr Goodrich, TX
-D <- D[D$site_no != "08154510", ] # Colorado Rv bl Mansfield Dam, Austin, TX
-D <- D[D$site_no != "08158000", ] # Colorado Rv at Austin, TX
-D <- D[D$site_no != "08169000", ] # Comal River (major spring)
-D <- D[D$site_no != "08170500", ] # San Marcos River (major spring)
-D <- D[D$texas_special != "1",]
+D <- D[D$edwards_rechzone != "1",]
 
-D <- D[D$texas_special != 1, ]
 for(p in pitch_sites) {
   D <- D[D$site_no != p,]
 }
@@ -245,7 +232,7 @@ Z <- D
 x <- Z$x; y <- Z$y
 Z$developed <- 2*asin(sqrt(Z$developed/100))
 Zc <- Surv(log10(Z$n - Z$nzero), Z$nzero != 0, type="right")
-SM <- survreg(Zc~tot_basin_area+ppt_mean+temp_mean+tot_basin_slope+decade+developed+AUG+x, data=Z, dist=family)
+SM <- survreg(Zc~tot_basin_area+ppt_mean+temp_mean+tot_basin_slope+decade+developed+AUG+isFL+isWest, data=Z, dist=family)
 #SM <- gam(Zc[,1]~Z$decade+developed+s(Z$tot_basin_area, Z$ppt_mean, bs="tp")+
 #                 s(Z$ANN_DNI)+s(Z$tot_basin_slope)+s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots)
 P <- predict(SM)
@@ -253,26 +240,24 @@ coefficients(SM)
 dec_code_count <- aggregate(data.frame(decade=D$decade),
                             by=list(D$decade), function(i) length(i))
 dec_code_count <- dec_code_count$decade
-dec_coe <- c(0, 0.01899920, 0.04587601, 0.04831031, 0.04740210, 0.02780173)
+dec_coe <- c(0, 0.01945759, 0.04601630, 0.04725372, 0.04456601, 0.02530880)
 dec_mean <- weighted.mean(dec_coe, dec_code_count)
-G <- 3.88974843+0.11403000*Z$tot_basin_area+0.37052478*Z$ppt_mean-0.88392499*Z$temp_mean+0.07593362*Z$tot_basin_slope+0.08264061*Z$developed-0.12802625*Z$AUG+dec_mean
 
-plot(P, G)
-
-pplof <- function(tot_basin_area, ppt_mean, temp_mean, tot_basin_slope, developed, aug) {
+pplof <- function(tot_basin_area, ppt_mean, temp_mean, tot_basin_slope, developed, aug, is_florida, is_west) {
   tot_basin_area  <- log10(tot_basin_area )
   ppt_mean        <- log10(ppt_mean       )
   temp_mean       <- log10(temp_mean      )
   tot_basin_slope <- log10(tot_basin_slope)
   developed <- 2*asin(sqrt(developed/100))
-  fd <- 4.69434743 + 0.08662583*tot_basin_area + 0.15617579*ppt_mean +
-    -0.97508550*temp_mean + 0.05167631*tot_basin_slope +
-    0.06239266*developed -0.12047591*aug + 0.03222257
+  fd <- 4.28515573 + 0.08933129*tot_basin_area + 0.24608588*ppt_mean +
+    -0.78914128*temp_mean + 0.04472021*tot_basin_slope +
+  0.07328314*developed -0.14103502*aug +
+   -0.08679212*is_florida + 0.02907497*is_west + 0.03119342
   print(fd)
   fd <- 10^fd; fd[fd > 3653] <- 3653; return(1-fd/3653)
 }
 est_pplo <- pplof(10^D$tot_basin_area, 10^D$ppt_mean, 10^D$temp_mean,
-                  10^D$tot_basin_slope, D$developed, D$AUG)
+                  10^D$tot_basin_slope, D$developed, D$AUG, D$isFL, D$isWest)
 plot(D$pplo, est_pplo, xlim=c(0,1), ylim=c(0,1),
      xlab="Observed fraction percentage decadal no flow",
      ylab="Predicted fraction percentage decadal no flow",
