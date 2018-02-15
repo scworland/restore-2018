@@ -45,3 +45,55 @@ ggplot() +
           subtitle="Site indicated by red diamond. Based on decadal Kmeans with 5 centers calculated from 34 basin characteristics") +
   theme_bw() 
 
+
+# Kmeans for coordinates
+site_info <- st_read('data/shapefiles/gages/restore_gages.shp') %>%
+  mutate(site_no=as.character(site_no))
+
+km_coords <- select(site_info,lat,lon) %>%
+  st_set_geometry(NULL) %>%
+  do(data.frame(., kclust = kmeans(as.matrix(.),centers=6)$cluster)) %>%
+  mutate(site_no = site_info$site_no,
+         kclust = as.character(kclust)) %>%
+  select(-lat,-lon) %>%
+  left_join(site_info, by="site_no")
+
+ggplot(km_coords) + 
+  geom_sf(aes(shape=kclust),show.legend="point") + 
+  labs(x="Longitude",y="Latitude") +
+  #coord_sf(datum = NA) +
+  theme_bw() 
+
+# function to find reference site
+site_info <- st_read('data/shapefiles/gages/restore_gages.shp',stringsAsFactors = F) 
+
+d <- read_feather("data/gage/all_gage_data.feather") 
+
+all_x <- read_feather("data/gage/all_gage_covariates.feather") %>%
+  mutate(decade=as.character(decade))
+
+ref_x <- d %>%
+  select(comid,site_no,decade) %>%
+  left_join(all_x,by=c("comid","site_no","decade"))
+
+ref_list <- find_ref(all_x,ref_x,site="08023080",distance=150)
+
+refs_plot <- ref_list$subs %>%
+  gather(type,site_no,-decade) %>%
+  left_join(site_info,by="site_no")
+
+sites_plot <- site_info %>%
+  filter(!site_no %in% refs_plot$site_no)
+
+ggplot() +
+  geom_sf(data=sites_plot, color="grey", alpha=0.5, size=0.8) +
+  geom_sf(data=refs_plot,aes(shape=type,fill=type),show.legend="point") +
+  scale_shape_manual(values=c(3,21,21)) +
+  scale_fill_manual(values=c("black","orange","dodgerblue")) +
+  facet_wrap(~decade) +
+  theme_bw() +
+  theme(legend.position = 'top')
+
+
+
+

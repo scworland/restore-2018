@@ -13,6 +13,9 @@ rest_huc12 <- st_read('data/shapefiles/restore_hucs/restoreHUC12s.shp', stringsA
 # load site list and get NHD comids for each gage
 sites <- read_csv("data/decade1950plus_site_list.csv")
 
+UM = "https://cida-test.er.usgs.gov/nldi/ss_gages/08116650/navigate/UM"
+nldi_data <- rgdal::readOGR(dsn = UM, layer = "OGRGeoJSON", verbose = FALSE)
+
 # use NLDI to find comids
 sites$comid <- NA
 for(i in 1:nrow(sites)){
@@ -30,6 +33,22 @@ sites <- sites %>%
 
 write_csv(sites,"data/decade1950plus_site_list_comid.csv")
 write_feather(sites,"data/decade1950plus_site_list.feather")
+
+# ----test COMIDs-----
+mwcomid <- read.dbf("data/gage/Gages_Order_PathIDs.dbf", as.is = FALSE)
+cda <- read_delim("data/gage/cda_bust.txt",delim=" ") %>%
+  mutate(bust="cda_bust")
+
+sites <- read_feather("data/decade1950plus_site_list.feather") %>%
+  left_join(mwcomid,by="site_no") %>%
+  select(site_no,nldi_comid=comid,gageloc_comid=GL_COMID) %>%
+  mutate_all(funs(as.character)) %>%
+  mutate(diff=ifelse(nldi_comid!=gageloc_comid,"1","0"),
+         diff=replace(diff,is.na(diff),"1")) %>%
+  filter(diff==1) %>%
+  left_join(cda,by="site_no")
+
+write_feather(sites,"data/gage/comid_diff.feather")
 
 # find coordinates of gages 
 # sites <- read_feather("data/decade1950plus_site_list.feather")
@@ -83,3 +102,4 @@ st_write(rest_huc12, 'data/shapefiles/restore_hucs/restoreHUC12s.shp')
 # 
 # 
 # hold <- Reduce(merge,immutable_chars)
+

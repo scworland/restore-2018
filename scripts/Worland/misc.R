@@ -19,8 +19,8 @@ por <- d %>%
   mutate(id=rev(1:nrow(.)))
 
 ggplot(por) + 
-  geom_segment(aes(x = start, y = id, xend = end, yend = id,color=kept),alpha=0.5) +
-  scale_color_manual(values=c("orange","dodgerblue"),name="period of record") +
+  geom_segment(aes(x = start, y = id, xend = end, yend = id,color=kept),alpha=0.3) +
+  scale_color_manual(values=c("grey","slateblue3"),name="period of record") +
   labs(x="years",y="Individual gages") +
   theme(legend.position = c(.3, .15),
         axis.text.y=element_blank(),
@@ -72,6 +72,13 @@ sites <- ls(DV)
 # load list of dvs
 dv_list <- as.list(DV)
 
+mx <- data.frame(sites)
+for (i in 1:length(dv_list)){
+  date <- dv_list[[i]]$Date
+  mx$max_date[i] <- as.character(max(date))
+}
+
+mx <- filter(mx,sites %in% d$site_no)
 # LULC files
 pth = "data/basinchars/sciencebase"
 lulc_files <- list.files(path=pth, pattern = glob2rx("*LULC*.feather"),full.names = T)
@@ -167,6 +174,84 @@ sw_get_files <- function(token){
 
 sw_get_files('58cbeef2e4b0849ce97dcd61')
 
+# plot AEP
+library(lmomco)
+L1 = 10^(2.13)
+T2 = 0.65
+T3 = 0.56
+T4 = 0.36
+lmr <- vec2lmom(c(L1,T2,T3,0.5*T4), lscale=FALSE)
+par <- paraep4(lmr, snap.tau4=TRUE) 
+FF <- seq(0,1,0.005)
+Q <- qlmomco(FF, par)
 
+
+FF <- c(0.00001, 0.0001, 0.001, seq(0.01, 0.99, by=0.01),
+       0.999, 0.9999, 0.99999)
+
+par1 <- list(para=c(0,1,1,1), type="aep4")
+par2 <- list(para=c(0,3,1,1), type="aep4")
+par3 <- list(para=c(0,5,1,1), type="aep4")
+
+aep <- data.frame(FF) %>%
+  mutate("0,1,1,1" = quaaep4(FF, par1),
+         "0,3,1,1" = quaaep4(FF, par2),
+         "0,5,1,1" = quaaep4(FF, par3)) %>%
+  gather(parameters,value,-FF)
+
+ggplot(aep) + 
+  geom_line(aes(FF,value,linetype=parameters)) +
+  scale_linetype_manual(values=c("solid","dotted","longdash")) +
+  coord_cartesian(ylim=c(-10,10)) +
+  xlab("Nonexceedance Probability") +
+  theme_bw() +
+  theme(legend.position = c(0.85,0.25), 
+        legend.box.background = element_rect())
+
+# plot activation functions
+x <- seq(-10,10,0.01)
+
+sigmoid = function(x){1/(1+exp(-x))}
+tanh = function(x){2*(sigmoid(1*x))-1}
+relu = function(x){sapply(x, function(z) max(0,z))}
+
+d <- data.frame(x=x,
+                sigmoid=sigmoid(x),
+                tanh=tanh(x),
+                relu=relu(x)) %>%
+  gather(activation, value, -x) 
+
+ggplot(d) + 
+  geom_line(aes(x,value,linetype=activation)) +
+  scale_linetype_manual(values=c("solid","dotted","longdash")) +
+  coord_cartesian(ylim=c(-1,1),xlim=c(-5,5)) +
+  labs(y="f(x)") +
+  theme_bw()
+
+d <- data.frame(x=x,
+                "bias1"=sigmoid(x-2),
+                "bias2"=sigmoid(x+0),
+                "bias3"=sigmoid(x+2)) %>%
+  gather(bias, value, -x) %>%
+  mutate(bias = ifelse(bias=="bias1","sigmoid(x-2)",bias),
+         bias = ifelse(bias=="bias2","sigmoid(x+0)",bias),
+         bias = ifelse(bias=="bias3","sigmoid(x+2)",bias))
+
+ggplot(d) + 
+  geom_line(aes(x,value,linetype=bias)) +
+  scale_linetype_manual(values=c("solid","dotted","longdash")) +
+  labs(linetype="varying bias",y="f(x)") +
+  theme_bw()
+
+# possible physics based L1
+d <- read_feather("data/gage/all_gage_data.feather") 
+
+l1_area <- d %>%
+  select(site_no,L1,area=tot_basin_area) %>%
+  mutate(L1 = round(log10(L1)),
+         area = round(log10(area))) %>%
+  arrange(L1,area)
+
+ggplot(l1_area) + geom_point(aes(L1,tot_basin_area),alpha=0.4)
 
 

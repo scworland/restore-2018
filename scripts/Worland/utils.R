@@ -45,6 +45,17 @@ sw_lmoms2 <- function(x,type="gno") {
   return(qlmomco(FF, pars))
 }
 
+sw_lmom2q <- function(lmoms,FF){
+  moms <- vec2lmom(lmoms, lscale=FALSE) 
+  par <- paraep4(moms, snap.tau4=TRUE) 
+  if(is.null(par)){
+    Q <- NA
+  }else{
+    Q <- qlmomco(FF, par)
+  }
+  return(Q)
+}
+
 # find column name with max value
 find_max <- function(df) {
   colnames(df)[max.col(df,ties.method="first")]
@@ -52,7 +63,7 @@ find_max <- function(df) {
 
 # download and unzip files from sciencebase
 #' @example sw_sb_extract("5835cad4e4b0d9329c801b22")
-sw_sb_extract <- function(item,type="TOT",path="data/basinchars/nhd_sb",group=0){
+sw_sb_extract <- function(item,type="TOT",path="data/basinchars/nhd_sb",group=0,sites,huc12s){
   
   library(sbtools)
   
@@ -108,7 +119,7 @@ sw_sb_extract <- function(item,type="TOT",path="data/basinchars/nhd_sb",group=0)
 }
 
 # return sites in same kcluster as given site
-obs_in_cluster <- function(site,kmeans_df) {
+sw_obs_in_cluster <- function(site,kmeans_df) {
   
   site_df <- kmeans_df %>%
     filter(site_no==site)
@@ -129,13 +140,14 @@ obs_in_cluster <- function(site,kmeans_df) {
 }
 
 # Find reference site
-find_ref <- function(all_x,ref_x,site,distance){
+sw_find_ref <- function(all_x,ref_x,site,distance=200){
   
   library(proxy)
   
   decades <- unique(all_x$decade)
   
   ref_site <- NULL
+  subs <- NULL
   for(i in 1:length(decades)){
     
     # extract rows for site (simulate ungaged)
@@ -150,23 +162,33 @@ find_ref <- function(all_x,ref_x,site,distance){
     lat <- ref_xd$lat
     
     # find sites with streamflow and within distance
-    neighbors <- geo_dist(site_data,ref_sites,lon,lat,distance=200)
+    neighbors <- sw_geo_dist(site_data,ref_sites,lon,lat,distance=distance)
     
     # find site that is the most similar in Euclidean space
     sub_xd <- ref_xd %>%
-      filter(site_no %in% neighbors$neighbor) 
+      filter(site_no %in% neighbors$neighbor) %>%
+      filter(site_no != site)
     
     dists <- proxy::dist(select(sub_xd,ppt_mean:tot_rdx),
                          select(site_data,ppt_mean:tot_rdx))
     
     ref_site[i] <- sub_xd$site_no[which(dists==min(dists))]
+    
+    sub_site_no <- sub_xd %>%
+      select(possible_sites=site_no,decade) %>%
+      mutate(ref_site=ref_site[i],
+             site=site)
+    
+    subs <- rbind(subs,sub_site_no)
   }
   
-  result <- data.frame(decade=decades,ref_site)
+  refs <- data.frame(decade=decades,ref_site,stringsAsFactors = F)
+  subs <- select(subs,site,decade,possible_sites,ref_site)
+  result <- list(refs=refs,subs=subs)
 }
 
 # find sites within geographic distance
-geo_dist <- function(site_data,ref_sites,lon,lat,distance=100){
+sw_geo_dist <- function(site_data,ref_sites,lon,lat,distance=200){
   
   library(geosphere)
   
@@ -185,8 +207,22 @@ geo_dist <- function(site_data,ref_sites,lon,lat,distance=100){
 }
 
 
-
-
+# sample groups. Stole directly from kendonB (https://github.com/tidyverse/dplyr/issues/361)
+sample_n_groups = function(tbl, size, replace = FALSE, weight = NULL) {
+  grps = tbl %>% 
+    groups %>% 
+    lapply(as.character) %>% 
+    unlist
+  
+  keep = tbl %>% 
+    summarise() %>% 
+    ungroup() %>% 
+    sample_n(size, replace, weight)
+  
+  tbl %>% 
+    right_join(keep, by=grps) %>% 
+    group_by_(.dots = grps)
+}
 
 
 

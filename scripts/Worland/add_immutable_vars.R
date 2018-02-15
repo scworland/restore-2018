@@ -2,12 +2,13 @@ library(pacman)
 pacman::p_load(tidyverse,stringr,lubridate,feather,geoknife,sf,sp,dataRetrieval)
 
 # uncomment to run from command line
-setwd("/Users/scworlan/Documents/Restore")
+# setwd("/Users/scworlan/Documents/Restore")
 
 # source scripts
 source('scripts/worland/nldi_funs.R')
 source('scripts/worland/utils.R')
 
+sw_add_immutablevars <- function(item_list,site_list,huc_list){
 # load sites and hucs
 sites <- read_feather("data/decade1950plus_site_list.feather")
 huc12s <- read_feather("data/huc12_list_comid.feather")
@@ -52,4 +53,4 @@ immutable_huc12_df <- as.data.frame(immutable_hucs) %>%
   select(comid, huc12, everything())
 
 write_feather(immutable_huc12_df,"data/basinchars/nhd_sb/immutable_huc12.feather")
-
+}

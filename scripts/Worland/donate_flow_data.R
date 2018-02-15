@@ -40,7 +40,7 @@ ref_x <- read_feather("data/gage/all_gage_data.feather")  %>%
 
 est_dvlist <- list()
 #for(i in 1:length(test_sites)){
-for(i in 1:3){
+for(i in 10:15){
   
   # select site
   test_site <- test_sites[i]
@@ -90,11 +90,12 @@ for(i in 1:3){
   
 }
 
-ggplot(est_dvlist[[1]]) +
-  geom_line(aes(date,Q_est)) +
-  geom_line(aes(date,Q_obs), color="dodgerblue") +
+ggplot(est_dvlist[[14]]) +
+  geom_line(aes(date,Q_obs)) +
+  geom_line(aes(date,Q_est),color="dodgerblue",alpha=0.7) +
   facet_wrap(~decade,scales="free",ncol=1) +
   theme_bw() +
+  ggtitle('Predicted streamflow',subtitle="blue=estimated, back=observed") +
   labs(y="Q")
 
 

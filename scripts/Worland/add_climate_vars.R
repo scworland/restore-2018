@@ -3,7 +3,7 @@ library(pacman)
 pacman::p_load(tidyverse,stringr,lubridate,feather,geoknife,sf,sp,dataRetrieval)
 
 # uncomment to run from command line
-setwd("/Users/scworlan/Documents/Restore")
+# setwd("/Users/scworlan/Documents/Restore")
 
 # source scripts
 source('scripts/worland/nldi_funs.R')

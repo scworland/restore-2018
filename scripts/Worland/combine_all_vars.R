@@ -12,7 +12,6 @@ immutable_gage_df <- read_feather("data/basinchars/nhd_sb/immutable_gage.feather
 climate_gage_df <- read_feather("data/basinchars/nhd_sb/climate_gage_df.feather")
 house_gage_df <- read_feather("data/basinchars/nhd_sb/housedens_gage_df.feather")
 dam_gage_df <- read_feather("data/basinchars/nhd_sb/dam_gage_df.feather")
-
 lulc_gage_df <- read_feather("data/basinchars/nhd_sb/lulc_gage_df.feather") 
 
 all_gage_covariates <- list(climate_gage_df,house_gage_df,dam_gage_df,lulc_gage_df) %>%
@@ -22,6 +21,8 @@ all_gage_covariates <- list(climate_gage_df,house_gage_df,dam_gage_df,lulc_gage_
   rename_all(tolower) %>%
   select(comid:woody_wetland,tot_bfi:tot_twi,tot_basin_area:tot_rdx,everything()) %>%
   filter(decade %in% c(1950,1960,1970,1980,1990,2000))
+
+write_feather(all_gage_covariates,"data/gage/all_gage_covariates.feather")
 
 ## load FDC data from Will A. 
 fdc50_00 <- read_feather("data/gage/fdc_lmr_pplo.feather")  %>%

@@ -3,7 +3,6 @@
 # library(parallelRemake)
 # makefile(targets = "all", remakefiles = "remake.yml", command = "make", args = c("--jobs=5", "-s"))
 
-
 packages:
   - tidyr
   - dplyr
@@ -13,7 +12,9 @@ packages:
   - sf
   - stringr
   - lubridate
-  
+
+file_extensions: ["feather"]
+
 sources:
   - scripts/Worland/clean
 
@@ -67,5 +68,5 @@ targets:
   gage_all:
     command: sw_gage_all(gage_covariates,fdc_data)
     
-  data/gage/all_gage_data.feather2:
+  data/gage/all_gage_data2.feather:
     command: write_feather(gage_all,target_name)
