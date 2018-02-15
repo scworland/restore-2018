@@ -8,8 +8,8 @@ AllFDCtrend <- visFDCtrend(TFDC, file="all_fdc_trend.pdf")
 save(AllFDCtrend, TFDC, file="AllFDCtrend.RData")
 #visFDCtrend(TFDC$"08093500", site="08093500") # new feature 09/28/2017
 
-# 12/01/2017
-sitesWOcompleteFDC <- c("02295163", "02300082", "02388350", "02432500",
+# 02/15/2018
+sitesWOcompleteFDC <- c("02295163", "02388350", "02432500",
                         "07031692", "08020450", "08067000", "08106350")
 
 
