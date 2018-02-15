@@ -1,30 +1,24 @@
-#dvget() for 02413210 --- via fill_dvenv (396/1387)
+#dvget() for 02413210 --- via fill_dvenv (392/1299)
 #  at least one -999999 discharge
-#dvget() for 02479980 --- via fill_dvenv (564/1387)
+#dvget() for 07040000 --- via fill_dvenv (634/1299)
 #  at least one -999999 discharge
-#dvget() for 07040000 --- via fill_dvenv (639/1387)
+#dvget() for 07040100 --- via fill_dvenv (635/1299)
 #  at least one -999999 discharge
-#dvget() for 07040100 --- via fill_dvenv (640/1387)
+#dvget() for 07040450 --- via fill_dvenv (636/1299)
 #  at least one -999999 discharge
-#dvget() for 07040450 --- via fill_dvenv (641/1387)
+#dvget() for 07285400 --- via fill_dvenv (684/1299)
 #  at least one -999999 discharge
-#dvget() for 07285400 --- via fill_dvenv (689/1387)
+#dvget() for 07337000 --- via fill_dvenv (720/1299)
 #  at least one -999999 discharge
-#dvget() for 07337000 --- via fill_dvenv (739/1387)
-#  at least one -999999 discharge
-#dvget() for 08025360 --- via fill_dvenv (916/1387)
-#  at least one -999999 discharge
-#dvget() for 08057300 --- via fill_dvenv (988/1387)
+#dvget() for 08057300 --- via fill_dvenv (965/1299)
 #  at least one -999999 discharge
 
 
-# REMOVE 08025360 because it is tail water gated discharges and not whole river.
-
-BadDVsites <- c("02413210", "02479980", "07040000", "07040100", "07040450",
-                "07285400", "07337000", "08025360", "08057300")
+BadDVsites <- c("02413210", "07040000", "07040100", "07040450",
+                "07285400", "07337000", "08057300")
 
 BadDV <- new.env()
-fill_dvenv(BadDVsites, envir=BadDV, edate="2016-09-30")
+fill_dvenv(BadDVsites, envir=BadDV, edate="2016-09-30", ignore.provisional=FALSE)
 
 # I have had conversations with GAWSC. I merged the Flow2 discharge for the NAs in Flow.
 02413210
@@ -38,14 +32,6 @@ H$..2.._Flow <- NULL
 H$..2.._Flow_cd <- NULL
 BadDV$"02413210" <- H
 
-
-
-
-LMG Site.
-     agency_cd  site_no       Date Flow Flow_cd     site year month decade wyear
-USGS	02479980	2016-05-09	10.7	P:e
-USGS	02479980	2016-05-10	10.9_***	P
-USGS	02479980	2016-05-11	10.7	P
 
 
       agency_cd  site_no       Date Flow Flow_cd     site year month decade wyear
