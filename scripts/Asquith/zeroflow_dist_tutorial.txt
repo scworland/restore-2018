@@ -16,7 +16,7 @@ but this curve is wrong and over estimates the low end! So now we plot the distr
 via a conditional probability offset or truncation. The key is in f2flo() and the
 transform (f - pp)/(1 - pp), which maps a [pplo, 1] interval into a [0,1] for purposes of
 computing the quantiles. For example, if the probability of zero flow is 0.078 as in this
-example, then the first fitted quantile at 0.078+eps in the real work is the 0th-percent
+example, then the first fitted quantile at 0.078+eps in the real world is the 0th-percent
 probability in the fitted distribution world. (The domain on which the L-moments were
 originally computed, which here means the nonzero flows.)
 
