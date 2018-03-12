@@ -220,7 +220,7 @@ save(D, DD, DDo, knots, knots_pplo, bnd, file="DEMO.RData")
 plot(bnd[[1]]$x,bnd[[1]]$y,type="l", col=8, lwd=.6)
 points(D$east[D$nzero == 0], D$north[D$nzero == 0], pch=4, lwd=.5, cex=0.9, col=rgb(0,.5,0.5,.5))
 points(D$east[D$nzero > 0 & D$nzero <= 800], D$north[D$nzero > 0 & D$nzero <= 800], pch=4, lwd=.5, cex=0.9, col=rgb(1,0,0.5,.5))
-points(D$east[D$nzero > 2000], D$north[D$nzero > 2000], pch=16, lwd=.5, cex=0.9, col=rgb(0.5,0,1,.5))
+points(D$east[D$nzero > 3653-2000], D$north[D$nzero > 3653-2000], pch=16, lwd=.5, cex=0.9, col=rgb(0.5,0,1))
 
 
 family <- "gaussian"
@@ -228,37 +228,45 @@ Z <- D
 x <- Z$east; y <- Z$north
 Z$developed <- 2*asin(sqrt(Z$developed/100))
 Zc <- Surv(log10(Z$n - Z$nzero), Z$nzero != 0, type="right")
-SM <- survreg(Zc~acc_basin_area+ppt_mean+temp_mean+acc_basin_slope+developed+decade-1, data=Z, dist=family)
+SM <- survreg(Zc~acc_basin_area+ppt_mean+temp_mean+acc_basin_slope+flood_storage+developed+ANN_DNI+bedperm+decade-1, data=Z, dist=family)
+#SM <- survreg(Zc~acc_basin_area+developed+ANN_DNI+decade-1, data=Z, dist=family)
 #SM <- gam(Zc[,1]~Z$decade+developed+s(Z$acc_basin_area, Z$ppt_mean, bs="tp")+
 #                 s(Z$ANN_DNI)+s(Z$acc_basin_slope)+s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots)
 P <- Po <- predict(SM); P[P > log10(3653)] <- log10(3653)
-plot(log10(Z$n - Z$nzero), P, xlim=c(3,3.6), ylim=c(3,3.6), pch=16, col=rgb(0,0,1,.2))
+plot(log10(Z$n - Z$nzero), P, xlim=c(2.3,3.6), ylim=c(3,3.6), pch=16, col=rgb(0,0,1,.2))
 abline(0,1)
-coefficients(SM)
-
-res <- residuals(SM); decade <- Z$decade
-RES <- gam(res~s(x, y, bs="so", xt=list(bnd=bnd))+decade-1, knots=knots, family="gaussian")
-COR <- Po + predict(RES); COR[COR > log10(3653)] <- log10(3653)
-#points(log10(Z$n - Z$nzero), COR, pch=16, col=rgb(1,0,0,.2), cex=.5)
-
 
 dec_code_count <- aggregate(data.frame(decade=Z$decade),
                             by=list(Z$decade), function(i) length(i))
 dec_code_count <- dec_code_count$decade
 coes <- coefficients(SM)
 dec_coe <- coes[grep("decade",names(coes))]
+if(length(dec_coe) == 5) dec_coe <- c(0, dec_coe)
 print(dec_coe)
 dec_mean <- weighted.mean(dec_coe, dec_code_count)
 
+
+res <- residuals(SM)
+decade <- Z$decade; area <- Z$acc_basin_area
+RES <- gam(res~s(x, y, bs="so", xt=list(bnd=bnd))+decade-1, knots=knots, family="gaussian")
+COR <- Po + predict(RES); COR[COR > log10(3653)] <- log10(3653)
+points(log10(Z$n - Z$nzero), COR, pch=16, col=rgb(1,0,0,.2), cex=.5)
+
+
+
+
 dec_coe_res <- coefficients(RES)
 dec_coe_res <- dec_coe_res[grep("decade",names(dec_coe_res))]
+if(length(dec_coe_res) == 5) dec_coe_res <- c(0, dec_coe_res)
 print(dec_coe_res)
 dec_mean_res <- weighted.mean(dec_coe_res, dec_code_count)
-COR2 <- Po + predict(RES) - dec_mean_res; COR2[COR2 > log10(3653)] <- log10(3653)
-points(log10(Z$n - Z$nzero), COR2, pch=16, col=rgb(1,0,0,.2), cex=.5)
+COR2 <- P + predict(RES) - dec_mean_res; COR2[COR2 > log10(3653)] <- log10(3653)
+points(log10(Z$n - Z$nzero), COR2, pch=16, col=rgb(0,1,0,.2), cex=.5)
 
-TEST <- predict(RES) - dec_mean_res
-J <- gam(TEST~s(x,y, bs="so", xt=list(bnd=bnd)), knots=knots)
+TEST <- dec_mean_res - res
+TEST <- log10(Z$n - Z$nzero) - P
+J <- gam(TEST~s(x,y, bs="so", xt=list(bnd=bnd))-1, knots=knots)
+plot(J, scheme=2)
 XYresENV <- new.env()
 #vis.gam <- edit(vis.gam) # see the screenshot file
 vis.gam(J, plot.type="contour",n.grid=100)
@@ -267,18 +275,20 @@ xg <- get("m1", XYresENV)
 yg <- get("m2", XYresENV)
 zg <- get("matrix", XYresENV)
 xg <- xg*1000; yg <- yg*1000
-unlink("test.txt"); do.call.names <- TRUE
+unlink("XYresENV.txt"); do.call.names <- TRUE
 for(i in 1:length(zg[,1])) {
   zs <- zg[i,]
   xs <- xg; ys <- rep(yg[i], length(xs))
-  write.table(data.frame(x=xs, y=ys, z=zs), file="test.txt", sep=",",
+  write.table(data.frame(x=xs, y=ys, z=zs), file="XYresENV.txt", sep=",",
               col.names=do.call.names, row.names=FALSE, na="", append=! do.call.names)
   do.call.names <- FALSE
 }
-test <- read.table("test.txt", header=TRUE, sep=",")
-test <- SpatialPointsDataFrame(cbind(test$x, test$y), data=test)
-proj4string(test) <- ALBEA
-writeOGR(test, "test/", "test", driver="ESRI Shapefile")
+GRID <- read.table("XYresENV.txt", header=TRUE, sep=",")
+GRID <- SpatialPointsDataFrame(cbind(GRID$x, GRID$y), data=GRID)
+proj4string(GRID) <- ALBEA
+library(rgdal)
+if(dir.exists("GRID/")) unlink("GRID/", recursive=TRUE)
+writeOGR(GRID, "GRID/", "GRID", driver="ESRI Shapefile")
 
 
 library(raster)
@@ -289,8 +299,87 @@ levels(ras)[[1]]$NAME <- letters[1:nrow(levels(ras)[[1]])]
 plot(ras)
 proj4string(ras) <- ALBEA
 library(rgdal)
-unlink("test.tif")
-writeRaster(ras, "test.tif", "tif")
+unlink("GRID.tif")
+writeRaster(ras, "GRID.tif", "GTiff")
+
+
+
+H <- extract(ras, Z)
+H[is.na(H)] <- mean(H, na.rm=TRUE)
+Z$pploxy <- H
+Zc <- Surv(log10(Z$n - Z$nzero), Z$nzero != 0, type="right")
+SM2 <- survreg(Zc~acc_basin_area+ppt_mean+temp_mean+acc_basin_slope+flood_storage+developed+ANN_DNI+pploxy+bedperm+decade-1, data=Z, dist=family)
+#SM2 <- survreg(Zc~acc_basin_area+developed+ANN_DNI+pploxy+decade-1, data=Z, dist=family)
+P2 <- P2o <- predict(SM2); P2[P2 > log10(3653)] <- log10(3653)
+
+#H[H > -0.10] <- 0
+P3 <- Po + 9.17464*H; P3[P3 > log10(3653)] <- log10(3653)
+
+plot(log10(Z$n - Z$nzero), P,
+     xlim=c(3,3.6), ylim=c(3,3.6), pch=16, col=rgb(0,0,1,.2))
+abline(0,1)
+points(log10(Z$n - Z$nzero), P2,
+       xlim=c(3,3.6), ylim=c(3,3.6), pch=16, col=rgb(1,0,0,.2))
+opts <- options(warn=-1)
+for(i in 1:length(P)) { arrows(ZN[i],P[i],ZN[i],P2[i], lwd=0.5, angle=10, length=.1)}
+options(opts)
+points(log10(Z$n - Z$nzero), P3,
+       xlim=c(3,3.6), ylim=c(3,3.6), pch=16, col=rgb(1,0,0,.2))
+opts <- options(warn=-1)
+for(i in 1:length(P)) { arrows(ZN[i],P[i],ZN[i],P3[i], lwd=0.5, angle=10, length=.1)}
+options(opts)
+
+AIC(SM)
+AIC(SM2)
+A <- abs(P-log10(Z$n - Z$nzero))
+B <- abs(P2-log10(Z$n - Z$nzero))
+summary(A)
+summary(B)
+plot( qnorm(pp(A)), sort(A), type="l")
+lines(qnorm(pp(B)), sort(B), col=2)
+
+
+plot(bnd[[1]]$x,bnd[[1]]$y,type="l", col=8, lwd=.6)
+points(D$east[D$nzero == 0], D$north[D$nzero == 0], pch=4, lwd=.5, cex=0.9, col=rgb(0,.5,0.5,.5))
+points(D$east[D$nzero > 0 & D$nzero <= 800], D$north[D$nzero > 0 & D$nzero <= 800], pch=4, lwd=.5, cex=0.9, col=rgb(1,0,0.5,.5))
+points(D$east[D$nzero > 3653-2000], D$north[D$nzero > 3653-2000], pch=16, lwd=.5, cex=0.9, col=rgb(0.5,0,1))
+mtext("Raw of PPLO")
+
+
+
+plot(bnd[[1]]$x,bnd[[1]]$y,type="l", col=8, lwd=.6)
+points(D$east[P == log10(3653)], D$north[P == log10(3653)], pch=4, lwd=.5, cex=0.9, col=rgb(0,.5,0.5,.5))
+points(D$east[P < log10(3653)], D$north[P < log10(3653)], pch=4, lwd=.5, cex=0.9, col=rgb(1,0,0.5,.5))
+points(D$east[P < log10(2000)], D$north[P < log10(2000)], pch=16, lwd=.5, cex=0.9, col=rgb(0.5,0,1,.5))
+mtext("Predictions of PPLO")
+
+plot(bnd[[1]]$x,bnd[[1]]$y,type="l", col=8, lwd=.6)
+points(D$east[P2 == log10(3653)], D$north[P2 == log10(3653)], pch=4, lwd=.5, cex=0.9, col=rgb(0,.5,0.5,.5))
+points(D$east[P2 < log10(3653)], D$north[P2 < log10(3653)], pch=4, lwd=.5, cex=0.9, col=rgb(1,0,0.5,.5))
+points(D$east[P2 < log10(2000)], D$north[P2 < log10(2000)], pch=16, lwd=.5, cex=0.9, col=rgb(0.5,0,1,.5))
+mtext("Predictions no.2 of PPLO")
+
+plot(bnd[[1]]$x,bnd[[1]]$y,type="l", col=8, lwd=.6)
+points(D$east[P3 == log10(3653)], D$north[P3 == log10(3653)], pch=4, lwd=.5, cex=0.9, col=rgb(0,.5,0.5,.5))
+points(D$east[P3 < log10(3653)], D$north[P3 < log10(3653)], pch=4, lwd=.5, cex=0.9, col=rgb(1,0,0.5,.5))
+points(D$east[P3 < log10(2000)], D$north[P3 < log10(2000)], pch=16, lwd=.5, cex=0.9, col=rgb(0.5,0,1,.5))
+mtext("Predictions no.3 of PPLO")
+
+
+
+plot(H, Z$ANN_DNI)
+lhs <- function(x) ifelse(x < -0.02, -0.02 - x, 0)
+rhs <- function(x) ifelse(x < -0.02, 0, x - -0.02)
+SM3 <- survreg(Zc~acc_basin_area+ppt_mean+temp_mean+acc_basin_slope+flood_storage+developed+ANN_DNI+pploxy+bedperm+decade-1, data=Z, dist=family)
+
+res3 <- residuals(SM3)
+J3 <- gam(res3~s(x,y, bs="so", xt=list(bnd=bnd))-1, knots=knots)
+plot(J3, scheme=2)
+
+
+lm(Z$ANN_DNI~lhs(Z$pploxy)+rhs(Z$pploxy))
+
+
 
 
 pplof <- function(basin_area, ppt_mean, temp_mean, basin_slope, developed, aug, is_florida, is_west) {
