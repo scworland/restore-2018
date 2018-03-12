@@ -1,0 +1,34 @@
+GENERAL FACTS:
+
+The U.S. Geological Survey (USGS), in cooperation with numerous Federal, State, and local cooperators, has, within the operational support of the streamgage network, in the study area collected and digitally archived about 18.4 million daily-mean streamflow values for 1,299 streamgages and about 815,000 days of no flow have occurred. A daily-mean streamflow value is simply the mean streamflow volume for a given day expressed in cubic feet per second (native units system of the USGS), and these are readily acquired from the Internet for a given streamgage identification number (a unique numerical identifier) (USGS, 2018). A no flow day is defined as a day for which the report flow was less than 0.01 cubic feet per second, and for general streamflow data this is the lowest flow reported by the USGS. No flow conditions are not to be attributed to full dry channel conditions, though this is often the physical situation on a no flow day.
+
+For this study, an initial master list of the 1,299 streamgages was created by those streamgages identified as residing within the study area boundary. This total does not represent all streamgages because initial screening was made to exclude those streamgages related factors including springflow determination, side weirs to river channels, partial flows for the tail races of dams, generally upstream from major tidal influences, and streamgages operating to record gage height and not streamflow. The screening sought to include streamgages for which daily-mean streamflow values were available and stemmed from what would reasonably be thought of as a watershed.
+
+It is difficult to briefly describe the distribution of the period of record for the 1,299 streamgages but the earliest daily value is Nov. 11, 1892 and the last daily value is Sept. 30, 2016. The later date was used as the truncation point for data assembly for this study as this date is the end of the 2016 water year. (A water year is the 12-month period from October 1 through September 30, designated by the calendar year in which it ends.)
+
+Subsequent to retrieval of the full period of record for a ending data of September 30, 2016, further screening was made to identify those streamgages having two distinct temporal criteria: (1) ``complete'' decade of streamflow for the calendar-year defined decades 1950, 1960, 1970, 1980, 1990, and 2000 and (2) an incomplete decade of 2010--2015 (6 years). A complete decade was defined for which up to 70 days could be missing in aggregate from the approximate maximum decade count of 3,653 days. This is a missing rate of 7 days per year. Similarly, the incomplete decade of 2010--2015 was defined for which 42 days could be missing in aggregate.
+
+Concerning the first temporal criteria (decades 1950--2000), there are 967 streamgages of the original 1,299 for which at least one complete decade of the six decades listed exists. Some streamgages then have just one decade represented and some streamgages have all six. In aggregate for the six decades, there are about 10.3 million days of flow and about 409,000 days of no flow.
+
+Concerning the second temporal criteria (period 2010--2015) , there are 783 streamgages of the original 1,299 having a complete record for the period 2010--2015. In aggregate for the 2010--2015 period, there are about 1.93 million days of flow and about 104,000 days of no flow. It was not a requirement that any of these 783 streamgages be represented for the first temporal criteria (decades 1950--2000) or that any of the 967 streamgages for the decades 1950--2000 be represented in the period 2010--2015.
+
+The primary reason that the number of streamgages in the two criteria are not equal to each other or equal to the 1,299 of the original list is that USGS streamgages have streamgage-specific periods of record influences by cooperator interest and fund levels, streamgaging technology, permanent inundation by reservoir backwater, and even safety concerns for streamgage operation.
+
+
+REFERENCES
+
+U.S. Geological Survey, 2018, National Water Information System---Web Interface, Daily data: accessed on November 14, 2017 at https://waterdata.usgs.gov/nwis/dv/?site_no=STATIONID&agency_cd=USGS
+[Replace STATIONID with the streamgage identification number]
+
+
+================================================ full_site_list.csv
+
+1,299 streamgages, about 18.4 million days of flow and about 815,000 days of no flow
+
+================================================ decade1950plus_site_list.csv
+
+967 streamgages, about 10.3 million days of flow and about 409,000 days of no flow
+
+================================================ decade2010-15_site_list.csv
+
+783 streamgages, about 1.93 million days of flow and about 104,000 days of no flow
