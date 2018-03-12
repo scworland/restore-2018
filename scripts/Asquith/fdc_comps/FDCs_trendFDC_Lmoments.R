@@ -73,9 +73,12 @@ if(length(ls(modFDCLMRlog)) != length(ls(modFDCLMRnolog)) ) {
 save(modFDCLMRlog, modFDCLMRnolog, modFDClmrdf.log, modFDClmrdf.nolog, file="modFDCLMR.RData")
 load("modFDCLMR.RData")
 
-fdc_lmr_pplo <- modFDClmrdf.nolog
+
 library(feather)
-write_feather(fdc_lmr_pplo, "fdc_lmr_pplo.feather")
+fdc_lmr_pplo <- modFDClmrdf.log
+names <- names(fdc_lmr_pplo)
+names[1] <- "site_no"; names(fdc_lmr_pplo) <- names
+write_feather(fdc_lmr_pplo, "log_fdc_lmr_pplo.feather")
 fdc_lmr_pplo <- read_feather("fdc_lmr_pplo.feather")
 
 
