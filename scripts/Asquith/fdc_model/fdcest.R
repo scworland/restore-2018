@@ -8,7 +8,7 @@ library(lmomco)
 library(Lmoments)
 library(survival)
 # https://www.sciencebase.gov/catalog/item/5669a79ee4b08895842a1d47
-FDC <- read_feather(file.choose()) # "all_gage_data2.feather"
+FDC <- read_feather(file.choose()) # "all_gage_data.feather"
 load(file.choose()) # "spRESTORE_MGCV_BND.RData"
 load(file.choose()) # spDNI_1998to2009.RData
 
@@ -100,14 +100,15 @@ length(DD$site_no)
 #n     <- aggregate(DD$n,     by=list(DD$site_no), sum)$x
 #nzero <- aggregate(DD$nzero, by=list(DD$site_no), sum)$x
 
-
-DD$flood_storage <- (DD$acc_nid_storage - DD$acc_norm_storage)/10^DD$CDA
+# storages are in acre-ft
+# 1 km2 = 247.104393047 acres
+DD$flood_storage <- (DD$acc_nid_storage - DD$acc_norm_storage)/(DD$acc_basin_area*247.104393047)
 DD[DD$flood_storage < 0,] # two sites: 02295420 and 02296750
-DD$flood_storage[DD$flood_storage < 0] <- (DD$acc_norm_storage[DD$flood_storage < 0] -
-                                            DD$acc_nid_storage[DD$flood_storage < 0]) /
-                                                     10^DD$CDA[DD$flood_storage < 0]
-DD$flood_storage[DD$flood_storage > 3000] <- 3000
-DD$flood_storage <- log10(DD$flood_storage+0.01)
+DD$flood_storage <- abs(DD$flood_storage)
+DD$flood_storage <- log10(DD$flood_storage+.01)
+plot(qnorm(pp(DD$flood_storage)), sort(DD$flood_storage))
+message("Maximum log10offets of flood_storage=",max(DD$flood_storage))
+
 
 DD$ppt_mean        <- log10(DD$ppt_mean)
 DD$temp_mean       <- log10(DD$temp_mean)
@@ -227,14 +228,15 @@ family <- "gaussian"
 Z <- D
 x <- Z$east; y <- Z$north
 Z$developed <- 2*asin(sqrt(Z$developed/100))
-Zc <- Surv(log10(Z$n - Z$nzero), Z$nzero != 0, type="right")
+Z$left.threshold <- rep(0, length(Z$nzero))
+Z$right.threshold <- log10(Z$n)
+Z$flowtime <- log10(Z$n - Z$nzero)
+Zc <- Surv(Z$flowtime, Z$nzero != 0, type="right")
 SM <- survreg(Zc~acc_basin_area+ppt_mean+temp_mean+acc_basin_slope+flood_storage+developed+ANN_DNI+bedperm+decade-1, data=Z, dist=family)
-#SM <- survreg(Zc~acc_basin_area+developed+ANN_DNI+decade-1, data=Z, dist=family)
-#SM <- gam(Zc[,1]~Z$decade+developed+s(Z$acc_basin_area, Z$ppt_mean, bs="tp")+
-#                 s(Z$ANN_DNI)+s(Z$acc_basin_slope)+s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots)
 P <- Po <- predict(SM); P[P > log10(3653)] <- log10(3653)
-plot(log10(Z$n - Z$nzero), P, xlim=c(2.3,3.6), ylim=c(3,3.6), pch=16, col=rgb(0,0,1,.2))
+plot(Z$flowtime, P, xlim=c(2.3,3.6), ylim=c(3,3.6), pch=16, col=rgb(0,0,1,.2))
 abline(0,1)
+
 
 dec_code_count <- aggregate(data.frame(decade=Z$decade),
                             by=list(Z$decade), function(i) length(i))
@@ -250,7 +252,7 @@ res <- residuals(SM)
 decade <- Z$decade; area <- Z$acc_basin_area
 RES <- gam(res~s(x, y, bs="so", xt=list(bnd=bnd))+decade-1, knots=knots, family="gaussian")
 COR <- Po + predict(RES); COR[COR > log10(3653)] <- log10(3653)
-points(log10(Z$n - Z$nzero), COR, pch=16, col=rgb(1,0,0,.2), cex=.5)
+points(Z$flowtime, COR, pch=16, col=rgb(1,0,0,.2), cex=.5)
 
 
 
@@ -261,10 +263,10 @@ if(length(dec_coe_res) == 5) dec_coe_res <- c(0, dec_coe_res)
 print(dec_coe_res)
 dec_mean_res <- weighted.mean(dec_coe_res, dec_code_count)
 COR2 <- P + predict(RES) - dec_mean_res; COR2[COR2 > log10(3653)] <- log10(3653)
-points(log10(Z$n - Z$nzero), COR2, pch=16, col=rgb(0,1,0,.2), cex=.5)
+points(Z$flowtime, COR2, pch=16, col=rgb(0,1,0,.2), cex=.5)
 
 TEST <- dec_mean_res - res
-TEST <- log10(Z$n - Z$nzero) - P
+TEST <- Z$flowtime - P
 J <- gam(TEST~s(x,y, bs="so", xt=list(bnd=bnd))-1, knots=knots)
 plot(J, scheme=2)
 XYresENV <- new.env()
@@ -307,7 +309,7 @@ writeRaster(ras, "GRID.tif", "GTiff")
 H <- extract(ras, Z)
 H[is.na(H)] <- mean(H, na.rm=TRUE)
 Z$pploxy <- H
-Zc <- Surv(log10(Z$n - Z$nzero), Z$nzero != 0, type="right")
+Zc <- Surv(Z$flowtime, Z$nzero != 0, type="right")
 SM2 <- survreg(Zc~acc_basin_area+ppt_mean+temp_mean+acc_basin_slope+flood_storage+developed+ANN_DNI+pploxy+bedperm+decade-1, data=Z, dist=family)
 #SM2 <- survreg(Zc~acc_basin_area+developed+ANN_DNI+pploxy+decade-1, data=Z, dist=family)
 P2 <- P2o <- predict(SM2); P2[P2 > log10(3653)] <- log10(3653)
@@ -315,15 +317,15 @@ P2 <- P2o <- predict(SM2); P2[P2 > log10(3653)] <- log10(3653)
 #H[H > -0.10] <- 0
 P3 <- Po + 9.17464*H; P3[P3 > log10(3653)] <- log10(3653)
 
-plot(log10(Z$n - Z$nzero), P,
+plot(Z$flowtime, P,
      xlim=c(3,3.6), ylim=c(3,3.6), pch=16, col=rgb(0,0,1,.2))
 abline(0,1)
-points(log10(Z$n - Z$nzero), P2,
+points(Z$flowtime, P2,
        xlim=c(3,3.6), ylim=c(3,3.6), pch=16, col=rgb(1,0,0,.2))
 opts <- options(warn=-1)
 for(i in 1:length(P)) { arrows(ZN[i],P[i],ZN[i],P2[i], lwd=0.5, angle=10, length=.1)}
 options(opts)
-points(log10(Z$n - Z$nzero), P3,
+points(Z$flowtime, P3,
        xlim=c(3,3.6), ylim=c(3,3.6), pch=16, col=rgb(1,0,0,.2))
 opts <- options(warn=-1)
 for(i in 1:length(P)) { arrows(ZN[i],P[i],ZN[i],P3[i], lwd=0.5, angle=10, length=.1)}
@@ -331,12 +333,41 @@ options(opts)
 
 AIC(SM)
 AIC(SM2)
-A <- abs(P-log10(Z$n - Z$nzero))
-B <- abs(P2-log10(Z$n - Z$nzero))
+A <- abs(P-Z$flowtime)
+B <- abs(P2-Z$flowtime)
 summary(A)
 summary(B)
 plot( qnorm(pp(A)), sort(A), type="l")
 lines(qnorm(pp(B)), sort(B), col=2)
+
+
+
+library(cenGAM)
+GM1 <- gam(flowtime~s(acc_basin_area)+s(ppt_mean)+s(temp_mean)+s(developed)+s(ANN_DNI)+bedperm+decade-1,
+    family=tobit1(left.threshold=Z$left.threshold,
+                  right.threshold=Z$right.threshold), data=Z)
+GM2 <- gam(flowtime~s(acc_basin_area)+s(ppt_mean)+s(temp_mean)+s(developed)+s(flood_storage)+s(ANN_DNI)+
+                    bedperm+decade-1+s(x,y, bs="so", xt=list(bnd=bnd)),
+    knots=knots,
+    family=tobit1(left.threshold=Z$left.threshold,
+                  right.threshold=Z$right.threshold), data=Z)
+P <- Po <- predict(SM); P[P > log10(3653)] <- log10(3653)
+plot(Z$flowtime, P, xlim=c(2.9,3.6), ylim=c(3,3.6), pch=16, col=rgb(0,0,1,.2))
+abline(0,1)
+C <- Co <- predict(GM2); C[C > log10(3653)] <- log10(3653)
+points(Z$flowtime, C, pch=1, col=2, cex=0.5)
+opts <- options(warn=-1)
+for(i in 1:length(P)) { arrows(Z$flowtime[i],P[i],Z$flowtime[i],C[i], lwd=0.5, angle=10, length=.1)}
+options(opts)
+A <- abs(P-Z$flowtime)
+B <- abs(C-Z$flowtime)
+summary(A)
+summary(B)
+plot( qnorm(pp(A)), sort(A), type="l")
+lines(qnorm(pp(B)), sort(B), col=2)
+save(GM2, file="PPLO.RData")
+
+
 
 
 plot(bnd[[1]]$x,bnd[[1]]$y,type="l", col=8, lwd=.6)
@@ -365,6 +396,11 @@ points(D$east[P3 < log10(3653)], D$north[P3 < log10(3653)], pch=4, lwd=.5, cex=0
 points(D$east[P3 < log10(2000)], D$north[P3 < log10(2000)], pch=16, lwd=.5, cex=0.9, col=rgb(0.5,0,1,.5))
 mtext("Predictions no.3 of PPLO")
 
+plot(bnd[[1]]$x,bnd[[1]]$y,type="l", col=8, lwd=.6)
+points(D$east[C == log10(3653)], D$north[C == log10(3653)], pch=4, lwd=.5, cex=0.9, col=rgb(0,.5,0.5,.5))
+points(D$east[C < log10(3653)], D$north[C < log10(3653)], pch=4, lwd=.5, cex=0.9, col=rgb(1,0,0.5,.5))
+points(D$east[C < log10(2000)], D$north[C < log10(2000)], pch=16, lwd=.5, cex=0.9, col=rgb(0.5,0,1,.5))
+mtext("Predictions cenGAM of PPLO")
 
 
 plot(H, Z$ANN_DNI)
