@@ -120,20 +120,40 @@ abline(0,1)
 abline(1/3,1,lty=2); abline(-1/3,1,lty=2)
 abline(1/2,1,lty=2); abline(-1/2,1,lty=3)
 mtext("Diagnostic check on watershed areas")
-sites_of_area_bust <- unique(DD$site_no[(DD$acc_basin_area - DD$CDA) < -1/2])
+sites_of_area_bust <- unique(DD$site_no[abs(DD$acc_basin_area - DD$CDA) > 1/2])
 for(site in sites_of_area_bust) {
   points(DD$CDA[DD$site_no == site], DD$acc_basin_area[DD$site_no == site], pch=16, col=2)
   DD <- DD[DD$site_no != site,]
 }
 
-DD$decade <- as.factor(DD$decade)
-DD$bedperm <- as.factor(DD$bedperm)
+DD$decade   <- as.factor(DD$decade)
+DD$bedperm  <- as.factor(DD$bedperm)
 DD$aquifers <- as.factor(DD$aquifers)
-DD$soller <- as.factor(DD$soller)
-DD$hlr <- as.factor(DD$hlr)
-DD$ecol3 <- as.factor(DD$ecol3)
-DD$physio <- as.factor(DD$physio)
-DD$statsgo <- as.factor(DD$statsgo)
+DD$soller   <- as.factor(DD$soller)
+DD$hlr      <- as.factor(DD$hlr)
+DD$ecol3    <- as.factor(DD$ecol3)
+DD$physio   <- as.factor(DD$physio)
+DD$statsgo  <- as.factor(DD$statsgo)
+
+DD$barren <- 2*asin(sqrt(DD$barren/100))
+DD$cultivated_cropland <- 2*asin(sqrt(DD$cultivated_cropland/100))
+DD$deciduous_forest    <- 2*asin(sqrt(DD$deciduous_forest/100))
+DD$developed           <- 2*asin(sqrt(DD$developed/100))
+DD$evergreen_forest    <- 2*asin(sqrt(DD$evergreen_forest/100))
+DD$grassland           <- 2*asin(sqrt(DD$grassland/100))
+DD$hay_pasture         <- 2*asin(sqrt(DD$hay_pasture/100))
+DD$herbaceous_wetland  <- 2*asin(sqrt(DD$herbaceous_wetland/100))
+DD$mixed_forest        <- 2*asin(sqrt(DD$mixed_forest/100))
+# Note perennial_ice_snow is 0.00 throughout
+DD$perennial_ice_snow  <- 2*asin(sqrt(DD$perennial_ice_snow/100))
+DD$shrubland           <- 2*asin(sqrt(DD$shrubland/100))
+DD$water               <- 2*asin(sqrt(DD$water/100))
+DD$woody_wetland       <- 2*asin(sqrt(DD$woody_wetland/100))
+
+
+
+
+
 
 DD$isWest <- 0
 DD$isWest[DD$x < 0] <- 1
@@ -227,9 +247,6 @@ points(D$east[D$nzero > 3653-2000], D$north[D$nzero > 3653-2000], pch=16, lwd=.5
 family <- "gaussian"
 Z <- D
 x <- Z$east; y <- Z$north
-Z$developed <- 2*asin(sqrt(Z$developed/100))
-Z$left.threshold <- rep(0, length(Z$nzero))
-Z$right.threshold <- log10(Z$n)
 Z$flowtime <- log10(Z$n - Z$nzero)
 Zc <- Surv(Z$flowtime, Z$nzero != 0, type="right")
 SM <- survreg(Zc~acc_basin_area+ppt_mean+temp_mean+acc_basin_slope+flood_storage+developed+ANN_DNI+bedperm+decade-1, data=Z, dist=family)
@@ -340,32 +357,61 @@ summary(B)
 plot( qnorm(pp(A)), sort(A), type="l")
 lines(qnorm(pp(B)), sort(B), col=2)
 
-
+#                    developed+cultivated_cropland+deciduous_forest+
+#                    evergreen_forest+grassland+hay_pasture+
+#                    herbaceous_wetland+mixed_forest+shrubland+
+#                    water+woody_wetland+
 
 library(cenGAM)
-GM1 <- gam(flowtime~s(acc_basin_area)+s(ppt_mean)+s(temp_mean)+s(developed)+s(ANN_DNI)+bedperm+decade-1,
-    family=tobit1(left.threshold=Z$left.threshold,
-                  right.threshold=Z$right.threshold), data=Z)
-GM2 <- gam(flowtime~s(acc_basin_area)+s(ppt_mean)+s(temp_mean)+s(developed)+s(flood_storage)+s(ANN_DNI)+
-                    bedperm+decade-1+s(x,y, bs="so", xt=list(bnd=bnd)),
-    knots=knots,
-    family=tobit1(left.threshold=Z$left.threshold,
-                  right.threshold=Z$right.threshold), data=Z)
+Z <- D
+x <- Z$east; y <- Z$north
+Z$left.threshold <- rep(0, length(Z$nzero))
+Z$right.threshold <- log10(Z$n)
+Z$flowtime <- log10(Z$n - Z$nzero)
+GM1 <- gam(flowtime~acc_basin_area+
+                    s(ppt_mean)+s(temp_mean)+s(ANN_DNI)+
+                    developed+s(grassland)+
+                    bedperm+decade-1,
+           family=tobit1(left.threshold=  Z$left.threshold,
+                         right.threshold=Z$right.threshold), data=Z); summary(GM1)
+GM2 <- gam(flowtime~acc_basin_area+
+                    s(ppt_mean)+s(temp_mean)+s(ANN_DNI)+
+                    developed+s(grassland)+
+                    bedperm+decade-1+
+        s(x,y, bs="so", xt=list(bnd=bnd)), knots=knots,
+           family=tobit1(left.threshold=  Z$left.threshold,
+                         right.threshold=Z$right.threshold), data=Z); summary(GM2)
 P <- Po <- predict(SM); P[P > log10(3653)] <- log10(3653)
-plot(Z$flowtime, P, xlim=c(2.9,3.6), ylim=c(3,3.6), pch=16, col=rgb(0,0,1,.2))
+C1 <- C1o <- predict(GM1); C1[C1 > log10(3653)] <- log10(3653)
+C2 <- C2o <- predict(GM2); C2[C2 > log10(3653)] <- log10(3653)
+pa <- abs(P - Z$flowtime)
+ca <- abs(C1- Z$flowtime)
+cb <- abs(C2- Z$flowtime)
+summary(pa)
+summary(ca)
+summary(cb)
+
+
+plot(Z$flowtime, P, xlim=c(2.9,3.6), ylim=c(3,3.6), type="n")
 abline(0,1)
-C <- Co <- predict(GM2); C[C > log10(3653)] <- log10(3653)
-points(Z$flowtime, C, pch=1, col=2, cex=0.5)
-opts <- options(warn=-1)
-for(i in 1:length(P)) { arrows(Z$flowtime[i],P[i],Z$flowtime[i],C[i], lwd=0.5, angle=10, length=.1)}
-options(opts)
-A <- abs(P-Z$flowtime)
-B <- abs(C-Z$flowtime)
-summary(A)
-summary(B)
-plot( qnorm(pp(A)), sort(A), type="l")
-lines(qnorm(pp(B)), sort(B), col=2)
-save(GM2, file="PPLO.RData")
+points(Z$flowtime ,P, pch=16, col=rgb(0,0,1,.5), cex=0.5)
+points(Z$flowtime,C2, pch=16, col=rgb(1,0,0,.2), cex=0.5)
+#for(i in 1:length(P)) {
+#  if(abs(P[i]-C1[i]) < .01) next
+#  try(arrows(Z$flowtime[i],P[i],Z$flowtime[i],C1[i],
+#             lwd=0.5, angle=10, length=.1, col=4), silent=TRUE)
+#}
+for(i in 1:length(P)) {
+  if(abs(P[i]-C2[i]) < .02) next
+  try(arrows(Z$flowtime[i],P[i],Z$flowtime[i],C2[i],
+             lwd=0.5, angle=20, length=.1, col=2), silent=TRUE)
+}
+
+plot( qnorm(pp(pa)), sort(pa), type="l", xlim=c(0,4))
+lines(qnorm(pp(ca)), sort(ca), col=4)
+lines(qnorm(pp(cb)), sort(cb), col=2)
+points(qnorm(pp(cb)), sort(cb), col=2)
+save(GM1, GM2, file="PPLOS.RData")
 
 
 
@@ -522,6 +568,17 @@ for(i in 1:length(CCC[1,])) {
   message(name, "  coef=",weighted.mean(vals, wgts))
 }
 
+
+
+
+
+Z <- D
+x <- Z$east; y <- Z$north
+GM2 <- gam(log10(L1)~s(acc_basin_area)+s(acc_basin_slope)+s(flood_storage)+
+                    s(ppt_mean)+s(temp_mean)+s(ANN_DNI)+
+                    developed+s(grassland)+
+                    bedperm+decade-1,
+           family="gaussian", data=Z); summary(GM2)
 
 
 
