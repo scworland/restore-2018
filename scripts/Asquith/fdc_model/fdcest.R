@@ -87,10 +87,6 @@ knots <- data.frame(x=c(x, -200), y=c(y, 800)); rm(x,y)
 points(knots$x, knots$y, pch=16, cex=1.1, col=4)
 
 knots_pplo <- knots
-# The as.numeric() is needed head of pplo use later
-plogit <- function(eta) as.numeric(exp(eta)/(exp(eta)+1))
-duan_smearing_estimator <- function(model) { sum(10^residuals(model))/length(residuals(model)) }
-
 
 length(DDo$site_no)
 length(DD$site_no)
@@ -201,6 +197,9 @@ D <- D[D$edwards_rechzone != "1",]
 
 save(D, DD, DDo, knots, knots_pplo, bnd, file="DEMO.RData")
 
+duan_smearing_estimator <- function(model) { sum(10^residuals(model))/length(residuals(model)) }
+
+
 # [45] "ppt_mean"            "ppt_sd"              "temp_mean"           "temp_sd"
 # [49] "tot_hdens"           "tot_major"           "tot_ndams"           "tot_nid_storage"
 # [53] "tot_norm_storage"    "barren"              "cultivated_cropland" "deciduous_forest"
@@ -266,7 +265,7 @@ mtext("Model structure not quite exact because of convergence issues in GAM")
 # that from survreg().
 
 GM1 <- gam(flowtime~acc_basin_area+
-                    s(ppt_mean, k=5)+s(temp_mean, k=4)+s(ANN_DNI, k=7)+
+                    s(ppt_mean, k=5)+s(temp_mean)+s(ANN_DNI)+
                     developed+s(grassland)+
                     bedperm+decade-1,
            family=tobit1(left.threshold=  Z$left.threshold,
@@ -318,8 +317,8 @@ points(Z$pplo, C2pplo, col=2)
 points(Z$pplo, C2pplo, col=4)
 abline(0,1)
 
-save(D, GM1, GM2, file="PPLOS.RData")
 PPLO <- GM2
+save(D, SM0, SM1, GM1, GM2, PPLO, file="PPLOS.RData")
 
 
 
@@ -474,6 +473,24 @@ pdf("T6.pdf", useDingbats=FALSE)
 dev.off()
 
 
+z <- log10(D$f50+1)      # --------------------------- Sixth L-moment ratio
+Q50   <- gam(z~acc_basin_area +
+               s(ppt_mean, k=5) + s(temp_mean, k=4) + s(ANN_DNI, k=7)+
+               developed+
+               mixed_forest+shrubland+
+               decade-1+
+               s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=Z,
+             family="gaussian")
+pdf("Q50.pdf", useDingbats=FALSE)
+plot(z, fitted.values(Q50))
+abline(0,1)
+plot(Q50, scheme=2)
+points(x, y, pch=4, lwd=.5, cex=0.9, col=8)
+points(knots$x, knots$y, pch=16, cex=1.1, col=4)
+text(100, 500, "Q50")
+dev.off()
+
+
 z <- log10(D$f90+1)      # --------------------------- Sixth L-moment ratio
 Q90   <- gam(z~acc_basin_area +
               s(ppt_mean, k=5) + s(temp_mean, k=4) + s(ANN_DNI, k=7)+
@@ -492,4 +509,21 @@ pdf("Q90.pdf", useDingbats=FALSE)
 dev.off()
 
 
-save(PPLO, L1, T2, T3, T4, T5, T6, Q90, file="Models.RData")
+z <- log10(D$f99+1)      # --------------------------- Sixth L-moment ratio
+Q99   <- gam(z~acc_basin_area +
+               s(ppt_mean, k=5) + s(temp_mean, k=4) + s(ANN_DNI, k=7)+
+               developed+
+               mixed_forest+shrubland+
+               decade-1+
+               s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=Z,
+             family="gaussian")
+pdf("Q99.pdf", useDingbats=FALSE)
+plot(z, fitted.values(Q99))
+abline(0,1)
+plot(Q99, scheme=2)
+points(x, y, pch=4, lwd=.5, cex=0.9, col=8)
+points(knots$x, knots$y, pch=16, cex=1.1, col=4)
+text(100, 500, "Q99")
+dev.off()
+
+save(D, PPLO, L1, T2, T3, T4, T5, T6, Q50, Q90, Q99, file="Models.RData")
