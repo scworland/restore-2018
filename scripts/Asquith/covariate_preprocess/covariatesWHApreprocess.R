@@ -4,6 +4,13 @@ library(sp)
 library(GISTools)
 library(RColorBrewer)
 
+load("DEMO.RData")
+load("Models.RData")
+load(file.choose()) # GulfStates.RData
+load(file.choose()) # spDNI_1998to2009.RData
+load(file.choose()) # "spRESTORE_MGCV_BND.RData"
+bnd <- list(x=bnd_poly_aea[,1]/1000, y=bnd_poly_aea[,2]/1000)
+bnd <- list(bnd)
 
 LATLONG <- paste0("+init=epsg:4269 +proj=longlat +ellps=GRS80 ",
                   "+datum=NAD83 +no_defs +towgs84=0,0,0")
@@ -13,7 +20,7 @@ ALBEA <- paste0("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +
 ALBEA <- sp::CRS(ALBEA)
 
 east_grids  <- seq(80,100,by=2)
-north_grids <- seq(28,38, by=2)
+north_grids <- seq(26,38, by=2)
 
 gx <- gy <- vector(mode="numeric")
 for(i in 1:length(north_grids)) {
@@ -23,22 +30,14 @@ for(i in 1:length(north_grids)) {
 GL <- SpatialPoints(cbind(-gx, gy), proj4string=LATLONG)
 GL <- spTransform(GL, ALBEA)
 XY <- coordinates(GL)
-x <- XY[,1]/1000
-y <- XY[,2]/1000
-ind <- mgcv::inSide(bnd,x,y)
-XY <- XY[ind,]
-x <- XY[,1]
-y <- XY[,2]
-plot(x, y, col=2)
+x <- XY[,1]/1000; y <- XY[,2]/1000
+#ind <- mgcv::inSide(bnd,x,y)
+#XY <- XY[ind,]
 GL <- SpatialPoints(cbind(x,y), proj4string=ALBEA)
-
-
-
-
-load(file.choose()) # GulfStates.RData
-
-
-
+ix <- 1:length(x)
+plot(GL, pch=1, col=2, add=TRUE)
+text(XY[,1],XY[,2], ix)
+GL <- GL[-c(1,3:9, 12, 14:20, 23, 34, 45)]
 
 COV <- COVo <- read_feather(file.choose()) # "all_huc12_covariates.feather"
 length(COVo$comid)                           # [1] 59070
@@ -84,6 +83,11 @@ spCOV$flood_storage <- log10(spCOV$flood_storage+.01)
 plot(qnorm(pp(spCOV$flood_storage)), sort(spCOV$flood_storage), type="l")
 #lines(qnorm(pp(DD$flood_storage)), sort(DD$flood_storage), col=2)
 length(spCOV$comid[spCOV$flood_storage >= 0.52]) # This is about 3.3 feet of watershed depth storage
+# [1] 35
+#summary(spCOV$flood_storage[spCOV$flood_storage >= 0.52])
+#   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+# 0.5228  0.5546  0.7193  0.7827  0.8425  1.5351
+
 spCOV <- spCOV[spCOV$flood_storage < 0.52,]
 
 
@@ -137,9 +141,124 @@ length(spCOV$comid[spCOV$ecol3 == "ecol3_37"]) # [1] 198
 length(spCOV$comid[spCOV$ecol3 == "ecol3_72"]) # [1] 12
 length(spCOV$comid[spCOV$ecol3 == "nodata"])   # [1] 30
 
-spCOV <- spCOV[spCOV$ecol3 != "ecol3_37",]
-spCOV <- spCOV[spCOV$ecol3 != "ecol3_72",]
-spCOV <- spCOV[spCOV$ecol3 != "nodata",]
+#spCOV <- spCOV[spCOV$ecol3 != "ecol3_37",]
+#spCOV <- spCOV[spCOV$ecol3 != "ecol3_72",]
+#spCOV <- spCOV[spCOV$ecol3 != "nodata",]
+
+
+
+
+
+
+
+
+map_annotation <- function() {
+  ss <- list(x=-90000, y=320000)
+  SpatialPolygonsRescale(layout.scale.bar(height=.07), offset=ss, scale=200*1000,
+                         fill=c("transparent", "black"), plot.grid=FALSE, lwd=0.4)
+  ss <- list(x=-90000, y=303000)
+  SpatialPolygonsRescale(layout.scale.bar(height=.08), offset=ss, scale=100*1609.344,
+                         fill=c("transparent", "black"), plot.grid=FALSE, lwd=0.4)
+  xx <- -122000
+  sl <- list(x=xx, y=350000)
+  sr <- list(x=xx+200*1000, y=350000)
+  text(sl, "0",xx, cex=0.6, pos=4); text(sr, "200 kilometers", cex=0.5, pos=4)
+  sl <- list(x=xx, y=283000)
+  sr <- list(x=xx+100*1609.344, y=283000)
+  text(sl, "0", cex=0.6, pos=4); text(sr, "100 miles", cex=0.5, pos=4)
+
+  txt <- paste0("Albers Equal Area Projection\n",
+                "North American Datum of 1983\n",
+                "Base modified from U.S. Geological Survey digital data, 1:24,000")
+  text(-420000, 1590000, txt, pos=4, cex=0.45)
+  plot(GulfStates, add=TRUE, lwd=.4, lty=2)
+  STATES <- c("Texas", "Oklahoma", "Missouri", "Arkansas", "Louisiana", "Mississippi",
+              "Tennessee", "Kentucky", "Alabama", "Georgia", "Florida")
+  STATES <- data.frame(easting=c(-440000, -202900.4,  178000,  178000,  279961.5,
+                                 430000,  710000,  710000,  710000,
+                                 1100000, 1270000),
+                       northing=c(955139.0, 1400000, 1558716.4, 1400000,  795368.5,
+                                  1170000, 1450000, 1600000, 1325000,
+                                  1170000, 800000),
+                       state=STATES)
+  text(STATES$easting, STATES$northing, STATES$state, pos=4, cex=0.7, col=grey(0.3))
+  plot(GL, lwd=0.4, col=grey(0.22), add=TRUE)
+}
+
+map_base <- function() {
+  par(lend=1, ljoin=1)
+  plot(spCOV, pch=NA); plot(GulfStates, add=TRUE, lty=0, col=grey(0.95))
+  polygon(bnd[[1]]$x*1000,bnd[[1]]$y*1000, col=grey(1), lwd=.7)
+}
+
+map_sebase <- function() {
+  k <- 0; ks <- c(0.6,0.8,1.0,1.2,1.4,1.6)
+  for(d in sort(unique(D$decade))) {
+    k <- k + 1
+    plot(D[D$decade == d,], pch=1, lwd=0.7, cex=ks[k], col=grey(0.72), add=TRUE)
+  }
+}
+
+choropleth_decade <-
+  function(data, cuts, x=NA, rev=FALSE, trans=function(t) {t}) {
+    env <- as.environment(as.list(slot(data, "data")))
+    if(x == "T2") {
+      y <- get("L2", envir=env)
+      x <- get("L1", envir=env)
+      x <- y/x
+    } else {
+      x <- get(x, envir=env)
+    }
+    decade <- get("decade", envir=env)
+    cols <- add.alpha(brewer.pal(10,"Spectral"),.7)
+    if(rev) cols <- rev(cols)
+    k <- 0; ks <- c(0.6,0.8,1.0,1.2,1.4,1.6)
+    for(d in sort(unique(decade))) {
+      k <- k + 1
+      tmp <- trans(x[decade == d])
+      shades <- auto.shading(tmp, cutter=cuts, n=9, cols=cols)
+      choropleth(data[data$decade == d,], tmp, pch=1, lwd=0.7, cex=ks[k], shading=shades, add=TRUE)
+    }
+  }
+
+choropleth_cov <-
+  function(data, cuts, x=NA, decade="2000", rev=FALSE, trans=function(t) {t}) {
+    data <- data[data$decade == decade,]
+    env <- as.environment(as.list(slot(data, "data")))
+    x <- get(x,   envir=env)
+    cols <- add.alpha(brewer.pal(10,"Spectral"),.7)
+    if(rev) cols <- rev(cols)
+    tmp <- trans(x)
+    shades <- auto.shading(tmp, cutter=cuts, n=9, cols=cols)
+    choropleth(data, tmp, pch=16, cex=0.4, shading=shades, add=TRUE)
+    return(shades)
+  }
+
+legend_est <- function(gage="", title="", note=TRUE, shades=NA, itgage=TRUE, ...) {
+  tx1 <- paste0("U.S. Geological Survey streamflow-gaging station:\n",
+                "Symbol colored* by observed decadal ",gage)
+  tx2 <- paste0("'COMID' location in the National Hydrography Dataset\n",
+                "version 2: Symbol colored by estimated decadal\n",gage)
+  if(itgage) {
+    legend(-80000, 595000, c(tx1, tx2), bty="n", cex=0.7, pt.cex=c(0.8,0.6),
+           lwd=c(0.7,1), lty=c(0,0), pch=c(1,16), col=c("#3288BDE6","#D53E4FE6"), ...)
+  } else {
+    legend(-80000, 520000, c(tx2), bty="n", cex=0.7, pt.cex=c(0.6),
+           lwd=c(1), lty=c(0), pch=c(16), col=c("#D53E4FE6"), ...)
+  }
+  choro.legend(850000, 690000, shades, cex=0.7, bty="n", box.col=grey(1), bg=grey(1),
+               fmt="%g", xjust=0, title=title)
+  if(note) {
+    text(270000, 320000,
+         "* Note that symbol size represents decade\n (1950 [smallest circle] through 2000 [largest circle]).",
+         cex=.6, pos=4)
+  }
+}
+
+setxt1 <- "standard error of fit"
+setxt2 <- "Standard error of fit"
+
+
 
 
 
@@ -149,289 +268,195 @@ spCOV <- spCOV[spCOV$ecol3 != "nodata",]
 
 
 EPo <- predict(PPLO, newdata=spCOV, se.fit=TRUE)
+EPo$se.fit <- EPo$se.fit*sqrt(PPLO$sig2)
 EPo$fit[is.na(EPo$fit)] <- mean(EPo$fit, na.rm=TRUE)
-EPo$se.fit[is.na(EPo$se.fit)] <- max(EPo$se.fit, na.rm=TRUE)
-EP$fit[EP$fit > log10(3653)] <- log10(3653)
+EPo$fit[EPo$fit > log10(3653)] <- log10(3653)
+EPo$se.fit[is.na(EPo$se.fit)] <- mean(EPo$se.fit, na.rm=TRUE)
 
-spCOV$est_pplo <- (3653-10^EP)/3653
+spCOV$est_pplo <- (3653-10^EPo$fit)/3653
 spCOV$est_pplo[is.na(spCOV$est_pplo)] <- 0
 spCOV$est_pplo[spCOV$est_pplo < 1/3653] <- 0
-
+spCOV$se.fit_est_pplo <- EPo$se.fit
 
 quantile(spCOV$est_pplo, probs=(1:9)/10, na.rm=TRUE)
-quantile(D$pplo, probs=(1:9)/10, na.rm=TRUE)
 quantile(EPo$se.fit,    probs=(1:9)/10, na.rm=TRUE)
 
 pploCuts <- function(x, n=9, ...) {
    labs <- 1:n
    cuts <- c(0, 0.005, .01, 0.04, .05, 0.1, 0.2, 0.4, 0.6)
-   #cuts <- c(1.2, 1.4, 1.6, 1.8, 1.9, 2.1, 2.3, 2.6, 3.14)
-   cuts <- cuts[labs]
-   names(cuts) <- paste("#", labs, sep = "")
-   cuts
+   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
 pploCutsSE <- function(x, n=9, ...) {
    labs <- 1:n
-   cuts <- c(0.016, 0.019, 0.021, 0.023, 0.026, 0.028, 0.031, 0.035)
-   #cuts <- c(0.015, 0.016, 0.017, 0.019, 0.020, 0.021, 0.022, 0.024, 0.028)
-   cuts <- cuts[labs]
-   names(cuts) <- paste("#", labs, sep = "")
-   cuts
+   cuts <- c(0.014, 0.015, 0.016, 0.018, 0.019, 0.020, 0.021, 0.022, 0.025)
+   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
-
-
-# load(file.choose()) # "GulfStates.RData"
-pdf("PPLOfit.pdf", useDingbats=FALSE, width=11, height=9.5)
-  par(lend=1, ljoin=1)
-  plot(spCOV, pch=NA); plot(GulfStates, add=TRUE, lty=0, col=grey(0.95))
-  polygon(bnd[[1]]$x*1000,bnd[[1]]$y*1000, col=grey(1), lwd=.7)
-  tmp <- D$pplo
-  shades <- auto.shading(tmp, cutter=pploCuts, n=9,
-                         cols=add.alpha(rev(brewer.pal(10,"Spectral")),.7))
-  choropleth(D, tmp, pch=1, lwd=0.7, cex=0.8, shading=shades, add=TRUE)
-
-  tmp <- spCOV$est_pplo; #
-  shades <- auto.shading(tmp, cutter=pploCuts, n=9,
-                         cols=add.alpha(rev(brewer.pal(10,"Spectral")),.2))
-  choropleth(spCOV, tmp, pch=16, cex=0.4, shading=shades, add=TRUE)
-  shades <- auto.shading(tmp, cutter=pploCuts, n=9, cols=rev(brewer.pal(10,"Spectral")))
-
-  ss <- list(x=-100000, y=420000)
-  SpatialPolygonsRescale(layout.scale.bar(height=.07), offset=ss, scale=200*1000,
-                         fill=c("transparent", "black"), plot.grid=FALSE, lwd=0.4)
-  ss <- list(x=-100000, y=403000)
-  SpatialPolygonsRescale(layout.scale.bar(height=.08), offset=ss, scale=100*1609.344,
-                         fill=c("transparent", "black"), plot.grid=FALSE, lwd=0.4)
-  xx <- -142000
-  sl <- list(x=xx, y=450000)
-  sr <- list(x=xx+200*1000, y=450000)
-  text(sl, "0",xx, cex=0.6, pos=4); text(sr, "200 kilometers", cex=0.5, pos=4)
-  sl <- list(x=xx, y=383000)
-  sr <- list(x=xx+100*1609.344, y=383000)
-  text(sl, "0", cex=0.6, pos=4); text(sr, "100 miles", cex=0.5, pos=4)
-
-  txt <- paste0("Albers Equal Area Projection\n",
-                "North American Datum of 1983\n",
-                "Base modified from U.S. Geological Survey digital data, 1:24,000")
-  text(-130000, 330000, txt, pos=4, cex=0.35)
-  plot(GulfStates, add=TRUE, lwd=.4, lty=2)
-  STATES <- c("Texas", "Oklahoma", "Missouri", "Arkansas", "Louisiana", "Mississippi",
-              "Tennessee", "Kentucky", "Alabama", "Georgia", "Florida")
-  STATES <- data.frame(easting=c(-440000, -202900.4,  178000,  178000,  279961.5,
-                                  430000,  690000,  690000,  690000,
-                                 1100000, 1270000),
-                       northing=c(955139.0, 1359890.9, 1558716.4, 1400000,  795368.5,
-                                  1170000, 1450000, 1600000, 1325000,
-                                  1170000, 800000),
-                       state=STATES)
-  text(STATES$easting, STATES$northing, STATES$state, pos=4, cex=0.7, col=grey(0.3))
-  legend(40000, 625000, c(paste0("U.S. Geological Survey streamflow-gaging station:\n",
-                                 "Colored* by observed decadal fraction of no flow conditions"),
-                          paste0("COMID for HUC12 of National Hydrography Dataset version 2:\n",
-                                 "Colored by estimated decadal fraction of no flow conditions")),
-         bty="n", cex=0.8, pt.cex=c(0.8,0.6), lwd=c(0.7,1), lty=c(0,0), pch=c(1,16),
-         col=c("#3288BDE6","#D53E4FE6"))
-  choro.legend(900000, 780000, shades, cex=0.8, bty="n", box.col=grey(1), bg=grey(1),
-               fmt="%g", xjust=0, title="Fraction decadal no flow")
-  text(205401.9, 490029.4, "* Note that ", cex=.45)
-
-
-  plot(spCOV, pch=NA); plot(GulfStates, add=TRUE, lty=0, col=grey(0.95))
-  polygon(bnd[[1]]$x*1000,bnd[[1]]$y*1000, col=grey(1), lwd=.7)
-
-  tmp <- EPo$se.fit; #
-  shades <- auto.shading(tmp, cutter=pploCutsSE, n=9,
-                         cols=add.alpha(rev(brewer.pal(10,"Spectral")),.2))
-  choropleth(spCOV, tmp, pch=16, cex=0.4, shading=shades, add=TRUE)
-  shades <- auto.shading(tmp, cutter=pploCutsSE, n=9, cols=rev(brewer.pal(10,"Spectral")))
-
-  ss <- list(x=-100000, y=420000)
-  SpatialPolygonsRescale(layout.scale.bar(height=.07), offset=ss, scale=200*1000,
-                         fill=c("transparent", "black"), plot.grid=FALSE, lwd=0.4)
-  ss <- list(x=-100000, y=403000)
-  SpatialPolygonsRescale(layout.scale.bar(height=.08), offset=ss, scale=100*1609.344,
-                         fill=c("transparent", "black"), plot.grid=FALSE, lwd=0.4)
-  xx <- -142000
-  sl <- list(x=xx, y=450000)
-  sr <- list(x=xx+200*1000, y=450000)
-  text(sl, "0",xx, cex=0.6, pos=4); text(sr, "200 kilometers", cex=0.5, pos=4)
-  sl <- list(x=xx, y=383000)
-  sr <- list(x=xx+100*1609.344, y=383000)
-  text(sl, "0", cex=0.6, pos=4); text(sr, "100 miles", cex=0.5, pos=4)
-
-  txt <- paste0("Albers Equal Area Projection\n",
-                "North American Datum of 1983\n",
-                "Base modified from U.S. Geological Survey digital data, 1:24,000")
-  text(-130000, 330000, txt, pos=4, cex=0.35)
-  plot(GulfStates, add=TRUE, lwd=.4, lty=2)
-  STATES <- c("Texas", "Oklahoma", "Missouri", "Arkansas", "Louisiana", "Mississippi",
-              "Tennessee", "Kentucky", "Alabama", "Georgia", "Florida")
-  STATES <- data.frame(easting=c(-440000, -202900.4,  178000,  178000,  279961.5,
-                                  430000,  690000,  690000,  690000,
-                                 1100000, 1270000),
-                       northing=c(955139.0, 1359890.9, 1558716.4, 1400000,  795368.5,
-                                  1170000, 1450000, 1600000, 1325000,
-                                  1170000, 800000),
-                       state=STATES)
-  text(STATES$easting, STATES$northing, STATES$state, pos=4, cex=0.7, col=grey(0.3))
-  legend(40000, 625000, c(paste0("U.S. Geological Survey streamflow-gaging station:\n",
-                                 "Colored* by observed decadal fraction of no flow conditions"),
-                          paste0("COMID for HUC12 of National Hydrography Dataset version 2:\n",
-                                 "Colored by estimated decadal fraction of no flow conditions")),
-         bty="n", cex=0.8, pt.cex=c(0.8,0.6), lwd=c(0.7,1), lty=c(0,0), pch=c(1,16),
-         col=c("#3288BDE6","#D53E4FE6"))
-  choro.legend(900000, 780000, shades, cex=0.8, bty="n", box.col=grey(1), bg=grey(1),
-               fmt="%g", xjust=0, title="Standard Error Fit")
-  text(205401.9, 490029.4, "* Note that ", cex=.45)
-  dev.off()
-
-
-
-
-
-
-
-
 EL1 <- predict(L1, newdata=spCOV, se.fit=TRUE)
+#EL1$se.fit <- sqrt(L1$sig2) * sqrt((EL1$se.fit/sqrt(L1$sig2))^2+1)
 EL1$fit[is.na(EL1$fit)] <- mean(EL1$fit, na.rm=TRUE)
 EL1$se.fit[is.na(EL1$se.fit)] <- mean(EL1$se.fit, na.rm=TRUE)
-
 spCOV$est_L1 <- EL1$fit
+spCOV$se.fit_est_L1 <- EL1$se.fit
 
 quantile(spCOV$est_L1, probs=(1:9)/10, na.rm=TRUE)
-quantile(log10(D$L1), probs=(1:9)/10, na.rm=TRUE)
 quantile(EL1$se.fit,    probs=(1:9)/10, na.rm=TRUE)
 
 L1Cuts <- function(x, n=9, ...) {
-   labs <- 1:n
-   cuts <- c(1.2, 1.4, 1.6, 1.8, 1.9, 2.1, 2.3, 2.6, 3.14)
-   cuts <- cuts[labs]
-   names(cuts) <- paste("#", labs, sep = "")
-   cuts
+  labs <- 1:n
+  cuts <- c(1.2, 1.4, 1.6, 1.8, 1.9, 2.1, 2.3, 2.6, 3.1)
+  cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
 L1CutsSE <- function(x, n=9, ...) {
-   labs <- 1:n
-   cuts <- c(0.015, 0.016, 0.017, 0.019, 0.020, 0.021, 0.022, 0.024, 0.028)
-   cuts <- cuts[labs]
-   names(cuts) <- paste("#", labs, sep = "")
-   cuts
+  labs <- 1:n
+  cuts <- c(0.014, 0.015, 0.016, 0.017, 0.018, 0.019, 0.020, 0.021, 0.024)
+  cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
 
 
 
+ET2 <- predict(T2, newdata=spCOV, se.fit=TRUE)
+ET2$fit[is.na(ET2$fit)] <- mean(ET2$fit, na.rm=TRUE)
+ET2$se.fit[is.na(ET2$se.fit)] <- mean(ET2$se.fit, na.rm=TRUE)
+spCOV$est_T2 <- ET2$fit
+spCOV$se.fit_est_T2 <- ET2$se.fit
+
+quantile(spCOV$est_T2, probs=(1:9)/10, na.rm=TRUE)
+quantile(ET2$se.fit,    probs=(1:9)/10, na.rm=TRUE)
+
+T2Cuts <- function(x, n=9, ...) {
+  labs <- 1:n
+  cuts <- c(0.54, 0.61, 0.65, 0.68, 0.71, 0.74, 0.77, 0.81, 0.87)
+  cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
+}
+
+T2CutsSE <- function(x, n=9, ...) {
+  labs <- 1:n
+  cuts <- c(0.0097, 0.0104, 0.0110, 0.0115, 0.0121, 0.0127, 0.0134, 0.0144, 0.0161)
+  cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
+}
 
 
-pdf("L1fit.pdf", useDingbats=FALSE, width=11, height=9.5)
-  par(lend=1, ljoin=1)
-  plot(spCOV, pch=NA); plot(GulfStates, add=TRUE, lty=0, col=grey(0.95))
-  polygon(bnd[[1]]$x*1000,bnd[[1]]$y*1000, col=grey(1), lwd=.7)
-  tmp <- log10(D$L1)
-  shades <- auto.shading(tmp, cutter=L1Cuts, n=9,
-                         cols=add.alpha(brewer.pal(10,"Spectral"),.7))
-  choropleth(D, tmp, pch=1, lwd=0.7, cex=0.8, shading=shades, add=TRUE)
+ET3 <- predict(T3, newdata=spCOV, se.fit=TRUE)
+ET3$fit[is.na(ET3$fit)] <- mean(ET3$fit, na.rm=TRUE)
+ET3$se.fit[is.na(ET3$se.fit)] <- mean(ET3$se.fit, na.rm=TRUE)
+spCOV$est_T3 <- ET3$fit
+spCOV$se.fit_est_T3 <- ET3$se.fit
 
-  tmp <- spCOV$est_L1; #
-  shades <- auto.shading(tmp, cutter=L1Cuts, n=9,
-                         cols=add.alpha(brewer.pal(10,"Spectral"),.2))
-  choropleth(spCOV, tmp, pch=16, cex=0.4, shading=shades, add=TRUE)
-  shades <- auto.shading(tmp, cutter=pploCuts, n=9, cols=rev(brewer.pal(10,"Spectral")))
+quantile(spCOV$est_T3, probs=(1:9)/10, na.rm=TRUE)
+quantile(ET3$se.fit,    probs=(1:9)/10, na.rm=TRUE)
 
-  ss <- list(x=-100000, y=420000)
-  SpatialPolygonsRescale(layout.scale.bar(height=.07), offset=ss, scale=200*1000,
-                         fill=c("transparent", "black"), plot.grid=FALSE, lwd=0.4)
-  ss <- list(x=-100000, y=403000)
-  SpatialPolygonsRescale(layout.scale.bar(height=.08), offset=ss, scale=100*1609.344,
-                         fill=c("transparent", "black"), plot.grid=FALSE, lwd=0.4)
-  xx <- -142000
-  sl <- list(x=xx, y=450000)
-  sr <- list(x=xx+200*1000, y=450000)
-  text(sl, "0",xx, cex=0.6, pos=4); text(sr, "200 kilometers", cex=0.5, pos=4)
-  sl <- list(x=xx, y=383000)
-  sr <- list(x=xx+100*1609.344, y=383000)
-  text(sl, "0", cex=0.6, pos=4); text(sr, "100 miles", cex=0.5, pos=4)
+T3Cuts <- function(x, n=9, ...) {
+  labs <- 1:n
+  cuts <- c(0.53, 0.58, 0.61, 0.64, 0.67, 0.70, 0.73, 0.78, 0.85)
+  cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
+}
 
-  txt <- paste0("Albers Equal Area Projection\n",
-                "North American Datum of 1983\n",
-                "Base modified from U.S. Geological Survey digital data, 1:24,000")
-  text(-130000, 330000, txt, pos=4, cex=0.35)
-  plot(GulfStates, add=TRUE, lwd=.4, lty=2)
-  STATES <- c("Texas", "Oklahoma", "Missouri", "Arkansas", "Louisiana", "Mississippi",
-              "Tennessee", "Kentucky", "Alabama", "Georgia", "Florida")
-  STATES <- data.frame(easting=c(-440000, -202900.4,  178000,  178000,  279961.5,
-                                  430000,  690000,  690000,  690000,
-                                 1100000, 1270000),
-                       northing=c(955139.0, 1359890.9, 1558716.4, 1400000,  795368.5,
-                                  1170000, 1450000, 1600000, 1325000,
-                                  1170000, 800000),
-                       state=STATES)
-  text(STATES$easting, STATES$northing, STATES$state, pos=4, cex=0.7, col=grey(0.3))
-  legend(40000, 625000, c(paste0("U.S. Geological Survey streamflow-gaging station:\n",
-                                 "Colored* by observed decadal mean of flow conditions"),
-                          paste0("COMID for HUC12 of National Hydrography Dataset version 2:\n",
-                                 "Colored by estimated decadal decadal mean of flow conditions")),
-         bty="n", cex=0.8, pt.cex=c(0.8,0.6), lwd=c(0.7,1), lty=c(0,0), pch=c(1,16),
-         col=c("#3288BDE6","#D53E4FE6"))
-  choro.legend(900000, 780000, shades, cex=0.8, bty="n", box.col=grey(1), bg=grey(1),
-               fmt="%g", xjust=0, title="Decadal mean of flow")
-  text(205401.9, 490029.4, "* Note that ", cex=.45)
+T3CutsSE <- function(x, n=9, ...) {
+  labs <- 1:n
+  cuts <- c(0.010, 0.0102, 0.0108, 0.0113, 0.0119, 0.0125, 0.0132, 0.0143, 0.0162)
+  cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
+}
 
 
-  plot(spCOV, pch=NA); plot(GulfStates, add=TRUE, lty=0, col=grey(0.95))
-  polygon(bnd[[1]]$x*1000,bnd[[1]]$y*1000, col=grey(1), lwd=.7)
+ET4 <- predict(T4, newdata=spCOV, se.fit=TRUE)
+ET4$fit[is.na(ET4$fit)] <- mean(ET4$fit, na.rm=TRUE)
+ET4$se.fit[is.na(ET4$se.fit)] <- mean(ET4$se.fit, na.rm=TRUE)
+spCOV$est_T4 <- ET4$fit
+spCOV$se.fit_est_T4 <- ET4$se.fit
 
-  tmp <- EL1$se.fit; #
-  shades <- auto.shading(tmp, cutter=L1CutsSE, n=9,
-                         cols=add.alpha(rev(brewer.pal(10,"Spectral")),.2))
-  choropleth(spCOV, tmp, pch=16, cex=0.4, shading=shades, add=TRUE)
-  shades <- auto.shading(tmp, cutter=L1CutsSE, n=9, cols=rev(brewer.pal(10,"Spectral")))
+quantile(spCOV$est_T4, probs=(1:9)/10, na.rm=TRUE)
+quantile(D$T4, probs=(1:9)/10, na.rm=TRUE)
+quantile(ET4$se.fit,    probs=(1:9)/10, na.rm=TRUE)
 
-  ss <- list(x=-100000, y=420000)
-  SpatialPolygonsRescale(layout.scale.bar(height=.07), offset=ss, scale=200*1000,
-                         fill=c("transparent", "black"), plot.grid=FALSE, lwd=0.4)
-  ss <- list(x=-100000, y=403000)
-  SpatialPolygonsRescale(layout.scale.bar(height=.08), offset=ss, scale=100*1609.344,
-                         fill=c("transparent", "black"), plot.grid=FALSE, lwd=0.4)
-  xx <- -142000
-  sl <- list(x=xx, y=450000)
-  sr <- list(x=xx+200*1000, y=450000)
-  text(sl, "0",xx, cex=0.6, pos=4); text(sr, "200 kilometers", cex=0.5, pos=4)
-  sl <- list(x=xx, y=383000)
-  sr <- list(x=xx+100*1609.344, y=383000)
-  text(sl, "0", cex=0.6, pos=4); text(sr, "100 miles", cex=0.5, pos=4)
+T4Cuts <- function(x, n=9, ...) {
+  labs <- 1:n
+  cuts <- c(0.34, 0.40, 44, 0.46, 0.50, 0.52, 0.56, 0.62, 0.72)
+  cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
+}
 
-  txt <- paste0("Albers Equal Area Projection\n",
-                "North American Datum of 1983\n",
-                "Base modified from U.S. Geological Survey digital data, 1:24,000")
-  text(-130000, 330000, txt, pos=4, cex=0.35)
-  plot(GulfStates, add=TRUE, lwd=.4, lty=2)
-  STATES <- c("Texas", "Oklahoma", "Missouri", "Arkansas", "Louisiana", "Mississippi",
-              "Tennessee", "Kentucky", "Alabama", "Georgia", "Florida")
-  STATES <- data.frame(easting=c(-440000, -202900.4,  178000,  178000,  279961.5,
-                                  430000,  690000,  690000,  690000,
-                                 1100000, 1270000),
-                       northing=c(955139.0, 1359890.9, 1558716.4, 1400000,  795368.5,
-                                  1170000, 1450000, 1600000, 1325000,
-                                  1170000, 800000),
-                       state=STATES)
-  text(STATES$easting, STATES$northing, STATES$state, pos=4, cex=0.7, col=grey(0.3))
-  legend(40000, 625000, c(paste0("U.S. Geological Survey streamflow-gaging station:\n",
-                                 "Colored* by observed decadal fraction of no flow conditions"),
-                          paste0("COMID for HUC12 of National Hydrography Dataset version 2:\n",
-                                 "Colored by estimated decadal fraction of no flow conditions")),
-         bty="n", cex=0.8, pt.cex=c(0.8,0.6), lwd=c(0.7,1), lty=c(0,0), pch=c(1,16),
-         col=c("#3288BDE6","#D53E4FE6"))
-  choro.legend(900000, 780000, shades, cex=0.8, bty="n", box.col=grey(1), bg=grey(1),
-               fmt="%g", xjust=0, title="Standard Error Fit")
-  text(205401.9, 490029.4, "* Note that ", cex=.45)
-  dev.off()
+T4CutsSE <- function(x, n=9, ...) {
+  labs <- 1:n
+  cuts <- c(0.0103, 0.0109, 0.0115, 0.0121, 0.0127, 0.0133, 0.0141, 0.0151, 0.0171)
+  cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
+}
 
 
+ET5 <- predict(T5, newdata=spCOV, se.fit=TRUE)
+ET5$fit[is.na(ET5$fit)] <- mean(ET5$fit, na.rm=TRUE)
+ET5$se.fit[is.na(ET5$se.fit)] <- mean(ET5$se.fit, na.rm=TRUE)
+spCOV$est_T5 <- ET5$fit
+spCOV$se.fit_est_T5 <- ET5$se.fit
+
+quantile(spCOV$est_T5, probs=(1:9)/10, na.rm=TRUE)
+quantile(D$T5, probs=(1:9)/10, na.rm=TRUE)
+quantile(ET5$se.fit,    probs=(1:9)/10, na.rm=TRUE)
+
+T5Cuts <- function(x, n=9, ...) {
+  labs <- 1:n
+  cuts <- c(0.226, 0.288, 0.326, 0.356, 0.382, 0.410, 0.443, 0.500, 0.600)
+  cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
+}
+
+T5CutsSE <- function(x, n=9, ...) {
+  labs <- 1:n
+  cuts <- c(0.0102, 0.0108, 0.0113, 0.0119, 0.0125,
+            0.0132, 0.0140, 0.0150, 0.0170)
+  cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
+}
 
 
+ET6 <- predict(T6, newdata=spCOV, se.fit=TRUE)
+ET6$fit[is.na(ET6$fit)] <- mean(ET6$fit, na.rm=TRUE)
+ET6$se.fit[is.na(ET6$se.fit)] <- mean(ET6$se.fit, na.rm=TRUE)
+spCOV$est_T6 <- ET6$fit
+spCOV$se.fit_est_T6 <- ET6$se.fit
+
+quantile(spCOV$est_T6, probs=(1:9)/10, na.rm=TRUE)
+quantile(D$T6, probs=(1:9)/10, na.rm=TRUE)
+quantile(ET6$se.fit,    probs=(1:9)/10, na.rm=TRUE)
+
+T6Cuts <- function(x, n=9, ...) {
+  labs <- 1:n
+  cuts <- c(0.17, 0.22, 0.26, 0.29, 0.31, 0.33, 0.36, 0.41, 0.52)
+  cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
+}
+
+T6CutsSE <- function(x, n=9, ...) {
+  labs <- 1:n
+  cuts <- c(0.0094, 0.0100, 0.0105, 0.0110, 0.0115, 0.0121, 0.0126, 0.0137, 0.0155)
+  cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
+}
+
+EQ50 <- predict(Q50, newdata=spCOV, se.fit=TRUE)
+EQ50$fit[is.na(EQ50$fit)] <- mean(EQ50$fit, na.rm=TRUE)
+EQ50$se.fit[is.na(EQ50$se.fit)] <- mean(EQ50$se.fit, na.rm=TRUE)
+
+spCOV$est_f50 <- EQ50$fit
+spCOV$se.fit_est_f50 <- EQ50$se.fit
+
+quantile(spCOV$est_f50,  probs=(1:9)/10, na.rm=TRUE)
+quantile(log10(D$f50+1), probs=(1:9)/10, na.rm=TRUE)
+quantile(EQ50$se.fit,    probs=(1:9)/10, na.rm=TRUE)
+
+f50Cuts <- function(x, n=9, ...) {
+  labs <- 1:n
+  cuts <- c(0.18, 0.65, 0.92, 1.11, 1.30, 1.50, 1.75, 2.10, 2.66)
+  cuts <- cuts[labs]
+  names(cuts) <- paste("#", labs, sep = "")
+  cuts
+}
+
+f50CutsSE <- function(x, n=9, ...) {
+  labs <- 1:n
+  cuts <- c(0.033, 0.035, 0.037, 0.039, 0.040, 0.043, 0.045, 0.049, 0.055)
+  cuts <- cuts[labs]
+  names(cuts) <- paste("#", labs, sep = "")
+  cuts
+}
 
 
 
@@ -440,134 +465,243 @@ EQ90$fit[is.na(EQ90$fit)] <- mean(EQ90$fit, na.rm=TRUE)
 EQ90$se.fit[is.na(EQ90$se.fit)] <- mean(EQ90$se.fit, na.rm=TRUE)
 
 spCOV$est_f90 <- EQ90$fit
+spCOV$se.fit_est_f90 <- EQ90$se.fit
 
-quantile(spCOV$est_f90, probs=(1:9)/10, na.rm=TRUE)
+quantile(spCOV$est_f90,  probs=(1:9)/10, na.rm=TRUE)
 quantile(log10(D$f90+1), probs=(1:9)/10, na.rm=TRUE)
 quantile(EQ90$se.fit,    probs=(1:9)/10, na.rm=TRUE)
 
 f90Cuts <- function(x, n=9, ...) {
-   labs <- 1:n
-   cuts <- c(1.3, 1.6, 1.8, 2.0, 2.2, 2.3, 2.6, 3.0, 3.50)
-   cuts <- cuts[labs]
-   names(cuts) <- paste("#", labs, sep = "")
-   cuts
+  labs <- 1:n
+  cuts <- c(1.3, 1.6, 1.8, 2.0, 2.2, 2.3, 2.6, 3.0, 3.5)
+  cuts <- cuts[labs]
+  names(cuts) <- paste("#", labs, sep = "")
+  cuts
 }
 
 f90CutsSE <- function(x, n=9, ...) {
-   labs <- 1:n
-   cuts <- c(0.018, 0.020, 0.021, 0.022, 0.023, 0.024, 0.025, 0.027, 0.031)
-   cuts <- cuts[labs]
-   names(cuts) <- paste("#", labs, sep = "")
-   cuts
+  labs <- 1:n
+  cuts <- c(0.018, 0.020, 0.021, 0.022, 0.023, 0.024, 0.025, 0.027, 0.031)
+  cuts <- cuts[labs]
+  names(cuts) <- paste("#", labs, sep = "")
+  cuts
 }
 
 
 
 
+EQ99 <- predict(Q99, newdata=spCOV, se.fit=TRUE)
+EQ99$fit[is.na(EQ99$fit)] <- mean(EQ99$fit, na.rm=TRUE)
+EQ99$se.fit[is.na(EQ99$se.fit)] <- mean(EQ99$se.fit, na.rm=TRUE)
 
+spCOV$est_f99 <- EQ99$fit
+spCOV$se.fit_est_f99 <- EQ99$se.fit
 
-pdf("Q90fit.pdf", useDingbats=FALSE, width=11, height=9.5)
-  par(lend=1, ljoin=1)
-  plot(spCOV, pch=NA); plot(GulfStates, add=TRUE, lty=0, col=grey(0.95))
-  polygon(bnd[[1]]$x*1000,bnd[[1]]$y*1000, col=grey(1), lwd=.7)
-  tmp <- log10(D$f90+1)
-  shades <- auto.shading(tmp, cutter=f90Cuts, n=9,
-                         cols=add.alpha(brewer.pal(10,"Spectral"),.7))
-  choropleth(D, tmp, pch=1, lwd=0.7, cex=0.8, shading=shades, add=TRUE)
+quantile(spCOV$est_f99,  probs=(1:9)/10, na.rm=TRUE)
+quantile(log10(D$f99+1), probs=(1:9)/10, na.rm=TRUE)
+quantile(EQ99$se.fit,    probs=(1:9)/10, na.rm=TRUE)
 
-  tmp <- spCOV$est_f90; #
-  shades <- auto.shading(tmp, cutter=f90Cuts, n=9,
-                         cols=add.alpha(brewer.pal(10,"Spectral"),.2))
-  choropleth(spCOV, tmp, pch=16, cex=0.4, shading=shades, add=TRUE)
-  shades <- auto.shading(tmp, cutter=f90Cuts, n=9, cols=rev(brewer.pal(10,"Spectral")))
+f99Cuts <- function(x, n=9, ...) {
+  labs <- 1:n
+  cuts <- c(2.3, 2.5, 2.7, 2.8, 2.9, 3.1, 3.3, 3.6, 4.1)
+  cuts <- cuts[labs]
+  names(cuts) <- paste("#", labs, sep = "")
+  cuts
+}
 
-  ss <- list(x=-100000, y=420000)
-  SpatialPolygonsRescale(layout.scale.bar(height=.07), offset=ss, scale=200*1000,
-                         fill=c("transparent", "black"), plot.grid=FALSE, lwd=0.4)
-  ss <- list(x=-100000, y=403000)
-  SpatialPolygonsRescale(layout.scale.bar(height=.08), offset=ss, scale=100*1609.344,
-                         fill=c("transparent", "black"), plot.grid=FALSE, lwd=0.4)
-  xx <- -142000
-  sl <- list(x=xx, y=450000)
-  sr <- list(x=xx+200*1000, y=450000)
-  text(sl, "0",xx, cex=0.6, pos=4); text(sr, "200 kilometers", cex=0.5, pos=4)
-  sl <- list(x=xx, y=383000)
-  sr <- list(x=xx+100*1609.344, y=383000)
-  text(sl, "0", cex=0.6, pos=4); text(sr, "100 miles", cex=0.5, pos=4)
+f99CutsSE <- function(x, n=9, ...) {
+  labs <- 1:n
+  cuts <- c(0.017, 0.018, 0.019, 0.020, 0.021, 0.022, 0.023, 0.025, 0.028)
+  cuts <- cuts[labs]
+  names(cuts) <- paste("#", labs, sep = "")
+  cuts
+}
 
-  txt <- paste0("Albers Equal Area Projection\n",
-                "North American Datum of 1983\n",
-                "Base modified from U.S. Geological Survey digital data, 1:24,000")
-  text(-130000, 330000, txt, pos=4, cex=0.35)
-  plot(GulfStates, add=TRUE, lwd=.4, lty=2)
-  STATES <- c("Texas", "Oklahoma", "Missouri", "Arkansas", "Louisiana", "Mississippi",
-              "Tennessee", "Kentucky", "Alabama", "Georgia", "Florida")
-  STATES <- data.frame(easting=c(-440000, -202900.4,  178000,  178000,  279961.5,
-                                  430000,  690000,  690000,  690000,
-                                 1100000, 1270000),
-                       northing=c(955139.0, 1359890.9, 1558716.4, 1400000,  795368.5,
-                                  1170000, 1450000, 1600000, 1325000,
-                                  1170000, 800000),
-                       state=STATES)
-  text(STATES$easting, STATES$northing, STATES$state, pos=4, cex=0.7, col=grey(0.3))
-  legend(40000, 625000, c(paste0("U.S. Geological Survey streamflow-gaging station:\n",
-                                 "Colored* by observed decadal 90th of flow conditions"),
-                          paste0("COMID for HUC12 of National Hydrography Dataset version 2:\n",
-                                 "Colored by estimated decadal decadal 90th of flow conditions")),
-         bty="n", cex=0.8, pt.cex=c(0.8,0.6), lwd=c(0.7,1), lty=c(0,0), pch=c(1,16),
-         col=c("#3288BDE6","#D53E4FE6"))
-  choro.legend(900000, 780000, shades, cex=0.8, bty="n", box.col=grey(1), bg=grey(1),
-               fmt="%g", xjust=0, title="Decadal log10(90th) of flow")
-  text(205401.9, 490029.4, "* Note that ", cex=.45)
+#-----------------------------------------------------------------------
+pdf("PPLOfit.pdf", useDingbats=FALSE, width=11, height=10)
+  for(d in sort(unique(D$decade))) {
+    map_base()
+    choropleth_decade(D, x="pplo", cuts=pploCuts, rev=TRUE)
+    shades <- choropleth_cov(spCOV, decade=d, x="est_pplo", cuts=pploCuts, rev=TRUE)
+    legend_est(gage="no flow fraction", title=paste0(d," decade\n","no flow fraction"),
+               note=TRUE, shades=shades)
+    map_annotation()
+  }
+  for(d in sort(unique(D$decade))) {
+    map_base(); map_sebase()
+    shades <- choropleth_cov(spCOV, decade=d, x="se.fit_est_pplo", cuts=pploCutsSE, rev=TRUE)
+    legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
+    map_annotation()
+  }
+dev.off()
+#-----------------------------------------------------------------------
+pdf("L1fit.pdf", useDingbats=FALSE, width=11, height=10)
+for(d in sort(unique(D$decade))) {
+  map_base()
+  choropleth_decade(D, x="L1", cuts=L1Cuts, trans=log10)
+  shades <- choropleth_cov(spCOV, decade=d, x="est_L1", cuts=L1Cuts)
+  legend_est(gage="mean streamflow", title=paste0(d," decade\n","mean streamflow, in log10(cfs)"),
+             note=TRUE, shades=shades)
+  map_annotation()
+}
+for(d in sort(unique(D$decade))) {
+  map_base(); map_sebase()
+  shades <- choropleth_cov(spCOV, decade=d, x="se.fit_est_L1", cuts=L1CutsSE, rev=TRUE)
+  legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
+  map_annotation()
+}
+dev.off()
+#-----------------------------------------------------------------------
+pdf("T2fit.pdf", useDingbats=FALSE, width=11, height=10)
+for(d in sort(unique(D$decade))) {
+  map_base(); cuts <-
+  choropleth_decade(D, x="T2", cuts=T2Cuts)
+  shades <- choropleth_cov(spCOV, decade=d, x="est_T2", cuts=T2Cuts)
+  legend_est(gage="L-CV of streamflow", title=paste0(d," decade\n","L-CV of streamflow"),
+             note=TRUE, shades=shades)
+  map_annotation()
+}
+for(d in sort(unique(D$decade))) {
+  map_base(); map_sebase()
+  shades <- choropleth_cov(spCOV, decade=d, x="se.fit_est_T2", cuts=T2CutsSE, rev=TRUE)
+  legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
+  map_annotation()
+}
+dev.off()
+#-----------------------------------------------------------------------
+pdf("T3fit.pdf", useDingbats=FALSE, width=11, height=10)
+for(d in sort(unique(D$decade))) {
+  map_base()
+  choropleth_decade(D, x="T3", cuts=T3Cuts)
+  shades <- choropleth_cov(spCOV, decade=d, x="est_T3", cuts=T3Cuts)
+  legend_est(gage="L-skew of streamflow", title=paste0(d," decade\n","L-skew of streamflow"),
+             note=TRUE, shades=shades)
+  map_annotation()
+}
+for(d in sort(unique(D$decade))) {
+  map_base(); map_sebase()
+  shades <- choropleth_cov(spCOV, decade=d, x="se.fit_est_T3", cuts=T3CutsSE, rev=TRUE)
+  legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
+  map_annotation()
+}
+dev.off()
+#-----------------------------------------------------------------------
+pdf("T4fit.pdf", useDingbats=FALSE, width=11, height=10)
+for(d in sort(unique(D$decade))) {
+  map_base()
+  choropleth_decade(D, x="T4", cuts=T4Cuts)
+  shades <- choropleth_cov(spCOV, decade=d, x="est_T4", cuts=T4Cuts)
+  legend_est(gage="L-kurtosis of streamflow", title=paste0(d," decade\n","L-kurtosis of streamflow"),
+             note=TRUE, shades=shades)
+  map_annotation()
+}
+for(d in sort(unique(D$decade))) {
+  map_base(); map_sebase()
+  shades <- choropleth_cov(spCOV, decade=d, x="se.fit_est_T4", cuts=T4CutsSE, rev=TRUE)
+  legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
+  map_annotation()
+}
+dev.off()
+#-----------------------------------------------------------------------
+pdf("T5fit.pdf", useDingbats=FALSE, width=11, height=10)
+for(d in sort(unique(D$decade))) {
+  map_base()
+  choropleth_decade(D, x="T5", cuts=T5Cuts)
+  shades <- choropleth_cov(spCOV, decade=d, x="est_T5", cuts=T5Cuts)
+  legend_est(gage="Tau5 of streamflow", title=paste0(d," decade\n","Tau5 of streamflow"),
+             note=TRUE, shades=shades)
+  map_annotation()
+}
+for(d in sort(unique(D$decade))) {
+  map_base(); map_sebase()
+  shades <- choropleth_cov(spCOV, decade=d, x="se.fit_est_T5", cuts=T5CutsSE, rev=TRUE)
+  legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
+  map_annotation()
+}
+dev.off()
+#-----------------------------------------------------------------------
+pdf("T6fit.pdf", useDingbats=FALSE, width=11, height=10)
+for(d in sort(unique(D$decade))) {
+  map_base()
+  choropleth_decade(D, x="T6", cuts=T6Cuts)
+  shades <- choropleth_cov(spCOV, decade=d, x="est_T6", cuts=T6Cuts)
+  legend_est(gage="T6 of streamflow", title=paste0(d," decade\n","Tau6 of streamflow"),
+             note=TRUE, shades=shades)
+  map_annotation()
+}
+for(d in sort(unique(D$decade))) {
+  map_base(); map_sebase()
+  shades <- choropleth_cov(spCOV, decade=d, x="se.fit_est_T6", cuts=T6CutsSE, rev=TRUE)
+  legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
+  map_annotation()
+}
+dev.off()
+#-----------------------------------------------------------------------
+pdf("Q50fit.pdf", useDingbats=FALSE, width=11, height=10)
+for(d in sort(unique(D$decade))) {
+  map_base()
+  choropleth_decade(D, x="f50", cuts=f50Cuts, trans=function(t) { log10(t+1) } )
+  shades <- choropleth_cov(spCOV, decade=d, x="est_f50", cuts=f50Cuts)
+  legend_est(gage="log10(Q50+1) of streamflow", title=paste0(d," decade\n","log10(Q50+1) of streamflow"),
+             note=TRUE, shades=shades)
+  map_annotation()
+}
+for(d in sort(unique(D$decade))) {
+  map_base(); map_sebase()
+  shades <- choropleth_cov(spCOV, decade=d, x="se.fit_est_f50", cuts=f50CutsSE, rev=TRUE)
+  legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
+  map_annotation()
+}
+dev.off()
+#-----------------------------------------------------------------------
+pdf("Q90fit.pdf", useDingbats=FALSE, width=11, height=10)
+for(d in sort(unique(D$decade))) {
+  map_base()
+  choropleth_decade(D, x="f90", cuts=f90Cuts, trans=function(t) { log10(t+1) } )
+  shades <- choropleth_cov(spCOV, decade=d, x="est_f90", cuts=f90Cuts)
+  legend_est(gage="log10(Q90+1) of streamflow", title=paste0(d," decade\n","log10(Q90+1) of streamflow"),
+             note=TRUE, shades=shades)
+  map_annotation()
+}
+for(d in sort(unique(D$decade))) {
+  map_base(); map_sebase()
+  shades <- choropleth_cov(spCOV, decade=d, x="se.fit_est_f90", cuts=f90CutsSE, rev=TRUE)
+  legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
+  map_annotation()
+}
+dev.off()
+#-----------------------------------------------------------------------
+pdf("Q99fit.pdf", useDingbats=FALSE, width=11, height=10)
+for(d in sort(unique(D$decade))) {
+  map_base()
+  choropleth_decade(D, x="f99", cuts=f99Cuts, trans=function(t) { log10(t+1) } )
+  shades <- choropleth_cov(spCOV, decade=d, x="est_f99", cuts=f99Cuts)
+  legend_est(gage="log(Q99+1) of streamflow", title=paste0(d," decade\n","log10(Q99+1) of streamflow"),
+             note=TRUE, shades=shades)
+  map_annotation()
+}
+for(d in sort(unique(D$decade))) {
+  map_base(); map_sebase()
+  shades <- choropleth_cov(spCOV, decade=d, x="se.fit_est_f99", cuts=f99CutsSE, rev=TRUE)
+  legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
+  map_annotation()
+}
+dev.off()
 
+plotlmrdia(lmrdia(), xlim=c(.1,1), ylim=c(0,1))
+points(spCOV$est_T3[spCOV$decade == "1950"],
+       spCOV$est_T4[spCOV$decade == "1950"], col=rgb(1,0,0,.1), cex=0.3, pch=16)
+points(spCOV$est_T3[spCOV$decade == "1960"],
+       spCOV$est_T4[spCOV$decade == "1960"], col=rgb(0,1,0,.1), cex=0.3, pch=16)
+points(spCOV$est_T3[spCOV$decade == "1970"],
+       spCOV$est_T4[spCOV$decade == "1970"], col=rgb(0,0,1,.1), cex=0.3, pch=16)
+points(spCOV$est_T3[spCOV$decade == "1980"],
+       spCOV$est_T4[spCOV$decade == "1980"], col=rgb(1,.5,.5,.1), cex=0.3, pch=17)
+points(spCOV$est_T3[spCOV$decade == "1990"],
+       spCOV$est_T4[spCOV$decade == "1990"], col=rgb(.5,1,.5,.1), cex=0.3, pch=17)
+points(spCOV$est_T3[spCOV$decade == "2000"],
+       spCOV$est_T4[spCOV$decade == "2000"], col=rgb(0,.5,1,.1), cex=0.3, pch=17)
 
-  plot(spCOV, pch=NA); plot(GulfStates, add=TRUE, lty=0, col=grey(0.95))
-  polygon(bnd[[1]]$x*1000,bnd[[1]]$y*1000, col=grey(1), lwd=.7)
-
-  tmp <- EQ90$se.fit; #
-  shades <- auto.shading(tmp, cutter=f90CutsSE, n=9,
-                         cols=add.alpha(rev(brewer.pal(10,"Spectral")),.2))
-  choropleth(spCOV, tmp, pch=16, cex=0.4, shading=shades, add=TRUE)
-  shades <- auto.shading(tmp, cutter=f90CutsSE, n=9, cols=rev(brewer.pal(10,"Spectral")))
-
-  ss <- list(x=-100000, y=420000)
-  SpatialPolygonsRescale(layout.scale.bar(height=.07), offset=ss, scale=200*1000,
-                         fill=c("transparent", "black"), plot.grid=FALSE, lwd=0.4)
-  ss <- list(x=-100000, y=403000)
-  SpatialPolygonsRescale(layout.scale.bar(height=.08), offset=ss, scale=100*1609.344,
-                         fill=c("transparent", "black"), plot.grid=FALSE, lwd=0.4)
-  xx <- -142000
-  sl <- list(x=xx, y=450000)
-  sr <- list(x=xx+200*1000, y=450000)
-  text(sl, "0",xx, cex=0.6, pos=4); text(sr, "200 kilometers", cex=0.5, pos=4)
-  sl <- list(x=xx, y=383000)
-  sr <- list(x=xx+100*1609.344, y=383000)
-  text(sl, "0", cex=0.6, pos=4); text(sr, "100 miles", cex=0.5, pos=4)
-
-  txt <- paste0("Albers Equal Area Projection\n",
-                "North American Datum of 1983\n",
-                "Base modified from U.S. Geological Survey digital data, 1:24,000")
-  text(-130000, 330000, txt, pos=4, cex=0.35)
-  plot(GulfStates, add=TRUE, lwd=.4, lty=2)
-  STATES <- c("Texas", "Oklahoma", "Missouri", "Arkansas", "Louisiana", "Mississippi",
-              "Tennessee", "Kentucky", "Alabama", "Georgia", "Florida")
-  STATES <- data.frame(easting=c(-440000, -202900.4,  178000,  178000,  279961.5,
-                                  430000,  690000,  690000,  690000,
-                                 1100000, 1270000),
-                       northing=c(955139.0, 1359890.9, 1558716.4, 1400000,  795368.5,
-                                  1170000, 1450000, 1600000, 1325000,
-                                  1170000, 800000),
-                       state=STATES)
-  text(STATES$easting, STATES$northing, STATES$state, pos=4, cex=0.7, col=grey(0.3))
-  legend(40000, 625000, c(paste0("U.S. Geological Survey streamflow-gaging station:\n",
-                                 "Colored* by observed decadal fraction of no flow conditions"),
-                          paste0("COMID for HUC12 of National Hydrography Dataset version 2:\n",
-                                 "Colored by estimated decadal fraction of no flow conditions")),
-         bty="n", cex=0.8, pt.cex=c(0.8,0.6), lwd=c(0.7,1), lty=c(0,0), pch=c(1,16),
-         col=c("#3288BDE6","#D53E4FE6"))
-  choro.legend(900000, 780000, shades, cex=0.8, bty="n", box.col=grey(1), bg=grey(1),
-               fmt="%g", xjust=0, title="Standard Error Fit")
-  text(205401.9, 490029.4, "* Note that ", cex=.45)
-  dev.off()
-
+write.table(spCOV, file="spCOV.txt", sep=",", quote=TRUE)
+write_feather(slot(spCOV, "data"), path="gam_estimates_huc12.feather")
 
