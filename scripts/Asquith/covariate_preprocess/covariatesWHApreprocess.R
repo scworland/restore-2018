@@ -35,7 +35,7 @@ x <- XY[,1]/1000; y <- XY[,2]/1000
 #XY <- XY[ind,]
 GL <- SpatialPoints(cbind(x,y), proj4string=ALBEA)
 ix <- 1:length(x)
-plot(GL, pch=1, col=2, add=TRUE)
+plot(GL, pch=1, col=2)
 text(XY[,1],XY[,2], ix)
 GL <- GL[-c(1,3:9, 12, 14:20, 23, 34, 45)]
 
