@@ -122,6 +122,9 @@ for(site in sites_of_area_bust) {
   points(DD$CDA[DD$site_no == site], DD$acc_basin_area[DD$site_no == site], pch=16, col=2)
   DD <- DD[DD$site_no != site,]
 }
+text(0,5, paste(sites_of_area_bust, collapse=", "), cex=0.6, pos=4)
+#points(DD$CDA[DD$site_no == "08167000"],
+#       DD$acc_basin_area[DD$site_no == "08167000"], pch=16, col=4)
 
 DD$decade   <- as.factor(DD$decade)
 DD$bedperm  <- as.factor(DD$bedperm)
