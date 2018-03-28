@@ -289,7 +289,7 @@ pploCuts <- function(x, n=9, ...) {
 
 pploCutsSE <- function(x, n=9, ...) {
    labs <- 1:n
-   cuts <- c(0.014, 0.015, 0.016, 0.018, 0.019, 0.020, 0.021, 0.022, 0.025)
+   cuts <- c(0.012, 0.013, 0.014, 0.015, 0.016, 0.017, 0.019, 0.020, 0.024)
    cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
@@ -305,13 +305,13 @@ quantile(EL1$se.fit,    probs=(1:9)/10, na.rm=TRUE)
 
 L1Cuts <- function(x, n=9, ...) {
   labs <- 1:n
-  cuts <- c(1.2, 1.4, 1.6, 1.8, 1.9, 2.1, 2.3, 2.6, 3.1)
+  cuts <- c(1.2, 1.5, 1.6, 1.8, 1.9, 2.1, 2.3, 2.6, 3.1)
   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
 L1CutsSE <- function(x, n=9, ...) {
   labs <- 1:n
-  cuts <- c(0.014, 0.015, 0.016, 0.017, 0.018, 0.019, 0.020, 0.021, 0.024)
+  cuts <- c(0.011, 0.012, 0.013, 0.014, 0.015, 0.016, 0.017, 0.018, 0.021)
   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
@@ -329,13 +329,13 @@ quantile(ET2$se.fit,    probs=(1:9)/10, na.rm=TRUE)
 
 T2Cuts <- function(x, n=9, ...) {
   labs <- 1:n
-  cuts <- c(0.54, 0.61, 0.65, 0.68, 0.71, 0.74, 0.77, 0.81, 0.87)
+  cuts <- c(0.55, 0.61, 0.65, 0.68, 0.71, 0.74, 0.77, 0.81, 0.86)
   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
 T2CutsSE <- function(x, n=9, ...) {
   labs <- 1:n
-  cuts <- c(0.0097, 0.0104, 0.0110, 0.0115, 0.0121, 0.0127, 0.0134, 0.0144, 0.0161)
+  cuts <- c(0.0080, 0.0085, 0.0089, 0.0093, 0.0098, 0.0103, 0.0111, 0.0124, 0.0140)
   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
@@ -351,13 +351,13 @@ quantile(ET3$se.fit,    probs=(1:9)/10, na.rm=TRUE)
 
 T3Cuts <- function(x, n=9, ...) {
   labs <- 1:n
-  cuts <- c(0.53, 0.58, 0.61, 0.64, 0.67, 0.70, 0.73, 0.78, 0.85)
+  cuts <- c(0.53, 0.58, 0.61, 0.64, 0.67, 0.70, 0.73, 0.77, 0.84)
   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
 T3CutsSE <- function(x, n=9, ...) {
   labs <- 1:n
-  cuts <- c(0.010, 0.0102, 0.0108, 0.0113, 0.0119, 0.0125, 0.0132, 0.0143, 0.0162)
+  cuts <- c(0.0077, 0.0822, 0.0086, 0.0900, 0.0945, 0.0100, 0.0108, 0.0120, 0.0140)
   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
@@ -369,18 +369,17 @@ spCOV$est_T4 <- ET4$fit
 spCOV$se.fit_est_T4 <- ET4$se.fit
 
 quantile(spCOV$est_T4, probs=(1:9)/10, na.rm=TRUE)
-quantile(D$T4, probs=(1:9)/10, na.rm=TRUE)
 quantile(ET4$se.fit,    probs=(1:9)/10, na.rm=TRUE)
 
 T4Cuts <- function(x, n=9, ...) {
   labs <- 1:n
-  cuts <- c(0.34, 0.40, 44, 0.46, 0.50, 0.52, 0.56, 0.62, 0.72)
+  cuts <- c(0.34, 0.40, 0.44, 0.46, 0.50, 0.52, 0.56, 0.62, 0.72)
   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
 T4CutsSE <- function(x, n=9, ...) {
   labs <- 1:n
-  cuts <- c(0.0103, 0.0109, 0.0115, 0.0121, 0.0127, 0.0133, 0.0141, 0.0151, 0.0171)
+  cuts <- c(0.0081, 0.0087, 0.0091, 0.0095, 0.01000, 0.0105, 0.0114, 0.0126, 0.0145)
   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
@@ -392,19 +391,18 @@ spCOV$est_T5 <- ET5$fit
 spCOV$se.fit_est_T5 <- ET5$se.fit
 
 quantile(spCOV$est_T5, probs=(1:9)/10, na.rm=TRUE)
-quantile(D$T5, probs=(1:9)/10, na.rm=TRUE)
 quantile(ET5$se.fit,    probs=(1:9)/10, na.rm=TRUE)
 
 T5Cuts <- function(x, n=9, ...) {
   labs <- 1:n
-  cuts <- c(0.226, 0.288, 0.326, 0.356, 0.382, 0.410, 0.443, 0.500, 0.600)
+  cuts <- c(0.23, 0.229, 0.32, 0.36, 0.38, 0.41, 0.44, 0.50, 0.60)
   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
 T5CutsSE <- function(x, n=9, ...) {
   labs <- 1:n
-  cuts <- c(0.0102, 0.0108, 0.0113, 0.0119, 0.0125,
-            0.0132, 0.0140, 0.0150, 0.0170)
+  cuts <- c(0.0080, 0.0085, 0.0090, 0.0094, 0.0098,
+            0.0104, 0.0112, 0.0124, 0.0143)
   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
@@ -416,7 +414,6 @@ spCOV$est_T6 <- ET6$fit
 spCOV$se.fit_est_T6 <- ET6$se.fit
 
 quantile(spCOV$est_T6, probs=(1:9)/10, na.rm=TRUE)
-quantile(D$T6, probs=(1:9)/10, na.rm=TRUE)
 quantile(ET6$se.fit,    probs=(1:9)/10, na.rm=TRUE)
 
 T6Cuts <- function(x, n=9, ...) {
@@ -427,7 +424,7 @@ T6Cuts <- function(x, n=9, ...) {
 
 T6CutsSE <- function(x, n=9, ...) {
   labs <- 1:n
-  cuts <- c(0.0094, 0.0100, 0.0105, 0.0110, 0.0115, 0.0121, 0.0126, 0.0137, 0.0155)
+  cuts <- c(0.0074, 0.0079, 0.0083, 0.0086, 0.0090, 0.0096, 0.0103, 0.0114, 0.0131)
   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
@@ -439,12 +436,11 @@ spCOV$est_f50 <- EQ50$fit
 spCOV$se.fit_est_f50 <- EQ50$se.fit
 
 quantile(spCOV$est_f50,  probs=(1:9)/10, na.rm=TRUE)
-quantile(log10(D$f50+1), probs=(1:9)/10, na.rm=TRUE)
 quantile(EQ50$se.fit,    probs=(1:9)/10, na.rm=TRUE)
 
 f50Cuts <- function(x, n=9, ...) {
   labs <- 1:n
-  cuts <- c(0.18, 0.65, 0.92, 1.11, 1.30, 1.50, 1.75, 2.10, 2.66)
+  cuts <- c(0.21, 0.67, 0.94, 1.13, 1.31, 1.52, 1.76, 2.10, 2.65)
   cuts <- cuts[labs]
   names(cuts) <- paste("#", labs, sep = "")
   cuts
@@ -452,7 +448,7 @@ f50Cuts <- function(x, n=9, ...) {
 
 f50CutsSE <- function(x, n=9, ...) {
   labs <- 1:n
-  cuts <- c(0.033, 0.035, 0.037, 0.039, 0.040, 0.043, 0.045, 0.049, 0.055)
+  cuts <- c(0.026, 0.028, 0.029, 0.031, 0.032, 0.034, 0.037, 0.041, 0.048)
   cuts <- cuts[labs]
   names(cuts) <- paste("#", labs, sep = "")
   cuts
@@ -468,7 +464,6 @@ spCOV$est_f90 <- EQ90$fit
 spCOV$se.fit_est_f90 <- EQ90$se.fit
 
 quantile(spCOV$est_f90,  probs=(1:9)/10, na.rm=TRUE)
-quantile(log10(D$f90+1), probs=(1:9)/10, na.rm=TRUE)
 quantile(EQ90$se.fit,    probs=(1:9)/10, na.rm=TRUE)
 
 f90Cuts <- function(x, n=9, ...) {
@@ -481,13 +476,64 @@ f90Cuts <- function(x, n=9, ...) {
 
 f90CutsSE <- function(x, n=9, ...) {
   labs <- 1:n
-  cuts <- c(0.018, 0.020, 0.021, 0.022, 0.023, 0.024, 0.025, 0.027, 0.031)
+  cuts <- c(0.014, 0.015, 0.016, 0.017, 0.018, 0.019, 0.021, 0.022, 0.026)
   cuts <- cuts[labs]
   names(cuts) <- paste("#", labs, sep = "")
   cuts
 }
 
 
+EQ95 <- predict(Q95, newdata=spCOV, se.fit=TRUE)
+EQ95$fit[is.na(EQ95$fit)] <- mean(EQ95$fit, na.rm=TRUE)
+EQ95$se.fit[is.na(EQ95$se.fit)] <- mean(EQ95$se.fit, na.rm=TRUE)
+
+spCOV$est_f95 <- EQ95$fit
+spCOV$se.fit_est_f95 <- EQ95$se.fit
+
+quantile(spCOV$est_f95,  probs=(1:9)/10, na.rm=TRUE)
+quantile(EQ95$se.fit,    probs=(1:9)/10, na.rm=TRUE)
+
+f95Cuts <- function(x, n=9, ...) {
+  labs <- 1:n
+  cuts <- c(1.6, 2.0, 2.1, 2.3, 2.4, 2.6, 2.8, 3.2, 3.7)
+  cuts <- cuts[labs]
+  names(cuts) <- paste("#", labs, sep = "")
+  cuts
+}
+
+f95CutsSE <- function(x, n=9, ...) {
+  labs <- 1:n
+  cuts <- c(0.013, 0.014, 0.015, 0.016, 0.017, 0.018, 0.019, 0.020, 0.022)
+  cuts <- cuts[labs]
+  names(cuts) <- paste("#", labs, sep = "")
+  cuts
+}
+
+EQ98 <- predict(Q98, newdata=spCOV, se.fit=TRUE)
+EQ98$fit[is.na(EQ98$fit)] <- mean(EQ98$fit, na.rm=TRUE)
+EQ98$se.fit[is.na(EQ98$se.fit)] <- mean(EQ98$se.fit, na.rm=TRUE)
+
+spCOV$est_f98 <- EQ98$fit
+spCOV$se.fit_est_f98 <- EQ98$se.fit
+
+quantile(spCOV$est_f98,  probs=(1:9)/10, na.rm=TRUE)
+quantile(EQ98$se.fit,    probs=(1:9)/10, na.rm=TRUE)
+
+f98Cuts <- function(x, n=9, ...) {
+  labs <- 1:n
+  cuts <- c(2.0, 2.3, 2.5, 2.6, 2.7, 2.9, 3.1, 3.4, 3.9)
+  cuts <- cuts[labs]
+  names(cuts) <- paste("#", labs, sep = "")
+  cuts
+}
+
+f98CutsSE <- function(x, n=9, ...) {
+  labs <- 1:n
+  cuts <- c(0.013, 0.014, 0.015, 0.016, 0.017, 0.018, 0.019, 0.020, 0.022)
+  cuts <- cuts[labs]
+  names(cuts) <- paste("#", labs, sep = "")
+  cuts
+}
 
 
 EQ99 <- predict(Q99, newdata=spCOV, se.fit=TRUE)
@@ -498,7 +544,6 @@ spCOV$est_f99 <- EQ99$fit
 spCOV$se.fit_est_f99 <- EQ99$se.fit
 
 quantile(spCOV$est_f99,  probs=(1:9)/10, na.rm=TRUE)
-quantile(log10(D$f99+1), probs=(1:9)/10, na.rm=TRUE)
 quantile(EQ99$se.fit,    probs=(1:9)/10, na.rm=TRUE)
 
 f99Cuts <- function(x, n=9, ...) {
@@ -511,11 +556,40 @@ f99Cuts <- function(x, n=9, ...) {
 
 f99CutsSE <- function(x, n=9, ...) {
   labs <- 1:n
-  cuts <- c(0.017, 0.018, 0.019, 0.020, 0.021, 0.022, 0.023, 0.025, 0.028)
+  cuts <- c(0.014, 0.015, 0.016, 0.017, 0.018, 0.019, 0.020, 0.021, 0.024)
   cuts <- cuts[labs]
   names(cuts) <- paste("#", labs, sep = "")
   cuts
 }
+
+
+EQ99p9 <- predict(Q99p9, newdata=spCOV, se.fit=TRUE)
+EQ99p9$fit[is.na(EQ99p9$fit)] <- mean(EQ99p9$fit, na.rm=TRUE)
+EQ99p9$se.fit[is.na(EQ99p9$se.fit)] <- mean(EQ99p9$se.fit, na.rm=TRUE)
+
+spCOV$est_f99.9 <- EQ99p9$fit
+spCOV$se.fit_est_f99.9 <- EQ99p9$se.fit
+
+quantile(spCOV$est_f99.9,  probs=(1:9)/10, na.rm=TRUE)
+quantile(EQ99p9$se.fit,    probs=(1:9)/10, na.rm=TRUE)
+
+f99p9Cuts <- function(x, n=9, ...) {
+  labs <- 1:n
+  cuts <- c(2.9, 3.1, 3.2, 3.3, 3.4, 3.6, 3.8, 4.0, 4.4)
+  cuts <- cuts[labs]
+  names(cuts) <- paste("#", labs, sep = "")
+  cuts
+}
+
+f99p9CutsSE <- function(x, n=9, ...) {
+  labs <- 1:n
+  cuts <- c(0.019, 0.021, 0.022, 0.023, 0.024, 0.025, 0.026, 0.029, 0.033)
+  cuts <- cuts[labs]
+  names(cuts) <- paste("#", labs, sep = "")
+  cuts
+}
+
+
 
 #-----------------------------------------------------------------------
 pdf("PPLOfit.pdf", useDingbats=FALSE, width=11, height=10)
@@ -671,6 +745,40 @@ for(d in sort(unique(D$decade))) {
 }
 dev.off()
 #-----------------------------------------------------------------------
+pdf("Q95fit.pdf", useDingbats=FALSE, width=11, height=10)
+for(d in sort(unique(D$decade))) {
+  map_base()
+  choropleth_decade(D, x="f95", cuts=f95Cuts, trans=function(t) { log10(t+1) } )
+  shades <- choropleth_cov(spCOV, decade=d, x="est_f95", cuts=f95Cuts)
+  legend_est(gage="log(Q95+1) of streamflow", title=paste0(d," decade\n","log10(Q95+1) of streamflow"),
+             note=TRUE, shades=shades)
+  map_annotation()
+}
+for(d in sort(unique(D$decade))) {
+  map_base(); map_sebase()
+  shades <- choropleth_cov(spCOV, decade=d, x="se.fit_est_f95", cuts=f95CutsSE, rev=TRUE)
+  legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
+  map_annotation()
+}
+dev.off()
+#-----------------------------------------------------------------------
+pdf("Q98fit.pdf", useDingbats=FALSE, width=11, height=10)
+for(d in sort(unique(D$decade))) {
+  map_base()
+  choropleth_decade(D, x="f98", cuts=f98Cuts, trans=function(t) { log10(t+1) } )
+  shades <- choropleth_cov(spCOV, decade=d, x="est_f98", cuts=f98Cuts)
+  legend_est(gage="log(Q98+1) of streamflow", title=paste0(d," decade\n","log10(Q98+1) of streamflow"),
+             note=TRUE, shades=shades)
+  map_annotation()
+}
+for(d in sort(unique(D$decade))) {
+  map_base(); map_sebase()
+  shades <- choropleth_cov(spCOV, decade=d, x="se.fit_est_f98", cuts=f98CutsSE, rev=TRUE)
+  legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
+  map_annotation()
+}
+dev.off()
+#-----------------------------------------------------------------------
 pdf("Q99fit.pdf", useDingbats=FALSE, width=11, height=10)
 for(d in sort(unique(D$decade))) {
   map_base()
@@ -687,6 +795,24 @@ for(d in sort(unique(D$decade))) {
   map_annotation()
 }
 dev.off()
+#-----------------------------------------------------------------------
+pdf("Q99p9fit.pdf", useDingbats=FALSE, width=11, height=10)
+for(d in sort(unique(D$decade))) {
+  map_base()
+  choropleth_decade(D, x="f99.9", cuts=f99p9Cuts, trans=function(t) { log10(t+1) } )
+  shades <- choropleth_cov(spCOV, decade=d, x="est_f99.9", cuts=f99p9Cuts)
+  legend_est(gage="log(Q99.9+1) of streamflow", title=paste0(d," decade\n","log10(Q99.9+1) of streamflow"),
+             note=TRUE, shades=shades)
+  map_annotation()
+}
+for(d in sort(unique(D$decade))) {
+  map_base(); map_sebase()
+  shades <- choropleth_cov(spCOV, decade=d, x="se.fit_est_f99.9", cuts=f99p9CutsSE, rev=TRUE)
+  legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
+  map_annotation()
+}
+dev.off()
+
 
 plotlmrdia(lmrdia(), xlim=c(.1,1), ylim=c(0,1))
 points(spCOV$est_T3[spCOV$decade == "1950"],
@@ -703,5 +829,6 @@ points(spCOV$est_T3[spCOV$decade == "2000"],
        spCOV$est_T4[spCOV$decade == "2000"], col=rgb(0,.5,1,.1), cex=0.3, pch=17)
 
 write.table(spCOV, file="spCOV.txt", sep=",", quote=TRUE)
+save(spCOV, file="spCOV.RData")
 write_feather(slot(spCOV, "data"), path="gam_estimates_huc12.feather")
 

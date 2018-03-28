@@ -81,6 +81,7 @@ text(knots$x, knots$y, row.names(knots))
 # errors of knots outside the boundary when they seem inside.
 # Internally, the mgcv logic must have some type of fuzzy test but
 # I have not found any documentation.
+knots <- knots[c(20, 24),]
 knots <- knots[-c(1, 2, 4, 8, 9, 12, 13, 21),]
 x <- knots$x; y <- knots$y
 knots <- data.frame(x=c(x, -200), y=c(y, 800)); rm(x,y)
@@ -378,7 +379,7 @@ pdf("L1.pdf", useDingbats=FALSE)
   plot(z, fitted.values(L1))
   abline(0,1)
   plot(L1, scheme=2)
-  points(x, y, pch=4, lwd=.5, cex=0.9, col=8)
+  points(Z$x, Z$y, pch=4, lwd=.5, cex=0.9, col=8)
   points(knots$x, knots$y, pch=16, cex=1.1, col=4)
   text(100, 500, "L1")
 dev.off()
@@ -389,13 +390,13 @@ T2   <- gam(z~acc_basin_area +
               developed+
               mixed_forest+shrubland+
               decade-1+
-              s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=Z,
+              s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
               family="gaussian")
 pdf("T2.pdf", useDingbats=FALSE)
   plot(z, fitted.values(T2))
   abline(0,1)
   plot(T2, scheme=2)
-  points(x, y, pch=4, lwd=.5, cex=0.9, col=8)
+  points(D$x, D$y, pch=4, lwd=.5, cex=0.9, col=8)
   points(knots$x, knots$y, pch=16, cex=1.1, col=4)
   text(100, 500, "Tau2")
 dev.off()
@@ -406,13 +407,13 @@ T3   <- gam(z~acc_basin_area +
               developed+
               mixed_forest+shrubland+
               decade-1+
-              s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=Z,
+              s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
               family="gaussian")
 pdf("T3.pdf", useDingbats=FALSE)
   plot(z, fitted.values(T3))
   abline(0,1)
   plot(T3, scheme=2)
-  points(x, y, pch=4, lwd=.5, cex=0.9, col=8)
+  points(D$x, D$y, pch=4, lwd=.5, cex=0.9, col=8)
   points(knots$x, knots$y, pch=16, cex=1.1, col=4)
   text(100, 500, "Tau3")
 dev.off()
@@ -424,13 +425,13 @@ T4   <- gam(z~acc_basin_area +
               developed+
               mixed_forest+shrubland+
               decade-1+
-              s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=Z,
+              s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
               family="gaussian")
 pdf("T4.pdf", useDingbats=FALSE)
   plot(z, fitted.values(T4))
   abline(0,1)
   plot(T4, scheme=2)
-  points(x, y, pch=4, lwd=.5, cex=0.9, col=8)
+  points(D$x, D$y, pch=4, lwd=.5, cex=0.9, col=8)
   points(knots$x, knots$y, pch=16, cex=1.1, col=4)
   text(100, 500, "Tau4")
 dev.off()
@@ -443,13 +444,13 @@ T5   <- gam(z~acc_basin_area +
               developed+
               mixed_forest+shrubland+
               decade-1+
-              s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=Z,
+              s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
               family="gaussian")
 pdf("T5.pdf", useDingbats=FALSE)
   plot(z, fitted.values(T5))
   abline(0,1)
   plot(T5, scheme=2)
-  points(x, y, pch=4, lwd=.5, cex=0.9, col=8)
+  points(D$x, D$y, pch=4, lwd=.5, cex=0.9, col=8)
   points(knots$x, knots$y, pch=16, cex=1.1, col=4)
   text(100, 500, "Tau5")
 dev.off()
@@ -461,13 +462,13 @@ T6   <- gam(z~acc_basin_area +
               developed+
               mixed_forest+shrubland+
               decade-1+
-              s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=Z,
+              s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
               family="gaussian")
 pdf("T6.pdf", useDingbats=FALSE)
   plot(z, fitted.values(T6))
   abline(0,1)
   plot(T6, scheme=2)
-  points(x, y, pch=4, lwd=.5, cex=0.9, col=8)
+  points(D$x, D$y, pch=4, lwd=.5, cex=0.9, col=8)
   points(knots$x, knots$y, pch=16, cex=1.1, col=4)
   text(100, 500, "Tau6")
 dev.off()
@@ -479,51 +480,113 @@ Q50   <- gam(z~acc_basin_area +
                developed+
                mixed_forest+shrubland+
                decade-1+
-               s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=Z,
+               s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
              family="gaussian")
 pdf("Q50.pdf", useDingbats=FALSE)
 plot(z, fitted.values(Q50))
 abline(0,1)
 plot(Q50, scheme=2)
-points(x, y, pch=4, lwd=.5, cex=0.9, col=8)
+points(D$x, D$y, pch=4, lwd=.5, cex=0.9, col=8)
 points(knots$x, knots$y, pch=16, cex=1.1, col=4)
 text(100, 500, "Q50")
 dev.off()
 
 
+sink("right_tail_flowing_fdc.txt")
 z <- log10(D$f90+1)      # --------------------------- Sixth L-moment ratio
-Q90   <- gam(z~acc_basin_area +
-              s(ppt_mean, k=5) + s(temp_mean, k=4) + s(ANN_DNI, k=7)+
+Q90   <- gam(z~acc_basin_area  + s(flood_storage, k=7) +
+              s(ppt_mean, k=5) + s(ANN_DNI, k=7)+
               developed+
               mixed_forest+shrubland+
               decade-1+
-              s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=Z,
+              s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
               family="gaussian")
+print(summary(Q90))
 pdf("Q90.pdf", useDingbats=FALSE)
   plot(z, fitted.values(Q90))
   abline(0,1)
-  plot(Q90, scheme=2)
-  points(x, y, pch=4, lwd=.5, cex=0.9, col=8)
+  plot(Q90, scheme=2, residuals=TRUE)
+  points(D$x, D$y, pch=4, lwd=.5, cex=0.9, col=8)
   points(knots$x, knots$y, pch=16, cex=1.1, col=4)
   text(100, 500, "Q90")
 dev.off()
 
 
-z <- log10(D$f99+1)      # --------------------------- Sixth L-moment ratio
-Q99   <- gam(z~acc_basin_area +
-               s(ppt_mean, k=5) + s(temp_mean, k=4) + s(ANN_DNI, k=7)+
+z <- log10(D$f95+1)      # --------------------------- Sixth L-moment ratio
+Q95   <- gam(z~acc_basin_area + s(flood_storage, k=7) +
+               s(ppt_mean, k=5) + s(ANN_DNI, k=7)+
                developed+
                mixed_forest+shrubland+
                decade-1+
-               s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=Z,
+               s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
              family="gaussian")
+print(summary(Q95))
+pdf("Q95.pdf", useDingbats=FALSE)
+plot(z, fitted.values(Q95))
+abline(0,1)
+plot(Q95, scheme=2, residuals=TRUE)
+points(D$x, D$y, pch=4, lwd=.5, cex=0.9, col=8)
+points(knots$x, knots$y, pch=16, cex=1.1, col=4)
+text(100, 500, "Q95")
+dev.off()
+
+
+z <- log10(D$f98+1)      # --------------------------- Sixth L-moment ratio
+Q98   <- gam(z~acc_basin_area + s(flood_storage, k=7) +
+               s(ppt_mean, k=5) + s(ANN_DNI, k=7)+
+               developed+
+               mixed_forest+shrubland+
+               decade-1+
+               s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
+             family="gaussian")
+print(summary(Q98))
+pdf("Q98.pdf", useDingbats=FALSE)
+plot(z, fitted.values(Q98))
+abline(0,1)
+plot(Q98, scheme=2, residuals=TRUE)
+points(D$x, D$y, pch=4, lwd=.5, cex=0.9, col=8)
+points(knots$x, knots$y, pch=16, cex=1.1, col=4)
+text(100, 500, "Q98")
+dev.off()
+
+z <- log10(D$f99+1)      # --------------------------- Sixth L-moment ratio
+Q99   <- gam(z~acc_basin_area + s(flood_storage, k=7) +
+               s(ppt_mean, k=5) + s(ANN_DNI, k=7)+
+               developed+
+               mixed_forest+shrubland+
+               decade-1+
+               s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
+             family="gaussian")
+print(summary(Q99))
 pdf("Q99.pdf", useDingbats=FALSE)
 plot(z, fitted.values(Q99))
 abline(0,1)
-plot(Q99, scheme=2)
-points(x, y, pch=4, lwd=.5, cex=0.9, col=8)
+plot(Q99, scheme=2, residuals=TRUE)
+points(D$x, D$y, pch=4, lwd=.5, cex=0.9, col=8)
 points(knots$x, knots$y, pch=16, cex=1.1, col=4)
 text(100, 500, "Q99")
 dev.off()
 
-save(D, PPLO, L1, T2, T3, T4, T5, T6, Q50, Q90, Q99, file="Models.RData")
+
+z <- log10(D$f99.9+1)      # --------------------------- Sixth L-moment ratio
+Q99p9   <- gam(z~acc_basin_area + s(flood_storage, k=7) +
+               s(ppt_mean, k=5) + s(ANN_DNI, k=7)+
+               developed+
+               mixed_forest+shrubland+
+               decade-1+
+               s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
+             family="gaussian")
+print(summary(Q99p9))
+pdf("Q99p9.pdf", useDingbats=FALSE)
+plot(z, fitted.values(Q99p9))
+abline(0,1)
+plot(Q99p9, scheme=2, residuals=TRUE)
+points(D$x, D$y, pch=4, lwd=.5, cex=0.9, col=8)
+points(knots$x, knots$y, pch=16, cex=1.1, col=4)
+text(100, 500, "Q99p9")
+dev.off()
+
+
+
+
+save(D, PPLO, L1, T2, T3, T4, T5, T6, Q50, Q90, Q95, Q98, Q99, Q99p9, file="Models.RData")
