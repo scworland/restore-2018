@@ -146,8 +146,6 @@ add.log.axis(logs=c(1),   tcl=-0.5*abs(par()$tcl), side=2, two.sided=TRUE)
 add.log.axis(logs=c(1),   tcl=+1.3*abs(par()$tcl), side=2, two.sided=TRUE)
 add.log.axis(logs=c(1, 2, 4, 6), side=2, make.labs=TRUE, las=1, label="")
 
-
-
 gage <- D[D$site_no == "08167000",]
 gage_area <- 10^gage$acc_basin_area[1]
 fdc <- as.data.frame(gage[,c(11:37)])
@@ -173,11 +171,12 @@ text(-1.0,.15, paste0("A Duan smearing estimator (Helsel and Hirsch, 2002) of ",
                      "used to correct retransformation bias in the mean (first L-moment)\n",
                      "prior to fitting of the distributions to the L-moments."),
              pos=4, cex=0.7)
-txt <- c(paste0("Observed flow-duration curve by decade where grey\n",
-                "increases from 1950s to 2000s and\nsymbol alternates by decade"))
+txt <- c(paste0("Observed flow-duration curve by decade where greyincreases from 1950s to 2000s\n",
+                "and symbol alternates with each increment of decade"))
 legend(-3.5, 2000, txt, col=grey(0.2), bty="n", lwd=1, pch=NA, cex=0.7)
 
 
+L1$duan_smearing <- 1.045 # EMERGENCY HACK TO MAKE OPERATIONAL!
 
 for(decade in cmp$decade) {
   lwd <- ifelse(decade == "1950", 0.5,
@@ -197,23 +196,45 @@ for(decade in cmp$decade) {
   tmp <- tmp[1,]
   aep4 <- c(tmp$aep4x,tmp$aep4a, tmp$aep4k,tmp$aep4h)
   aep4 <- vec2par(aep4, type="aep4")
-  nep <- qnorm(f2f(FF, pp=tmp$est_pplo))
-  qua <- qlmomco(f2flo(FF, pp=tmp$est_pplo), aep4)
-  qua[qua <= 0.01] <- 0.01
-  lines(nep,qua, col=rgb(1,0,0,0.9), lwd=lwd, lty=lty)
+  nep1 <- qnorm(f2f(FF, pp=tmp$est_pplo))
+  qua1 <- qua1o <- qlmomco(f2flo(FF, pp=tmp$est_pplo), aep4)
+  qua1[qua1 <= 0.01] <- 0.01
+  lines(nep1,qua1, col=rgb(1,0,0,0.9), lwd=lwd, lty=lty)
   gno <- c(tmp$gnox,tmp$gnoa, tmp$gnok)
   gno <- vec2par(gno, type="gno")
-  nep <- qnorm(f2f(FF, pp=tmp$est_pplo))
-  qua <- qlmomco(f2flo(FF, pp=tmp$est_pplo), gno)
-  qua[qua <= 0.01] <- 0.01
-  lines(nep,qua, col=rgb(0,1,0,0.9), lwd=lwd, lty=lty)
+  nep2 <- qnorm(f2f(FF, pp=tmp$est_pplo))
+  qua2 <- qua2o <- qlmomco(f2flo(FF, pp=tmp$est_pplo), gno)
+  qua2[qua2 <= 0.01] <- 0.01
+  lines(nep2,qua2, col=rgb(0,1,0,0.9), lwd=lwd, lty=lty)
   kap <- c(tmp$kapx,tmp$kapa, tmp$kapk,tmp$kaph)
   kap <- vec2par(kap, type="kap")
-  nep <- qnorm(f2f(FF, pp=tmp$est_pplo))
-  qua <- qlmomco(f2flo(FF, pp=tmp$est_pplo), kap)
-  qua[qua <= 0.01] <- 0.01
-  lines(nep,qua, col=rgb(0,0,1,0.9), lwd=lwd, lty=lty)
+  nep3 <- qnorm(f2f(FF, pp=tmp$est_pplo))
+  qua3 <- qua3o <- qlmomco(f2flo(FF, pp=tmp$est_pplo), kap)
+  qua3[qua3 <= 0.01] <- 0.01
+  lines(nep3,qua3, col=rgb(0,0,1,0.9), lwd=lwd, lty=lty)
+  df1 <- data.frame(nep=pnorm(nep1), qua1=qua1o)
+  df2 <- data.frame(nep=pnorm(nep2), qua2=qua2o)
+  df3 <- data.frame(nep=pnorm(nep3), qua3=qua3o)
+  df <- merge(df1, merge(df2, df3, all=TRUE), all=TRUE)
+  df$FF <- pnorm(unique(sort(c(nep1, nep2, nep3))))
+  df$qua1[df$qua1 < 0] <- 0
+  df$qua2[df$qua2 < 0] <- 0
+  df$qua3[df$qua3 < 0] <- 0
+  df$Qfo <- df$Qfp <- (df$qua1 + df$qua2 + df$qua3)/3
+  df$Qfp[df$Qfp <= 0] <- 0.01
+  row1 <- data.frame(nep=1/(3653+1), qua1=df$qua1[1],
+                     qua2=df$qua2[1], qua3=df$qua3[1], FF=1/(3653+1),
+                      Qfp=df$Qfp[1], Qfo=df$Qfo[1])
+  df <- merge(df, row1, all=TRUE)
+  lines(qnorm(df$nep), df$Qfp, col=6, lwd=3, lty=1)
 }
+#lines(qnorm(df$nep), df$qua1, col=6, lwd=4, lty=4)
+#lines(qnorm(df$nep), df$qua2, col=6, lwd=4, lty=4)
+#lines(qnorm(df$nep), df$qua3, col=6, lwd=4, lty=4)
+#lines(qnorm(df$nep), df$Qfp, col=6, lwd=6, lty=4)
+comboMu <- function(f, combo) approx(combo$nep,combo$Qfo,xout=f,rule=2)$y
+integrate(comboMu, lower=0, upper=1, combo=df)
+
 mtext(paste0("COMID: ",comid))
 txt <- c("Asymmetric exponential power distribution (four parameter)",
          "Generalized normal distribution (three parameter log-Normal)",
@@ -222,5 +243,17 @@ legend(-3.5, 300, txt, col=c(2,3,4), bty="n", lwd=1, cex=0.7)
 suppressWarnings(par(opts))
 dev.off()
 
-FF <- c(0,FF,1)
-new_qua <- c(rep(0, length(FF)-length(qua)), qua)
+nFF <- c(0,FF,1)
+new_qua1 <- c(rep(0, length(nFF)-length(qua1o)), qua1o)
+new_qua2 <- c(rep(0, length(nFF)-length(qua2o)), qua2o)
+new_qua3 <- c(rep(0, length(nFF)-length(qua3o)), qua3o)
+qua_combo <- (new_qua1 + new_qua2 + new_qua3)/3
+lines(qnorm(nFF), qua_combo)
+lines(qnorm(nFF), new_qua1)
+lines(qnorm(nFF), new_qua2)
+lines(qnorm(nFF), new_qua3)
+lines(qnorm(nFF), qua1o)
+lines(qnorm(nFF), qua2o)
+lines(qnorm(nFF), qua3o)
+
+
