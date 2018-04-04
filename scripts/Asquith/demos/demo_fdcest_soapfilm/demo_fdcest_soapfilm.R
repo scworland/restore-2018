@@ -7,8 +7,10 @@ library(rgeos)
 
 FDC <- read_feather(file.choose()) # "fdc_lmr_pplo.feather" or "fdc_lmr_pplo2010-15.feather"
 # I am using fdc_lmr_pplo2010-15.feather for the testing here.
+load(file.choose()) # "spRESTORE_MGCV_BND.RData"
+load(file.choose()) # spDNI_1998to2009.RData
 
-sites <- unique(FDC$site)
+sites <- unique(FDC$site_no)
 sitefile <- dataRetrieval::readNWISsite(sites)
 sitefile <- sitefile[sitefile$agency_cd != "USCE",]
 
@@ -16,7 +18,6 @@ CDA <- sitefile$contrib_drain_area_va
 CDA[is.na(CDA)] <- sitefile$drain_area_va[is.na(CDA)]
 sitefile$contrib_drain_area_va <- CDA
 
-load(file.choose()) # "spRESTORE_MGCV_BND.RData"
 LATLONG <- paste0("+init=epsg:4269 +proj=longlat +ellps=GRS80 ",
                   "+datum=NAD83 +no_defs +towgs84=0,0,0")
 LATLONG <- sp::CRS(LATLONG)
@@ -24,7 +25,7 @@ ALBEA <- paste0("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +
                 "+datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0")
 ALBEA <- sp::CRS(ALBEA)
 
-D <- data.frame(site=sitefile$site_no,
+D <- data.frame(site_no=sitefile$site_no,
                 dec_lat_va=sitefile$dec_lat_va,
                 dec_long_va=sitefile$dec_long_va,
                 CDA=log10(CDA), stringsAsFactors=FALSE)
@@ -37,10 +38,6 @@ D <- spTransform(D, ALBEA)
 XY <- coordinates(D)
 D$east <- XY[,1]/1000; D$north <- XY[,2]/1000; rm(XY)
 
-D$prob_has_noflow <- 0
-D$prob_has_noflow[D$nzero > 0] <- 1
-
-load(file.choose()) # spDNI_1998to2009.RData
 SO <- over(D, spDNI_1998to2009)
 D$ANN_DNI <- SO$ANN_DNI
 D$JAN <- SO$JAN; D$FEB <- SO$FEB
@@ -77,32 +74,25 @@ text(knots$x, knots$y, row.names(knots))
 # errors of knots outside the boundary when they seem inside.
 # Internally, the mgcv logic must have some type of fuzzy test but
 # I have not found any documentation.
-knots <- knots[-c(3, 13, 10, 11, 12, 29, 21, 22, 27, 16, 6, 5),]
+knots <- knots[c(20, 24),]
 x <- knots$x; y <- knots$y
-knots <- data.frame(x=c(x, 1375), y=c(y, 600)); rm(x,y)
+#knots <- data.frame(x=c(x, 1375), y=c(y, 600)); rm(x,y)
 points(knots$x, knots$y, pch=16, cex=1.1, col=4)
 
 duan_smearing_estimator <- function(model) { sum(10^residuals(L1))/length(residuals(L1)) }
 
 z <- log10(D$L1)
-#L1   <- gam(z~s(CDA, bs="cr")+s(ANN_DNI, bs="cr")+
-#              s(MAY, DEC, bs="tp", k=5)+
-#              s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots,
-#              family="gaussian")
-#L1   <- gam(z~CDA*ANN_DNI+
-#              s(MAY, DEC, bs="tp", k=5)+
-#              s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots,
-#              family="gaussian")
+x <- D$east; y <- D$north
 L1   <- gam(z~te(CDA, ANN_DNI, bs="tp")+
               s(MAY, DEC, bs="tp", k=5)+
               s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots,
-              family="gaussian")
+              family="gaussian", data=D)
 L1$duan_smearing <- duan_smearing_estimator(L1)
-pdf("L1.pdf", useDingbats=FALSE)
+#pdf("L1.pdf", useDingbats=FALSE)
   plot(z, fitted.values(L1))
   abline(0,1)
   plot(L1, scheme=2)
   points(x, y, pch=4, lwd=.5, cex=0.9, col=8)
   points(knots$x, knots$y, pch=16, cex=1.1, col=4)
   text(100, 500, "L1")
-dev.off()
+#dev.off()
