@@ -7,6 +7,8 @@ library(rgeos)
 library(lmomco)
 library(Lmoments)
 library(survival)
+library(cenGAM)
+
 # https://www.sciencebase.gov/catalog/item/5669a79ee4b08895842a1d47
 FDC <- read_feather(file.choose()) # "all_gage_data.feather"
 load(file.choose()) # "spRESTORE_MGCV_BND.RData"
@@ -82,12 +84,10 @@ text(knots$x, knots$y, row.names(knots))
 # Internally, the mgcv logic must have some type of fuzzy test but
 # I have not found any documentation.
 knots <- knots[c(20, 24),]
-knots <- knots[-c(1, 2, 4, 8, 9, 12, 13, 21),]
+#knots <- knots[-c(1, 2, 4, 8, 9, 12, 13, 21),]
 x <- knots$x; y <- knots$y
-knots <- data.frame(x=c(x, -200), y=c(y, 800)); rm(x,y)
+#knots <- data.frame(x=c(x, -200), y=c(y, 800)); rm(x,y)
 points(knots$x, knots$y, pch=16, cex=1.1, col=4)
-
-knots_pplo <- knots
 
 length(DDo$site_no)
 length(DD$site_no)
@@ -199,9 +199,10 @@ D <- DD;
 
 D <- D[D$edwards_rechzone != "1",]
 
-save(D, DD, DDo, knots, knots_pplo, bnd, file="DEMO.RData")
-
 duan_smearing_estimator <- function(model) { sum(10^residuals(model))/length(residuals(model)) }
+
+save(bnd, D, DD, DDo, knots, bnd, duan_smearing_estimator, file="DEMO.RData")
+
 
 
 # [45] "ppt_mean"            "ppt_sd"              "temp_mean"           "temp_sd"
@@ -227,6 +228,56 @@ points(D$east[D$nzero > 0 & D$nzero <= 800], D$north[D$nzero > 0 & D$nzero <= 80
 points(D$east[D$nzero > 3653-2000], D$north[D$nzero > 3653-2000], pch=16, lwd=.5, cex=0.9, col=rgb(0.5,0,1))
 
 
+pdf("test_survreg_gam.pdf", useDingbats=FALSE, height=6, width=7.5)
+par(las=1)
+family <- "gaussian"
+Z <- D
+x <- Z$east; y <- Z$north
+Z$flowtime <- log10(Z$n - Z$nzero)
+Zc <- Surv(Z$flowtime, Z$nzero != 0, type="right")
+SMt <- survreg(Zc~acc_basin_area+ppt_mean+decade-1, data=Z, dist=family)
+Pt <- Pto <- predict(SMt); Pt[Pt > log10(3653)] <- log10(3653)
+
+Z <- D
+x <- Z$east; y <- Z$north
+Z$left.threshold <-  log10(rep(0.01, length(Z$nzero)))
+Z$right.threshold <- log10(Z$n)
+Z$flowtime <- log10(Z$n - Z$nzero)
+GMt <- gam(flowtime~acc_basin_area+s(ppt_mean, k=2)+decade-1,
+           family=tobit1(left.threshold=  Z$left.threshold,
+                         right.threshold=Z$right.threshold), data=Z); summary(GMt)
+Gt <- Gto <- predict(GMt); Gt[Gt > log10(3653)] <- log10(3653)
+plot(Gto, Pto, ylab="Test survival regression: log10(days of decadal streamflow)",
+               xlab="Test censored generalized additive model (GAM): log10(days of decadal streamflow)",
+               pch=21, col=4, bg=8, cex=0.5, lwd=0.5, xaxs="i", yaxs="i",
+               xlim=c(3.3,4.0), ylim=c(3.3,4.0), type="n")
+usr <- par()$usr
+xp <- c(log10(3653),  4, 4, 3.3, 3.3, log10(3653), log10(3653))
+yp <- c(3.3, 3.3, 4, 4, log10(3653), log10(3653), 3.3)
+
+polygon(xp, yp, col=grey(0.9), lty=0)
+points(Gto, Pto, pch=21, col=4, bg=8, cex=0.6, lwd=0.5)
+lines(rep(log10(3653),2), c(3.3, 4), lty=2)
+lines(c(3.3, 4), rep(log10(3653),2), lty=2)
+
+abline(0,1, lwd=0.8)
+length(Z$n[Z$nzero == 0])
+#[1] 2011
+length(Z$n[Z$nzero != 0])
+#[1] 738
+length(Pto[Pto < log10(3653)])
+#[1] 388
+length(Gto[Gto < log10(3653)])
+#[1] 409
+txt <- paste0("Number of gage:decade observations with no zero-flow conditions: 2,011\n",
+              "Number of gage:decade observations with zero-flow conditions: 738\n",
+              "Number of survival regression predicted with zero-flow conditions: 388\n",
+              "Number of GAM regression predicted with zero-flow conditions: 409\n")
+text(3.57, 3.4, txt, pos=4, cex=0.7)
+dev.off()
+
+
+
 family <- "gaussian"
 Z <- D
 x <- Z$east; y <- Z$north
@@ -247,10 +298,9 @@ abline(0,1)
 
 
 
-library(cenGAM)
 Z <- D
 x <- Z$east; y <- Z$north
-Z$left.threshold <- rep(0, length(Z$nzero))
+Z$left.threshold <-  log10(rep(0.01, length(Z$nzero)))
 Z$right.threshold <- log10(Z$n)
 Z$flowtime <- log10(Z$n - Z$nzero)
 GM0 <- gam(flowtime~acc_basin_area+

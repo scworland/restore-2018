@@ -55,7 +55,6 @@ spCOV$x <- spCOV$east <- XY[,1]/1000; spCOV$y <- spCOV$north <- XY[,2]/1000; rm(
 
 
 
-#load(file.choose()) # spDNI_1998to2009.RData
 SO <- over(spCOV, spDNI_1998to2009)
 spCOV$ANN_DNI <- SO$ANN_DNI
 spCOV$JAN <- SO$JAN; spCOV$FEB <- SO$FEB
@@ -136,19 +135,9 @@ length(spCOV$comid[spCOV$bedperm == "nodata"]) # [1] 198
 spCOV <- spCOV[spCOV$bedperm != "nodata",]
 
 message("REMOVING ecol3_37, ecol3_72, nodata (Ecoregion)")
-
 length(spCOV$comid[spCOV$ecol3 == "ecol3_37"]) # [1] 198
 length(spCOV$comid[spCOV$ecol3 == "ecol3_72"]) # [1] 12
 length(spCOV$comid[spCOV$ecol3 == "nodata"])   # [1] 30
-
-#spCOV <- spCOV[spCOV$ecol3 != "ecol3_37",]
-#spCOV <- spCOV[spCOV$ecol3 != "ecol3_72",]
-#spCOV <- spCOV[spCOV$ecol3 != "nodata",]
-
-
-
-
-
 
 
 
@@ -171,7 +160,7 @@ map_annotation <- function() {
                 "North American Datum of 1983\n",
                 "Base modified from U.S. Geological Survey digital data, 1:24,000")
   text(-420000, 1590000, txt, pos=4, cex=0.45)
-  plot(GulfStates, add=TRUE, lwd=.4, lty=2)
+  plot(GulfStates_modified, add=TRUE, lwd=.4, lty=2)
   STATES <- c("Texas", "Oklahoma", "Missouri", "Arkansas", "Louisiana", "Mississippi",
               "Tennessee", "Kentucky", "Alabama", "Georgia", "Florida")
   STATES <- data.frame(easting=c(-440000, -202900.4,  178000,  178000,  279961.5,
