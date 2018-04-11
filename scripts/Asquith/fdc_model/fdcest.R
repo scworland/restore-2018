@@ -57,8 +57,13 @@ rm(SO)
 DD$x <- DD$east; DD$y <- DD$north
 DDo <- DD
 
+ix <- length(2:(length(bnd_poly_aea[,1])-1))
+ix <- c(1,sort(sample(ix, size=20000, replace=FALSE)),length(bnd_poly_aea[,1]))
 bnd <- list(x=bnd_poly_aea[,1]/1000, y=bnd_poly_aea[,2]/1000)
 bnd <- list(bnd)
+bndthin <- list(x=bnd_poly_aea[ix,1]/1000, y=bnd_poly_aea[ix,2]/1000)
+bndthin <- list(bndthin)
+bnd <- bndthin
 plot(bnd[[1]]$x,bnd[[1]]$y,type="l", col=8, lwd=.6)
 points(DD$east, DD$north, pch=4, lwd=.5, cex=0.9, col=rgb(0,.5,0.5,.2))
 
@@ -117,7 +122,9 @@ abline(0,1)
 abline(1/3,1,lty=2); abline(-1/3,1,lty=2)
 abline(1/2,1,lty=2); abline(-1/2,1,lty=3)
 mtext("Diagnostic check on watershed areas")
-sites_of_area_bust <- unique(DD$site_no[abs(DD$acc_basin_area - DD$CDA) > 1/2])
+jnk <- abs(DD$acc_basin_area - DD$CDA)
+summary(jnk[jnk > 1/2])
+sites_of_area_bust <- unique(DD$site_no[jnk > 1/2])
 for(site in sites_of_area_bust) {
   points(DD$CDA[DD$site_no == site], DD$acc_basin_area[DD$site_no == site], pch=16, col=2)
   DD <- DD[DD$site_no != site,]
@@ -222,7 +229,7 @@ save(bnd, D, DD, DDo, knots, bnd, duan_smearing_estimator, file="DEMO.RData")
 # the x, y must be passed as same names in to the s(...). The x,y is not
 # the critical piece, it is that they are all the same literal string.
 # For example, v,w would work too.
-plot(bnd[[1]]$x,bnd[[1]]$y,type="l", col=8, lwd=.6)
+plot(bnd[[1]]$x,bnd[[1]]$y,type="l", col=8, lwd=.6, xlim=c(-200,0), ylim=c(750,840))
 points(D$east[D$nzero == 0], D$north[D$nzero == 0], pch=4, lwd=.5, cex=0.9, col=rgb(0,.5,0.5,.5))
 points(D$east[D$nzero > 0 & D$nzero <= 800], D$north[D$nzero > 0 & D$nzero <= 800], pch=4, lwd=.5, cex=0.9, col=rgb(1,0,0.5,.5))
 points(D$east[D$nzero > 3653-2000], D$north[D$nzero > 3653-2000], pch=16, lwd=.5, cex=0.9, col=rgb(0.5,0,1))
@@ -240,7 +247,7 @@ Pt <- Pto <- predict(SMt); Pt[Pt > log10(3653)] <- log10(3653)
 
 Z <- D
 x <- Z$east; y <- Z$north
-Z$left.threshold <-  log10(rep(0.01, length(Z$nzero)))
+Z$left.threshold <-  log10(rep(0, length(Z$nzero)))
 Z$right.threshold <- log10(Z$n)
 Z$flowtime <- log10(Z$n - Z$nzero)
 GMt <- gam(flowtime~acc_basin_area+s(ppt_mean, k=2)+decade-1,
@@ -255,10 +262,11 @@ usr <- par()$usr
 xp <- c(log10(3653),  4, 4, 3.3, 3.3, log10(3653), log10(3653))
 yp <- c(3.3, 3.3, 4, 4, log10(3653), log10(3653), 3.3)
 
-polygon(xp, yp, col=grey(0.9), lty=0)
-points(Gto, Pto, pch=21, col=4, bg=8, cex=0.6, lwd=0.5)
-lines(rep(log10(3653),2), c(3.3, 4), lty=2)
-lines(c(3.3, 4), rep(log10(3653),2), lty=2)
+polygon(xp, yp, col=grey(0.97), lty=0)
+ix <- sample(1:length(Gto)) # randomizer
+points(Gto[ix], Pto[ix], pch=21, col=grey(0.5), bg=Z$decade[ix], cex=0.7, lwd=0.5)
+lines(rep(log10(3653),2), c(3.3, 4), lty=2, lwd=0.65, col=grey(0.5))
+lines(c(3.3, 4), rep(log10(3653),2), lty=2, lwd=0.65, col=grey(0.5))
 
 abline(0,1, lwd=0.8)
 length(Z$n[Z$nzero == 0])
@@ -269,11 +277,20 @@ length(Pto[Pto < log10(3653)])
 #[1] 388
 length(Gto[Gto < log10(3653)])
 #[1] 409
-txt <- paste0("Number of gage:decade observations with no zero-flow conditions: 2,011\n",
-              "Number of gage:decade observations with zero-flow conditions: 738\n",
+txt <- paste0("Number of streamgage:decade records with no zero-flow conditions: 2,011\n",
+              "Number of streamgage:decade records with zero-flow conditions: 738\n",
               "Number of survival regression predicted with zero-flow conditions: 388\n",
               "Number of GAM regression predicted with zero-flow conditions: 409\n")
 text(3.57, 3.4, txt, pos=4, cex=0.7)
+txt <- paste0("All three grey regions depict predictions of\n",
+              "no zero-flow occurrences in at least a decade.\n",
+              "These exemplify the concept of right censoring.\n",
+              "Given a time period longer than a decade, one\n",
+              "or more zero-flow might have been observed.")
+text(3.295, 3.9, txt, pos=4, cex=0.7)
+text(3.95, 3.95, "Equal value line", cex=0.7)
+legend(3.31, 3.75, c("A unique streamgage:decade record\n in the database colored by decade"),
+              pch=21, lty=0, col=grey(0.5), pt.bg=2, bty="n", cex=0.8)
 dev.off()
 
 
@@ -300,7 +317,7 @@ abline(0,1)
 
 Z <- D
 x <- Z$east; y <- Z$north
-Z$left.threshold <-  log10(rep(0.01, length(Z$nzero)))
+Z$left.threshold <-  log10(rep(0, length(Z$nzero)))
 Z$right.threshold <- log10(Z$n)
 Z$flowtime <- log10(Z$n - Z$nzero)
 GM0 <- gam(flowtime~acc_basin_area+
@@ -331,6 +348,13 @@ GM2 <- gam(flowtime~acc_basin_area+
         s(x,y, bs="so", xt=list(bnd=bnd)), knots=knots,
            family=tobit1(left.threshold=  Z$left.threshold,
                          right.threshold=Z$right.threshold), data=Z); summary(GM2)
+GM2.nosoap <- gam(flowtime~acc_basin_area+
+                    s(ppt_mean, k=5)+s(temp_mean, k=4)+s(ANN_DNI, k=7)+
+                    developed+s(grassland)+
+                    bedperm+decade-1+
+        s(x,y), knots=knots,
+           family=tobit1(left.threshold=  Z$left.threshold,
+                         right.threshold=Z$right.threshold), data=Z); summary(GM2.nosoap)
 
 P <- Po <- predict(SM1); P[P > log10(3653)] <- log10(3653)
 C1 <- C1o <- predict(GM1); C1[C1 > log10(3653)] <- log10(3653)
