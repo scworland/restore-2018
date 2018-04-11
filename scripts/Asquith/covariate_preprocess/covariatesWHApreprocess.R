@@ -8,9 +8,7 @@ load("DEMO.RData")
 load("Models.RData")
 load(file.choose()) # GulfStates.RData
 load(file.choose()) # spDNI_1998to2009.RData
-load(file.choose()) # "spRESTORE_MGCV_BND.RData"
-bnd <- list(x=bnd_poly_aea[,1]/1000, y=bnd_poly_aea[,2]/1000)
-bnd <- list(bnd)
+load(file.choose()) # spRESTORE_MGCV_BND.RData
 
 LATLONG <- paste0("+init=epsg:4269 +proj=longlat +ellps=GRS80 ",
                   "+datum=NAD83 +no_defs +towgs84=0,0,0")
@@ -176,7 +174,7 @@ map_annotation <- function() {
 
 map_base <- function() {
   par(lend=1, ljoin=1)
-  plot(spCOV, pch=NA); plot(GulfStates, add=TRUE, lty=0, col=grey(0.95))
+  plot(spCOV, pch=NA); plot(GulfStates_modified, add=TRUE, lty=0, col=grey(0.95))
   polygon(bnd[[1]]$x*1000,bnd[[1]]$y*1000, col=grey(1), lwd=.7)
 }
 
@@ -617,7 +615,7 @@ dev.off()
 #-----------------------------------------------------------------------
 pdf("T2fit.pdf", useDingbats=FALSE, width=11, height=10)
 for(d in sort(unique(D$decade))) {
-  map_base(); cuts <-
+  map_base();
   choropleth_decade(D, x="T2", cuts=T2Cuts)
   shades <- choropleth_cov(spCOV, decade=d, x="est_T2", cuts=T2Cuts)
   legend_est(gage="L-CV of streamflow", title=paste0(d," decade\n","L-CV of streamflow"),
