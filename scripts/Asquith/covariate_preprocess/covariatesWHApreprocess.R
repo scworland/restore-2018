@@ -3,6 +3,12 @@ library(mgcv)
 library(sp)
 library(GISTools)
 library(RColorBrewer)
+library(lmomco)
+
+# Transformation and Retransformation Functions for the Sin Transformation of
+# Percentile data
+dotransin <- function(p) 2*asin(sqrt(p/100))
+retransin <- function(p) sin(p/2)^2*100
 
 load("DEMO.RData")
 load("Models.RData")
@@ -113,20 +119,20 @@ spCOV$ecol3 <- as.factor(spCOV$ecol3)
 spCOV$physio <- as.factor(spCOV$physio)
 spCOV$statsgo <- as.factor(spCOV$statsgo)
 
-spCOV$barren <- 2*asin(sqrt(spCOV$barren/100))
-spCOV$cultivated_cropland <- 2*asin(sqrt(spCOV$cultivated_cropland/100))
-spCOV$deciduous_forest    <- 2*asin(sqrt(spCOV$deciduous_forest/100))
-spCOV$developed           <- 2*asin(sqrt(spCOV$developed/100))
-spCOV$evergreen_forest    <- 2*asin(sqrt(spCOV$evergreen_forest/100))
-spCOV$grassland           <- 2*asin(sqrt(spCOV$grassland/100))
-spCOV$hay_pasture         <- 2*asin(sqrt(spCOV$hay_pasture/100))
-spCOV$herbaceous_wetland  <- 2*asin(sqrt(spCOV$herbaceous_wetland/100))
-spCOV$mixed_forest        <- 2*asin(sqrt(spCOV$mixed_forest/100))
+spCOV$barren <- dotransin(spCOV$barren)
+spCOV$cultivated_cropland <- dotransin(spCOV$cultivated_cropland)
+spCOV$deciduous_forest    <- dotransin(spCOV$deciduous_forest)
+spCOV$developed           <- dotransin(spCOV$developed)
+spCOV$evergreen_forest    <- dotransin(spCOV$evergreen_forest)
+spCOV$grassland           <- dotransin(spCOV$grassland)
+spCOV$hay_pasture         <- dotransin(spCOV$hay_pasture)
+spCOV$herbaceous_wetland  <- dotransin(spCOV$herbaceous_wetland)
+spCOV$mixed_forest        <- dotransin(spCOV$mixed_forest)
 # Note perennial_ice_snow is 0.00 throughout
-spCOV$perennial_ice_snow  <- 2*asin(sqrt(spCOV$perennial_ice_snow/100))
-spCOV$shrubland           <- 2*asin(sqrt(spCOV$shrubland/100))
-spCOV$water               <- 2*asin(sqrt(spCOV$water/100))
-spCOV$woody_wetland       <- 2*asin(sqrt(spCOV$woody_wetland/100))
+spCOV$perennial_ice_snow  <- dotransin(spCOV$perennial_ice_snow)
+spCOV$shrubland           <- dotransin(spCOV$shrubland)
+spCOV$water               <- dotransin(spCOV$water)
+spCOV$woody_wetland       <- dotransin(spCOV$woody_wetland)
 
 message("REMOVING nodata (Bed Permeability)")
 length(spCOV$comid[spCOV$bedperm == "nodata"]) # [1] 198
