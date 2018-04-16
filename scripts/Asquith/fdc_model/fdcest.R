@@ -105,8 +105,31 @@ length(DD$site_no)
 # storages are in acre-ft
 # 1 km2 = 247.104393047 acres
 DD$flood_storage <- (DD$acc_nid_storage - DD$acc_norm_storage)/(DD$acc_basin_area*247.104393047)
+DD_original <- DD
+
+#               flood_storage
+#02295420 1980  0.2750118
+#02295420 1990  0.4008173
+#02295420 2000 -3.3440962
+#02296750 1950  0.004036043
+#02296750 1960  0.009044272
+#02296750 1970  0.036882952
+#02296750 1980  0.142299683
+#02296750 1990  0.158467423
+#02296750 2000 -0.173860951
+
+DD[DD$site_no == "02295420",]
+DD[DD$site_no == "02296750",]
+DD$flood_storage[                 DD$site_no == "02295420" & DD$decade == "2000"] <-
+                 DD$flood_storage[DD$site_no == "02295420" & DD$decade == "1990"]
+DD$flood_storage[                 DD$site_no == "02296750" & DD$decade == "2000"] <-
+             abs(DD$flood_storage[DD$site_no == "02296750" & DD$decade == "2000"])
+DD[DD$site_no == "02295420",]
+DD[DD$site_no == "02296750",]
+
 DD[DD$flood_storage < 0,] # two sites: 02295420 and 02296750
-DD$flood_storage <- abs(DD$flood_storage)
+
+
 DD$flood_storage <- log10(DD$flood_storage+.01)
 plot(qnorm(pp(DD$flood_storage)), sort(DD$flood_storage))
 message("Maximum log10offets of flood_storage=",max(DD$flood_storage))
@@ -125,6 +148,10 @@ mtext("Diagnostic check on watershed areas")
 jnk <- abs(DD$acc_basin_area - DD$CDA)
 summary(jnk[jnk > 1/2])
 sites_of_area_bust <- unique(DD$site_no[jnk > 1/2])
+DD_sites_of_area_bust <- DD[DD$site_no == sites_of_area_bust[1], ]
+for(site in sites_of_area_bust[2:length(sites_of_area_bust)]) {
+  DD_sites_of_area_bust <- rbind(DD_sites_of_area_bust,DD[DD$site_no == site, ] )
+}
 for(site in sites_of_area_bust) {
   points(DD$CDA[DD$site_no == site], DD$acc_basin_area[DD$site_no == site], pch=16, col=2)
   DD <- DD[DD$site_no != site,]
@@ -142,20 +169,23 @@ DD$ecol3    <- as.factor(DD$ecol3)
 DD$physio   <- as.factor(DD$physio)
 DD$statsgo  <- as.factor(DD$statsgo)
 
-DD$barren <- 2*asin(sqrt(DD$barren/100))
-DD$cultivated_cropland <- 2*asin(sqrt(DD$cultivated_cropland/100))
-DD$deciduous_forest    <- 2*asin(sqrt(DD$deciduous_forest/100))
-DD$developed           <- 2*asin(sqrt(DD$developed/100))
-DD$evergreen_forest    <- 2*asin(sqrt(DD$evergreen_forest/100))
-DD$grassland           <- 2*asin(sqrt(DD$grassland/100))
-DD$hay_pasture         <- 2*asin(sqrt(DD$hay_pasture/100))
-DD$herbaceous_wetland  <- 2*asin(sqrt(DD$herbaceous_wetland/100))
-DD$mixed_forest        <- 2*asin(sqrt(DD$mixed_forest/100))
+dotransin <- function(p) 2*asin(sqrt(p/100))
+retransin <- function(p) sin(p/2)^2*100
+
+DD$barren <- dotransin(DD$barren)
+DD$cultivated_cropland <-  dotransin(DD$cultivated_cropland)
+DD$deciduous_forest    <-  dotransin(DD$deciduous_forest)
+DD$developed           <-  dotransin(DD$developed)
+DD$evergreen_forest    <-  dotransin(DD$evergreen_forest)
+DD$grassland           <-  dotransin(DD$grassland)
+DD$hay_pasture         <-  dotransin(DD$hay_pasture)
+DD$herbaceous_wetland  <-  dotransin(DD$herbaceous_wetland)
+DD$mixed_forest        <-  dotransin(DD$mixed_forest)
 # Note perennial_ice_snow is 0.00 throughout
-DD$perennial_ice_snow  <- 2*asin(sqrt(DD$perennial_ice_snow/100))
-DD$shrubland           <- 2*asin(sqrt(DD$shrubland/100))
-DD$water               <- 2*asin(sqrt(DD$water/100))
-DD$woody_wetland       <- 2*asin(sqrt(DD$woody_wetland/100))
+DD$perennial_ice_snow  <-  dotransin(DD$perennial_ice_snow)
+DD$shrubland           <-  dotransin(DD$shrubland)
+DD$water               <-  dotransin(DD$water)
+DD$woody_wetland       <-  dotransin(DD$woody_wetland)
 
 
 DD$alt_ecol3 <- "-0"
@@ -208,8 +238,12 @@ D <- D[D$edwards_rechzone != "1",]
 
 duan_smearing_estimator <- function(model) { sum(10^residuals(model))/length(residuals(model)) }
 
-save(bnd, D, DD, DDo, knots, bnd, duan_smearing_estimator, file="DEMO.RData")
+save(bnd, D, DD, DDo, knots, bnd,
+     DD_original,
+     DD_sites_of_area_bust, duan_smearing_estimator, file="DEMO.RData")
 
+# TODO: Need to look at these two neighboring locations in MO on the MAP.
+# 07044000, 07045000
 
 
 # [45] "ppt_mean"            "ppt_sd"              "temp_mean"           "temp_sd"
@@ -664,6 +698,6 @@ text(100, 500, "Q99p9")
 dev.off()
 
 
-
-
 save(D, PPLO, L1, T2, T3, T4, T5, T6, Q50, Q90, Q95, Q98, Q99, Q99p9, file="Models.RData")
+
+sink()
