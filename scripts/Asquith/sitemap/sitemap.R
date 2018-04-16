@@ -8,6 +8,7 @@ load(file.choose()) # GulfStates.RData
 load(file.choose()) # spRESTORE_MGCV_BND.RData
 load(file.choose()) # Edwards
 load(file.choose()) # DEMO.RData
+
 LATLONG <- paste0("+init=epsg:4269 +proj=longlat +ellps=GRS80 ",
                   "+datum=NAD83 +no_defs +towgs84=0,0,0")
 LATLONG <- sp::CRS(LATLONG)
@@ -77,6 +78,7 @@ dev.off()
 pdf("SiteMapA.pdf", useDingbats=FALSE, width=11, height=10)
   plot(GulfStates_modified, lty=0, col=grey(0.95), xlim=usr[1:2], ylim=usr[3:4])
   plot(spRESTORE_MGCV_BND, col="white", add=TRUE, lty=0)
+  #plot(MRVA_BoundaryEcoRegion02miBuffer, add=TRUE, col=2)
   plot(edwards_aquifer_outcrop, col="#F99B00", lty=0, add=TRUE)
   plot(StreamsOutRESTORE, add=TRUE, lwd=0.15, col="#91B0BD")
   plot(StreamsInRESTORE, add=TRUE, lwd=0.17, col="#6AC3F2")
@@ -84,8 +86,20 @@ pdf("SiteMapA.pdf", useDingbats=FALSE, width=11, height=10)
   ix <- length(2:(length(bnd_poly_aea[,1])-1))
   ix <- c(1,sort(sample(ix, size=20000, replace=FALSE)),length(bnd_poly_aea[,1]))
   lines(bnd_poly_aea[ix,1], bnd_poly_aea[ix,2], lty=1, lwd=1.5, col="#006F41")
-  plot(DD[DD$edwards_rechzone == 0,], pch=2, lwd=0.7, cex=0.6, col="#1E4D2B", add=TRUE)
-  plot(DD[DD$edwards_rechzone == 1,], pch=1, lwd=0.7, cex=0.6, col="#8D4200", add=TRUE)
+  tmp <- DD[DD$edwards_rechzone == 1,]
+  for(site in unique(tmp$site_no)) {
+     tmp2 <- tmp[tmp$site_no == site, ]; tmp2 <- tmp2[1,]
+     plot(tmp2, pch=1, lwd=0.7, cex=0.8, col="#8D4200", add=TRUE)
+  }
+  for(site in unique(DD_sites_of_area_bust$site_no)) {
+    tmp2 <- DD_sites_of_area_bust[DD_sites_of_area_bust$site_no == site, ]; tmp2 <- tmp2[1,]
+    plot(tmp2, pch=0, lwd=0.7, cex=0.8, col="#FB0032", add=TRUE)
+    text(tmp2$east*1000, tmp2$north*1000, site, cex=0.5)
+  }
+  for(site in unique(D$site_no)) {
+    tmp2 <- D[D$site_no == site, ]; tmp2 <- tmp2[1,]
+    plot(tmp2, pch=2, lwd=0.7, cex=0.8, col="#1E4D2B", add=TRUE)
+  }
   map_annotation()
 dev.off()
 pdf("SiteMapB.pdf", useDingbats=FALSE, width=11, height=10)
