@@ -273,7 +273,6 @@ pdf("test_survreg_gam.pdf", useDingbats=FALSE, height=6, width=7.5)
 par(las=1)
 family <- "gaussian"
 Z <- D
-x <- Z$east; y <- Z$north
 Z$flowtime <- log10(Z$n - Z$nzero)
 Zc <- Surv(Z$flowtime, Z$nzero != 0, type="right")
 SMt <- survreg(Zc~acc_basin_area+ppt_mean+decade-1, data=Z, dist=family)
