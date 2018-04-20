@@ -22,7 +22,6 @@ LATLONG <- sp::CRS(LATLONG)
 ALBEA <- paste0("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 ",
                 "+datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0")
 ALBEA <- sp::CRS(ALBEA)
-
 east_grids  <- seq(80,100,by=2)
 north_grids <- seq(26,38, by=2)
 
@@ -34,7 +33,7 @@ for(i in 1:length(north_grids)) {
 GL <- SpatialPoints(cbind(-gx, gy), proj4string=LATLONG)
 GL <- spTransform(GL, ALBEA)
 XY <- coordinates(GL)
-x <- XY[,1]/1000; y <- XY[,2]/1000
+x <- XY[,1]; y <- XY[,2]
 #ind <- mgcv::inSide(bnd,x,y)
 #XY <- XY[ind,]
 GL <- SpatialPoints(cbind(x,y), proj4string=ALBEA)
@@ -42,6 +41,7 @@ ix <- 1:length(x)
 plot(GL, pch=1, col=2)
 text(XY[,1],XY[,2], ix)
 GL <- GL[-c(1,3:9, 12, 14:20, 23, 34, 45)]
+
 
 COV <- COVo <- read_feather(file.choose()) # "all_huc12_covariates.feather"
 length(COVo$comid)                           # [1] 59070
@@ -178,9 +178,10 @@ map_annotation <- function() {
   plot(GL, lwd=0.4, col=grey(0.22), add=TRUE)
 }
 
-map_base <- function() {
+map_base <- function(xlim=NA, ylim=NA) {
   par(lend=1, ljoin=1)
-  plot(spCOV, pch=NA); plot(GulfStates_modified, add=TRUE, lty=0, col=grey(0.95))
+  plot(spCOV, pch=NA, xlim=usr[1:2], ylim=usr[3:4])
+  plot(GulfStates_modified, add=TRUE, lty=0, col=grey(0.95))
   polygon(bnd[[1]]$x*1000,bnd[[1]]$y*1000, col=grey(1), lwd=.7)
 }
 
@@ -585,9 +586,13 @@ f99p9CutsSE <- function(x, n=9, ...) {
 
 
 #-----------------------------------------------------------------------
+pdf("PPLOfit_junk.pdf", useDingbats=FALSE, width=11, height=10)
+  plot(spRESTORE_MGCV_BND)
+  usr <- par()$usr
+dev.off()
 pdf("PPLOfit.pdf", useDingbats=FALSE, width=11, height=10)
   for(d in sort(unique(D$decade))) {
-    map_base()
+    map_base(xlim=usr[1:2], ylim=usr[3:4])
     choropleth_decade(D, x="pplo", cuts=pploCuts, rev=TRUE)
     shades <- choropleth_cov(spCOV, decade=d, x="est_pplo", cuts=pploCuts, rev=TRUE)
     legend_est(gage="no flow fraction", title=paste0(d," decade\n","no flow fraction"),
@@ -595,7 +600,7 @@ pdf("PPLOfit.pdf", useDingbats=FALSE, width=11, height=10)
     map_annotation()
   }
   for(d in sort(unique(D$decade))) {
-    map_base(); map_sebase()
+    map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase()
     shades <- choropleth_cov(spCOV, decade=d, x="se.fit_est_pplo", cuts=pploCutsSE, rev=TRUE)
     legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
     map_annotation()
@@ -604,7 +609,7 @@ dev.off()
 #-----------------------------------------------------------------------
 pdf("L1fit.pdf", useDingbats=FALSE, width=11, height=10)
 for(d in sort(unique(D$decade))) {
-  map_base()
+  map_base(xlim=usr[1:2], ylim=usr[3:4])
   choropleth_decade(D, x="L1", cuts=L1Cuts, trans=log10)
   shades <- choropleth_cov(spCOV, decade=d, x="est_L1", cuts=L1Cuts)
   legend_est(gage="mean streamflow", title=paste0(d," decade\n","mean streamflow, in log10(cfs)"),
@@ -612,7 +617,7 @@ for(d in sort(unique(D$decade))) {
   map_annotation()
 }
 for(d in sort(unique(D$decade))) {
-  map_base(); map_sebase()
+  map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase()
   shades <- choropleth_cov(spCOV, decade=d, x="se.fit_est_L1", cuts=L1CutsSE, rev=TRUE)
   legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
   map_annotation()
@@ -621,7 +626,7 @@ dev.off()
 #-----------------------------------------------------------------------
 pdf("T2fit.pdf", useDingbats=FALSE, width=11, height=10)
 for(d in sort(unique(D$decade))) {
-  map_base();
+  map_base(xlim=usr[1:2], ylim=usr[3:4]);
   choropleth_decade(D, x="T2", cuts=T2Cuts)
   shades <- choropleth_cov(spCOV, decade=d, x="est_T2", cuts=T2Cuts)
   legend_est(gage="L-CV of streamflow", title=paste0(d," decade\n","L-CV of streamflow"),
@@ -629,7 +634,7 @@ for(d in sort(unique(D$decade))) {
   map_annotation()
 }
 for(d in sort(unique(D$decade))) {
-  map_base(); map_sebase()
+  map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase()
   shades <- choropleth_cov(spCOV, decade=d, x="se.fit_est_T2", cuts=T2CutsSE, rev=TRUE)
   legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
   map_annotation()
@@ -638,7 +643,7 @@ dev.off()
 #-----------------------------------------------------------------------
 pdf("T3fit.pdf", useDingbats=FALSE, width=11, height=10)
 for(d in sort(unique(D$decade))) {
-  map_base()
+  map_base(xlim=usr[1:2], ylim=usr[3:4])
   choropleth_decade(D, x="T3", cuts=T3Cuts)
   shades <- choropleth_cov(spCOV, decade=d, x="est_T3", cuts=T3Cuts)
   legend_est(gage="L-skew of streamflow", title=paste0(d," decade\n","L-skew of streamflow"),
@@ -646,7 +651,7 @@ for(d in sort(unique(D$decade))) {
   map_annotation()
 }
 for(d in sort(unique(D$decade))) {
-  map_base(); map_sebase()
+  map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase()
   shades <- choropleth_cov(spCOV, decade=d, x="se.fit_est_T3", cuts=T3CutsSE, rev=TRUE)
   legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
   map_annotation()
@@ -655,7 +660,7 @@ dev.off()
 #-----------------------------------------------------------------------
 pdf("T4fit.pdf", useDingbats=FALSE, width=11, height=10)
 for(d in sort(unique(D$decade))) {
-  map_base()
+  map_base(xlim=usr[1:2], ylim=usr[3:4])
   choropleth_decade(D, x="T4", cuts=T4Cuts)
   shades <- choropleth_cov(spCOV, decade=d, x="est_T4", cuts=T4Cuts)
   legend_est(gage="L-kurtosis of streamflow", title=paste0(d," decade\n","L-kurtosis of streamflow"),
@@ -663,7 +668,7 @@ for(d in sort(unique(D$decade))) {
   map_annotation()
 }
 for(d in sort(unique(D$decade))) {
-  map_base(); map_sebase()
+  map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase()
   shades <- choropleth_cov(spCOV, decade=d, x="se.fit_est_T4", cuts=T4CutsSE, rev=TRUE)
   legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
   map_annotation()
@@ -672,7 +677,7 @@ dev.off()
 #-----------------------------------------------------------------------
 pdf("T5fit.pdf", useDingbats=FALSE, width=11, height=10)
 for(d in sort(unique(D$decade))) {
-  map_base()
+  map_base(xlim=usr[1:2], ylim=usr[3:4])
   choropleth_decade(D, x="T5", cuts=T5Cuts)
   shades <- choropleth_cov(spCOV, decade=d, x="est_T5", cuts=T5Cuts)
   legend_est(gage="Tau5 of streamflow", title=paste0(d," decade\n","Tau5 of streamflow"),
@@ -680,7 +685,7 @@ for(d in sort(unique(D$decade))) {
   map_annotation()
 }
 for(d in sort(unique(D$decade))) {
-  map_base(); map_sebase()
+  map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase()
   shades <- choropleth_cov(spCOV, decade=d, x="se.fit_est_T5", cuts=T5CutsSE, rev=TRUE)
   legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
   map_annotation()
@@ -689,7 +694,7 @@ dev.off()
 #-----------------------------------------------------------------------
 pdf("T6fit.pdf", useDingbats=FALSE, width=11, height=10)
 for(d in sort(unique(D$decade))) {
-  map_base()
+  map_base(xlim=usr[1:2], ylim=usr[3:4])
   choropleth_decade(D, x="T6", cuts=T6Cuts)
   shades <- choropleth_cov(spCOV, decade=d, x="est_T6", cuts=T6Cuts)
   legend_est(gage="T6 of streamflow", title=paste0(d," decade\n","Tau6 of streamflow"),
@@ -697,7 +702,7 @@ for(d in sort(unique(D$decade))) {
   map_annotation()
 }
 for(d in sort(unique(D$decade))) {
-  map_base(); map_sebase()
+  map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase()
   shades <- choropleth_cov(spCOV, decade=d, x="se.fit_est_T6", cuts=T6CutsSE, rev=TRUE)
   legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
   map_annotation()
@@ -706,7 +711,7 @@ dev.off()
 #-----------------------------------------------------------------------
 pdf("Q50fit.pdf", useDingbats=FALSE, width=11, height=10)
 for(d in sort(unique(D$decade))) {
-  map_base()
+  map_base(xlim=usr[1:2], ylim=usr[3:4])
   choropleth_decade(D, x="f50", cuts=f50Cuts, trans=function(t) { log10(t+1) } )
   shades <- choropleth_cov(spCOV, decade=d, x="est_f50", cuts=f50Cuts)
   legend_est(gage="log10(Q50+1) of streamflow", title=paste0(d," decade\n","log10(Q50+1) of streamflow"),
@@ -714,7 +719,7 @@ for(d in sort(unique(D$decade))) {
   map_annotation()
 }
 for(d in sort(unique(D$decade))) {
-  map_base(); map_sebase()
+  map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase()
   shades <- choropleth_cov(spCOV, decade=d, x="se.fit_est_f50", cuts=f50CutsSE, rev=TRUE)
   legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
   map_annotation()
@@ -723,7 +728,7 @@ dev.off()
 #-----------------------------------------------------------------------
 pdf("Q90fit.pdf", useDingbats=FALSE, width=11, height=10)
 for(d in sort(unique(D$decade))) {
-  map_base()
+  map_base(xlim=usr[1:2], ylim=usr[3:4])
   choropleth_decade(D, x="f90", cuts=f90Cuts, trans=function(t) { log10(t+1) } )
   shades <- choropleth_cov(spCOV, decade=d, x="est_f90", cuts=f90Cuts)
   legend_est(gage="log10(Q90+1) of streamflow", title=paste0(d," decade\n","log10(Q90+1) of streamflow"),
@@ -731,7 +736,7 @@ for(d in sort(unique(D$decade))) {
   map_annotation()
 }
 for(d in sort(unique(D$decade))) {
-  map_base(); map_sebase()
+  map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase()
   shades <- choropleth_cov(spCOV, decade=d, x="se.fit_est_f90", cuts=f90CutsSE, rev=TRUE)
   legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
   map_annotation()
@@ -740,7 +745,7 @@ dev.off()
 #-----------------------------------------------------------------------
 pdf("Q95fit.pdf", useDingbats=FALSE, width=11, height=10)
 for(d in sort(unique(D$decade))) {
-  map_base()
+  map_base(xlim=usr[1:2], ylim=usr[3:4])
   choropleth_decade(D, x="f95", cuts=f95Cuts, trans=function(t) { log10(t+1) } )
   shades <- choropleth_cov(spCOV, decade=d, x="est_f95", cuts=f95Cuts)
   legend_est(gage="log(Q95+1) of streamflow", title=paste0(d," decade\n","log10(Q95+1) of streamflow"),
@@ -748,7 +753,7 @@ for(d in sort(unique(D$decade))) {
   map_annotation()
 }
 for(d in sort(unique(D$decade))) {
-  map_base(); map_sebase()
+  map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase()
   shades <- choropleth_cov(spCOV, decade=d, x="se.fit_est_f95", cuts=f95CutsSE, rev=TRUE)
   legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
   map_annotation()
@@ -757,7 +762,7 @@ dev.off()
 #-----------------------------------------------------------------------
 pdf("Q98fit.pdf", useDingbats=FALSE, width=11, height=10)
 for(d in sort(unique(D$decade))) {
-  map_base()
+  map_base(xlim=usr[1:2], ylim=usr[3:4])
   choropleth_decade(D, x="f98", cuts=f98Cuts, trans=function(t) { log10(t+1) } )
   shades <- choropleth_cov(spCOV, decade=d, x="est_f98", cuts=f98Cuts)
   legend_est(gage="log(Q98+1) of streamflow", title=paste0(d," decade\n","log10(Q98+1) of streamflow"),
@@ -765,7 +770,7 @@ for(d in sort(unique(D$decade))) {
   map_annotation()
 }
 for(d in sort(unique(D$decade))) {
-  map_base(); map_sebase()
+  map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase()
   shades <- choropleth_cov(spCOV, decade=d, x="se.fit_est_f98", cuts=f98CutsSE, rev=TRUE)
   legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
   map_annotation()
@@ -774,7 +779,7 @@ dev.off()
 #-----------------------------------------------------------------------
 pdf("Q99fit.pdf", useDingbats=FALSE, width=11, height=10)
 for(d in sort(unique(D$decade))) {
-  map_base()
+  map_base(xlim=usr[1:2], ylim=usr[3:4])
   choropleth_decade(D, x="f99", cuts=f99Cuts, trans=function(t) { log10(t+1) } )
   shades <- choropleth_cov(spCOV, decade=d, x="est_f99", cuts=f99Cuts)
   legend_est(gage="log(Q99+1) of streamflow", title=paste0(d," decade\n","log10(Q99+1) of streamflow"),
@@ -782,7 +787,7 @@ for(d in sort(unique(D$decade))) {
   map_annotation()
 }
 for(d in sort(unique(D$decade))) {
-  map_base(); map_sebase()
+  map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase()
   shades <- choropleth_cov(spCOV, decade=d, x="se.fit_est_f99", cuts=f99CutsSE, rev=TRUE)
   legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
   map_annotation()
@@ -791,7 +796,7 @@ dev.off()
 #-----------------------------------------------------------------------
 pdf("Q99p9fit.pdf", useDingbats=FALSE, width=11, height=10)
 for(d in sort(unique(D$decade))) {
-  map_base()
+  map_base(xlim=usr[1:2], ylim=usr[3:4])
   choropleth_decade(D, x="f99.9", cuts=f99p9Cuts, trans=function(t) { log10(t+1) } )
   shades <- choropleth_cov(spCOV, decade=d, x="est_f99.9", cuts=f99p9Cuts)
   legend_est(gage="log(Q99.9+1) of streamflow", title=paste0(d," decade\n","log10(Q99.9+1) of streamflow"),
@@ -799,7 +804,7 @@ for(d in sort(unique(D$decade))) {
   map_annotation()
 }
 for(d in sort(unique(D$decade))) {
-  map_base(); map_sebase()
+  map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase()
   shades <- choropleth_cov(spCOV, decade=d, x="se.fit_est_f99.9", cuts=f99p9CutsSE, rev=TRUE)
   legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
   map_annotation()
