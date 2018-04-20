@@ -5,3 +5,19 @@ This directory holds the original site list given to WHA in February 2017. The s
 Now this directory holds the site list after a pull back from western Texas and removal of a few gages in Texas that are not representative of watersheds (partial outflows from reservoirs and major springs).
 
 -wha 2018/02/15
+
+
+Now the St. Francis system sticking north out of the boundary have been removed.
+
+sf <- c(
+"07035000",
+"07035500",
+"07035800",
+"07036100",
+"07037000",
+"07037300",
+"07037500",
+"07037700",
+"07039500")
+
+-wha 2018/04/20
