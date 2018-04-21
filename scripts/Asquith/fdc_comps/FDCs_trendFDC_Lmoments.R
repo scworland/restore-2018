@@ -79,7 +79,15 @@ fdc_lmr_pplo <- modFDClmrdf.log
 names <- names(fdc_lmr_pplo)
 names[1] <- "site_no"; names(fdc_lmr_pplo) <- names
 write_feather(fdc_lmr_pplo, "log_fdc_lmr_pplo.feather")
+fdc_lmr_pplo <- read_feather("log_fdc_lmr_pplo.feather")
+
+
+fdc_lmr_pplo <- modFDClmrdf.nolog
+names <- names(fdc_lmr_pplo)
+names[1] <- "site_no"; names(fdc_lmr_pplo) <- names
+write_feather(fdc_lmr_pplo, "fdc_lmr_pplo.feather")
 fdc_lmr_pplo <- read_feather("fdc_lmr_pplo.feather")
+
 
 
 ModelSites <- data.frame(site_no=ModelSites)
@@ -106,69 +114,3 @@ dev.off()
 
 
 stop()  # experimental material follows below
-
-#pdf("massive.pdf")
-FF <- (1:365)/366; qFF <- qnorm(FF)
-plot(qnorm(c(1/366, 365/366)), c(1E-2, 1E5), type="n", log="y",
-     xlab="STANDARD NORMAL VARIATE", ylab="cfs")
-lmrDF <- modFDClmrdf.nolog
-for(i in (1:length(lmrDF$site))) {
-   if(is.na(lmrDF$L1[i])) next
-   lmr <- c(lmrDF$L1[i], lmrDF$L2[i],
-            lmrDF$T3[i], lmrDF$T4[i], lmrDF$T5[i])
-   lmr <- vec2lmom(lmr, checklmom=FALSE)
-   if(! are.lmom.valid(lmr)) next;
-   par <- lmom2par(lmr, type="gno")
-   col <- rgb(0,0,1,.2)
-   #col <- ifelse(par$ifail == 2, rgb(0,0,1,.4),
-   #       ifelse(par$ifail == 3, rgb(0,1,0,.4), rgb(1,0,0, .4)))
-   lines(qFF, qlmomco(FF, par), lwd=0.4, col=col)
-}
-
-
-FF <- (1:365)/366; qFF <- qnorm(FF)
-plot(qnorm(c(1/366, 365/366)), c(1E-3, 10), type="n",
-     xlab="STANDARD NORMAL VARIATE", ylab="log10(cfs+1cfs)")
-lmrDF <- modFDClmrdf.log
-for(i in 1:length(lmrDF$site)) {
-   if(is.na(lmrDF$L1[i])) next
-   lmr <- c(lmrDF$L1[i], lmrDF$L2[i],
-            lmrDF$T3[i], lmrDF$T4[i], lmrDF$T5[i])
-   lmr <- vec2lmom(lmr, checklmom=FALSE)
-   if(! are.lmom.valid(lmr)) next;
-   par <- lmom2par(lmr, type="wak")
-   col <- ifelse(par$ifail == 2, rgb(0,0,1,.4),
-          ifelse(par$ifail == 3, rgb(0,1,0,.4), rgb(1,0,0, .4)))
-   lines(qFF, qlmomco(FF, par), lwd=0.4, col=col)
-}
-
-#dev.off()
-
-
-for(ktsites in unique(AllFDCtrend$site)) {
-   X <- AllFDCtrend[AllFDCtrend$site == ktsites,]
-   message(paste0(ktsites," ",length(X$site)))
-   deltau <- 0.05; alpha <- 0.05
-   rnames <- seq(-1,1,by=deltau)
-   cnames <- round((1:365)/(365+1), digits=3)
-   nr <- length(rnames); nc <- length(cnames)
-   MX <- CX <- TX <- matrix(NA, nrow=nr, ncol=nc)
-   rownames(MX) <- rnames; rownames(CX) <- rnames
-   colnames(MX) <- cnames; colnames(CX) <- cnames
-   rix <- 1:length(rnames)
-   for(column in 1:365) {
-      tau <- X$estimate[column]
-      color <- as.numeric(X$p.value[column] > alpha); color[color != 1] <- 2
-      ix <- sample(rix[rnames >= tau-deltau & rnames <= tau+deltau], 1)
-      TX[1:ix, column] <- 3; TX[ix:nr,column] <- 4
-      MX[ix,column] <- tau
-      CX[ix,column] <- TX[ix,column] <- color
-   }
-  stop()
-}
-#jpeg(filename="junkMX.jpg", width=365, height=401)
-#image(t(MX), col=topo.colors(1), xaxt="n", yaxt="n")
-#dev.off()
-#jpeg(filename="junkCX.jpg", width=365, height=401)
-#image(t(CX), col=topo.colors(2), xaxt="n", yaxt="n")
-#dev.off()
