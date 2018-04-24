@@ -7,7 +7,7 @@ scripts/Asquith/fdc_model/fdcest.R.
 
 We are recommending revision to COMIDs as per discussion below. We have 11 sites of which
 3 are not to be changed. We must tentatively conclude that NWIS areas are at "fault" and
-not to be investigated further. We think that seven can be fixed, and these often have
+not to be investigated further. We think that eight can be fixed, and these often have
 area differences measured in orders of magnitude.
 
 A large descrepancy is measured in log10-cycle differences.
