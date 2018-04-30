@@ -14,6 +14,12 @@ A large descrepancy is measured in log10-cycle differences.
 
 -WHA, -RRK (April 24, 2018)
 
+
+Also the last section of this file documents the results of 11 sites that did not have 
+any COMID associated with that site in the NHD. Some are too small to have such, but
+others are not.
+
+
 REFERENCES
 \bibitem[U.S. Geological Survey(2014)]{StreamsOnly}
 U.S. Geological Survey, 2014. USGS Small-scale dataset---1:1,000,000-scale streams of the
@@ -33,7 +39,7 @@ data release, accessed on March 12, 2018 at \url{https://doi.org/10.5066/F7765D7
 
 
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-+   NEW SECTION. Outliers of |>1/2| log10 and most are several orders of magnitude off.
++   SECTION. Outliers of |>1/2| log10 and most are several orders of magnitude off.
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ===***===***===***===***===***===***===***===***===***===***===***===***===***===***
         coordinates  site_no    comid        huc12 decade       lon      lat    n
@@ -136,7 +142,7 @@ Most DS COMID for HUC12: 8348979
 
 
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-+   NEW SECTION. These are outliers of |>1/3| log10 and |<1/2| log10.
++   SECTION. These are outliers of |>1/3| log10 and |<1/2| log10.
 +   We had five others but they were all small watershed and are not further considered
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ===***===***===***===***===***===***===***===***===***===***===***===***===***===***
@@ -170,3 +176,35 @@ nearest COMID: 766886
 DS COMID for HUC12:   767886
 HUC12	080202040615
 **** Recommend changing COMID to 766886
+
+
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++   SECTION. These ARE gages that do not have COMIDs in original NHDplus that we are 
++   working on. Manual inspection of these was made and recommendations are shown.
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+===***===***===***===***===***===***===***===***===***===***===***===***===***===***
+readNWISsite(c("02294068","02301740","02303350","02309848","02312690"
+               "02359315","07047000","07287000","07341500","07371000","08167350"))
+ site_no                                         station_nm  dec_lat_va dec_long_va   contrib_drain_area_va
+02294068                      LULU LAKE OUTLET AT ELOISE FL  27.98447   -81.72952        23
+**** Recommend COMDI 
+
+02301740 NORTH ARCHIE CREEK AT PROGRESS BLVD. NEAR TAMPA FL  27.89669   -82.34981         6.09
+02303350                TROUT CREEK NEAR SULPHUR SPRINGS FL  28.13472   -82.36194        23
+02309848          SOUTH BRANCH ANCLOTE RIVER NEAR ODESSA FL  28.18544   -82.55336        17.10
+02312690              CHITTY CHATTY CREEK NR WILDWOOD, FLA.  28.80943   -81.98286        38.00
+02359315           MARTIN BAYOU AT US 98 AT SPRINGFIELD, FL  30.13520   -85.61548         3.96
+07047000    ST. FRANCIS R FLOODWAY NR MARKED TREE, AR (DAM)  35.60008   -90.45010      4644
+07287000                       YAZOO RIVER AT GREENWOOD, MS  33.52444   -90.18167      7450
+07341500                          RED RIVER AT FULTON, ARK.  33.60734   -93.81379     46444
+07371000                      GARRETT CREEK AT JONESBORO LA  32.23210   -92.72654         2.14
+08167350     Unm Trib Honey Ck Site 1T nr Spring Branch, TX  29.85039   -98.47289         0.16
+**** Recommend removing from the list. WHA himself built this streamgage in upland area
+     associated with the effects of brush removal. There is barely a visible flow path,
+     not channel until immediately upstream of the gage as the overland flow cascades 
+     over a cliff edge.
+
+
+
