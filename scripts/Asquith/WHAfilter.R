@@ -24,16 +24,16 @@ gage_covariates_WHAfilter <- function(df) {
   # $-0.174$~feet and for 1980 was $0.142$~feet and for 1990 was $0.158$~feet. For this
   # study, the value for 2000 was assigned as the absolute value for an assumption that
   # data transcription error in the NID is involved.
-  # df[DD$site_no == "02295420",]
-  # df[DD$site_no == "02296750",]
+  # df[DD$site_no == "02295420",] # Asquith testing only
+  # df[DD$site_no == "02296750",] # Asquith testing only
   df$flood_storage[                 df$site_no == "02295420" & df$decade == "2000"] <-
                    df$flood_storage[df$site_no == "02295420" & df$decade == "1990"]
   df$flood_storage[                 df$site_no == "02296750" & df$decade == "2000"] <-
                abs(df$flood_storage[df$site_no == "02296750" & df$decade == "2000"])
 
-  df$flood_storage <- log10(df$flood_storage+.001)
-  #plot(qnorm(lmomco::pp(df$flood_storage)), sort(df$flood_storage))
-  #text(paste0("Maximum log10offets of flood_storage=",max(df$flood_storage)))
+  #df$flood_storage <- log10(df$flood_storage+.001) # Asquith testing only
+  #plot(qnorm(lmomco::pp(df$flood_storage)), sort(df$flood_storage)) # Asquith testing only
+  #text(paste0("Maximum log10offets of flood_storage=",max(df$flood_storage))) # Asquith testing only
   # The conclusion is that a maximum log10 flood storage is 0.52 (3.3 ft). We will
   # be truncated prediction COMIDs according to this upper limit.
 
@@ -82,12 +82,12 @@ huc12_covariates_WHAfilter <- function(df) {
   df$flood_storage[is.na(df$flood_storage)] <- 0 # resetting the missing
   #df[df$flood_storage < 0,]; # plot(df); plot(df[df$flood_storage < 0,], add=TRUE, col=2)
   df$flood_storage <- abs(df) # there appear to be spurious negatives, switched values in original data?
-  #df$flood_storage <- log10(df$flood_storage+.01)
-  #plot(qnorm(pp(df$flood_storage)), sort(df$flood_storage), type="l")
-  #lines(qnorm(pp(DD$flood_storage)), sort(DD$flood_storage), col=2)
+  #df$flood_storage <- log10(df$flood_storage+.01) # Asquith testing only
+  #plot(qnorm(pp(df$flood_storage)), sort(df$flood_storage), type="l") # Asquith testing only
+  #lines(qnorm(pp(DD$flood_storage)), sort(DD$flood_storage), col=2) # Asquith testing only
   #length(df$comid[df$flood_storage >= 0.52]) # This is about 3.3 feet of watershed depth storage
   # [1] 35
-  #summary(df$flood_storage[df$flood_storage >= 0.52])
+  #summary(df$flood_storage[df$flood_storage >= 0.52]) # Asquith testing only
   #   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
   # 0.5228  0.5546  0.7193  0.7827  0.8425  1.5351
   df <- df[df$flood_storage < 0.52,] # COMID parameter space restriction
