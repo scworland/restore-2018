@@ -122,6 +122,11 @@ huc12_covariates_WHAfilter <- function(df) {
   df <- df[df$ecol3 != "ecol3_72",]
   df <- df[df$ecol3 != "nodata",  ]
 
+  # *** ABOUT PERMANENT ICE AND SNOW ***
+  # We have no permanent ice and snow, just remove the column entirely.
+  # perennial_ice_snow
+  df$perennial_ice_snow <- NULL
+
   return(df)
 }
 
