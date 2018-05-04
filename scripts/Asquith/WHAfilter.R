@@ -183,6 +183,19 @@ huc12_covariates_WHAfilter <- function(df, purge=FALSE) {
   df$perennial_ice_snow <- NULL
   df$soller[df$soller == "cat_soller_nodata"] <- "nodata"
 
+  # ***** WHA/RRK mental notes and checking the ungaged categories
+  #CAT_SOLLER_101 ---> CAT_SOLLER_11   *** No we could delete, only one? ***
+  #CAT_SOLLER_11 Estimated percent of catchment that contains the surficial materials: Alluvial sediments, thin, less than 100 feet thick; Holocene to Pliocene geologic age.
+  #to
+  #CAT_SOLLER_101 Estimated percent of catchment that contains the surficial materials:Biological sediments less than 100 feet thick. Holocene to middle Pleistocene geologic age.
+  # COV[! is.na(COV$hlr) & COV$soller == "cat_soller_101" & COV$decade == 1950,2] #  A tibble: 1 x 1
+
+  #CAT_HLR_17 ---> CAT_HLR_* 15/18
+  #CAT_HLR_ * 15/18
+  #to
+  #CAT_HLR_17
+  #COV[! is.na(COV$hlr) & COV$hlr == "cat_hlr_17" & COV$decade == 1950,2] # A tibble: 8 x 1
+
   # Checks on existance of the factors we need. Here we list them all.
   message("HUC12_COVARIATES: bedperm length of levels: ", length(levels(as.factor(df$bedperm))))
   message("HUC12_COVARIATES: aquifers length of levels: ",length(levels(as.factor(df$aquifers))))
