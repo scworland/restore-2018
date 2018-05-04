@@ -73,7 +73,7 @@ gage_covariates_WHAfilter <- function(df) {
   message("GAGE_COVARIATES: physio length of levels: ",  paste(levels(as.factor(df$physio)), collapse=" "))
   message("GAGE_COVARIATES: statsgo length of levels: ", paste(levels(as.factor(df$statsgo)), collapse=" "))
 
-  # *** ABOUT TEXAS Edwards Aquifer Hydrology ***  (We never got clarity about Florida.)
+  # *** ABOUT TEXAS Edwards Aquifer Hydrology ***  (We never got clarity concerning Florida.)
   # Edwards Recharge Zone in Texas has large affect to the low end of the streamflow
   # regime. WHA after consulting a shapefile, the high no flow percentages, and
   # basic situational awareness of the region, has identified these as needed a flag.
@@ -94,8 +94,8 @@ gage_covariates_WHAfilter <- function(df) {
   df$edwards_recharge_zone_impacted <- as.character(df$edwards_recharge_zone_impacted)
 
   # Flow-duration curve and statistics to cms (1 cfs = 0.028316846592 cms)
-  # WHA is well aware this is long winded but don't want to use column index for safety
-  # and to not want to convert the data.frame into an environment and list just in case.
+  # WHA is well aware this is long winded but doesn't want to use column index for safety
+  # and does not want to convert the data.frame into an environment and list just in case.
   P <- 0.028316846592
   df$min    <- P*df$min
   df$f0.02  <- P*df$f0.02
