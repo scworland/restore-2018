@@ -55,6 +55,7 @@ gage_covariates_WHAfilter <- function(df) {
   # We have no permanent ice and snow, just remove the column entirely.
   # perennial_ice_snow
   df$perennial_ice_snow <- NULL
+  df$soller[df$soller == "cat_soller_nodata"] <- "nodata"
 
   # Checks on existance of the factors we need. Here we list them all.
   message("GAGE_COVARIATES: bedperm length of levels: ", length(levels(as.factor(df$bedperm))))
