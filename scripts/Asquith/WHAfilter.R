@@ -55,6 +55,7 @@ gage_covariates_WHAfilter <- function(df) {
   # We have no permanent ice and snow, just remove the column entirely.
   # perennial_ice_snow
   df$perennial_ice_snow <- NULL
+  df$aquifers[df$aquifers == "cat_aq_nodata"] <- "nodata"
   df$soller[df$soller == "cat_soller_nodata"] <- "nodata"
 
   # Checks on existance of the factors we need. Here we list them all.
@@ -182,6 +183,7 @@ huc12_covariates_WHAfilter <- function(df, purge=FALSE) {
   # We have no permanent ice and snow, just remove the column entirely.
   # perennial_ice_snow
   df$perennial_ice_snow <- NULL
+  df$aquifers[df$aquifers == "cat_aq_nodata"] <- "nodata"
   df$soller[df$soller == "cat_soller_nodata"] <- "nodata"
 
   # ***** WHA/RRK mental notes and checking the ungaged categories
