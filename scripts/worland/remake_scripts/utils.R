@@ -154,55 +154,55 @@ sw_obs_in_cluster <- function(site,kmeans_df) {
 }
 
 # Find reference site
-sw_find_ref <- function(all_x,ref_x,site,distance=200){
+sw_find_index <- function(all_x,index_x,site,distance=200){
   
   library(proxy)
   
   decades <- unique(all_x$decade)
   
-  ref_site <- NULL
+  index_site <- NULL
   subs <- NULL
   for(i in 1:length(decades)){
     
     # extract rows for site (simulate ungaged)
-    site_data <- filter(all_x,site_no==site & decade==decades[i])
+    site_data <- filter(all_x,comid==site & decade==decades[i])
     
     # subset possible reference by decade
-    ref_xd <- filter(ref_x,decade==decades[i])
+    index_xd <- filter(index_x,decade==decades[i])
     
     # possible donor sites
-    ref_sites <- ref_xd$site_no
-    lon <- ref_xd$lon
-    lat <- ref_xd$lat
+    index_sites <- index_xd$comid
+    lon <- index_xd$lon
+    lat <- index_xd$lat
     
     # find sites with streamflow and within distance
-    neighbors <- sw_geo_dist(site_data,ref_sites,lon,lat,distance=distance)
+    neighbors <- sw_geo_dist(site_data,index_sites,lon,lat,distance=distance)
     
     # find site that is the most similar in Euclidean space
-    sub_xd <- ref_xd %>%
-      filter(site_no %in% neighbors$neighbor) %>%
-      filter(site_no != site)
+    sub_xd <- index_xd %>%
+      filter(comid %in% neighbors$neighbor) %>%
+      filter(comid != site)
     
     dists <- proxy::dist(select(sub_xd,lon,lat,acc_hdens:acc_rdx),
                          select(site_data,lon,lat,acc_hdens:acc_rdx))
     
-    ref_site[i] <- sub_xd$site_no[which(dists==min(dists))]
+    index_site[i] <- sub_xd$comid[which(dists==min(dists))]
     
-    sub_site_no <- sub_xd %>%
-      select(possible_sites=site_no,decade) %>%
-      mutate(ref_site=ref_site[i],
+    sub_comid <- sub_xd %>%
+      select(possible_sites=comid,decade) %>%
+      mutate(index_site=index_site[i],
              site=site)
     
-    subs <- rbind(subs,sub_site_no)
+    subs <- rbind(subs,sub_comid)
   }
   
-  refs <- data.frame(decade=decades,ref_site,stringsAsFactors = F)
-  subs <- select(subs,site,decade,possible_sites,ref_site)
-  result <- list(refs=refs,subs=subs)
+  index_sites <- data.frame(decade=decades,index_site,stringsAsFactors = F)
+  possible_index <- select(subs,site,decade,possible_sites,index_site)
+  result <- list(index_sites=index_sites,possible_index=possible_index)
 }
 
 # find sites within geographic distance
-sw_geo_dist <- function(site_data,ref_sites,lon,lat,distance=200){
+sw_geo_dist <- function(site_data,index_sites,lon,lat,distance=200){
   
   library(geosphere)
   
@@ -212,8 +212,8 @@ sw_geo_dist <- function(site_data,ref_sites,lon,lat,distance=200){
   
   dmat <- distm(coord_mat,site_coords,fun = distHaversine)/1000
   
-  neighbors <- data.frame(site=site_data$site_no,
-                          neighbor=ref_sites[which(dmat <= distance)],
+  neighbors <- data.frame(site=site_data$comid,
+                          neighbor=index_sites[which(dmat <= distance)],
                           stringsAsFactors = F)
   
   

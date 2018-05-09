@@ -1,0 +1,48 @@
+
+target_default: predict_fdc
+
+include:
+  - prepare_data.yml
+  
+packages:
+  - tidyverse
+  - keras
+  - broom
+  - feather
+  - zoo
+  - sf
+  - lmomco
+  
+file_extensions:
+  - feather
+  - shp 
+
+sources:
+  - scripts/Worland/remake_scripts
+
+targets:
+  predict_fdc:
+    depends:
+      - mnn_quantile_est
+      - snn_quantile_est
+      - mnn_lmom_est
+      - all_est_fdc
+  
+  ## build and compare statistical models to predict FDCs -----    
+  mnn_quantile_est: # build quantile multioutput neural network 
+    command: sw_build_mnn_quantile(gage_all)
+    
+  snn_quantile_est: # build quantile single-output neural network 
+    command: sw_build_snn_quantile(gage_all)
+  
+  mnn_lmom_est: # build lmom multioutput neural network
+    command: sw_build_mnn_lmom(gage_all)
+  
+  ## Estimate FDCs using final model -----
+  all_est_fdc: # manually add the selected model in sw_predict_fdcs
+    command: sw_predict_fdcs(gage_all,gage_covariates,huc12_covariates,mnn_quantile_est)
+    
+    
+    
+    
+    

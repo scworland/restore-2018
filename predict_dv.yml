@@ -1,0 +1,35 @@
+
+target_default: predict_dv
+
+include:
+  - predict_fdc.yml
+  
+packages:
+  - tidyverse
+  - keras
+  - broom
+  - feather
+  - zoo
+  - sf
+  
+file_extensions:
+  - feather
+  - shp 
+
+sources:
+  - scripts/Worland/remake_scripts
+
+targets:
+  predict_dv:
+    depends:
+      - dv_est
+  
+  dv_list:
+    command: readRDS("data/dvs/dv_list.rds")
+    
+  dv_est:
+    command: sw_estimate_dv(dv_list,gage_all,all_est_fdc,gage_covariates,huc12_covariates)
+    
+    
+    
+    

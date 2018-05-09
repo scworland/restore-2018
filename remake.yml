@@ -1,118 +1,13 @@
 
-# library(remake)
-# library(parallelRemake)
-# makefile(targets = "all", remakefiles = "remake.yml", command = "make", args = c("--jobs=5", "-s"))
+# Ensures that the entire project is up to date
 
 packages:
-  - tidyr
-  - dplyr
-  - purrr
-  - readr
-  - feather
-  - sf
-  - stringr
-  - lubridate
-  - dataRetrieval
+  - remake
 
-file_extensions: ["feather","shp"]
-
-sources:
-  - scripts/Worland/remake_scripts
+include:
+  - predict_dv.yml
 
 targets:
-  all:
-    depends: 
-      - data/gage/all_gage_data.feather
-  
-  ## Prepare HUC 12 site file -----
-  restore_boundary: # load restore boundary
-    command: sw_shp_read("data/shapefiles/restore_bnd/restore_bnd.shp") 
+
+      
     
-  wbd_huc12: # load data from http://www.horizon-systems.com/NHDPlus/V2NationalData.php
-    command: sw_shp_read("data/shapefiles/nhd_wbd/WBDSnapshot_National.shp")
-  
-  clipped_hucs: # clip hucs that are in boundary
-    command: clip_restore_hucs(restore_boundary,wbd_huc12)
-    
-  data/shapefiles/restore_hucs/restoreHUC12s.shp: # write restore hucs shapefile
-    command: st_write(clipped_hucs,target_name)
-  
-  restore_hucs: # load restore hucs shapefile
-    command: sw_shp_read("data/shapefiles/restore_hucs/restoreHUC12s.shp") 
-  
-  huc12_pp: # load huc12 comids and pour point shapefile
-    command: sw_shp_read("data/shapefiles/huc_pp_comid/HUC12_Outlet_COMIDs_CONUS.shp") 
-    
-  huc12_comid_pp: # add huc12 comid and pour points
-    command: add_huc12_comid_pp(restore_hucs, huc12_pp)
-  
-  data/huc12_list_comid.feather:
-    command: write_feather(huc12_comid_pp,target_name)
-    
-  huc12s:
-    command: read_feather("data/huc12_list_comid.feather")
-    
-  ## Prepare complete gages site file -----
-  site_list: # load master site list
-    command: read_csv("data/decade1950plus_site_list.csv")
-  
-  gage_locs: # load primary gage location file
-    command: sw_shp_read("data/shapefiles/GageLoc/GageLoc.shp")
-    
-  updated_locs: # load updated gage location file from Laura Hayes
-    command: sw_shp_read("data/shapefiles/CATCHMENT_gageloc_v1/CATCHMENT_gageloc_v1.shp")
-    
-  site_comids: # add comids to site list
-    command: add_gage_comid(site_list,gage_locs,updated_locs,restore_hucs)
-  
-  clean_sites: # fix comids based on WHA and RKK analysis
-    command: sw_fix_comids(site_comids)
-    
-  data/gage_list_comid.feather: # write final site file
-    command: write_feather(clean_sites,target_name)
-  
-  sites: # load site file
-    command: read_feather("data/gage_list_comid.feather")
-  
-  ## Add covariates ----- 
-  item_list:
-    command: read_csv("data/basin_sb_items.csv")
-    
-  immutable_vars:
-    command: sw_add_immutable_vars(item_list,sites,huc12s)
-    
-  dams:
-    command: sw_add_dams(item_list,sites,huc12s)
-    
-  housing_density:
-    command: sw_add_housedensity(item_list,sites,huc12s)
-    
-  climate:
-    command: sw_add_climate(item_list,sites,huc12s)
-    
-  historic_class_link:
-    command: read_csv("data/historic_lulc_classes.csv") 
-    
-  lulc:
-    command: sw_add_lulc(historic_class_link,item_list,sites,huc12s)
-    
-  gage_covariates:  
-    command: sw_combine_gage(sites,immutable_vars,dams,housing_density,climate,lulc)
-    
-  huc12_covariates:  
-    command: sw_combine_huc12(huc12s,immutable_vars,dams,housing_density,climate,lulc)
-    
-  data/gage/all_gage_covariates.feather:
-    command: write_feather(gage_covariates,target_name)
-    
-  data/huc12/all_huc12_covariates.feather:
-    command: write_feather(huc12_covariates,target_name)
-    
-  fdc_data:
-    command: read_feather("data/gage/fdc_lmr_pplo.feather")
-    
-  gage_all:
-    command: sw_gage_all(sites,gage_covariates,fdc_data)
-    
-  data/gage/all_gage_data.feather:
-    command: write_feather(gage_all,target_name)
