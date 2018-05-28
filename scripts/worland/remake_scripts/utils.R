@@ -238,6 +238,69 @@ sample_n_groups = function(tbl, size, replace = FALSE, weight = NULL) {
     group_by_(.dots = grps)
 }
 
+# return rows in prediction matrix that are outside the range
+# of the training dataset
+sw_within_range <- function(train,predict) {
+  
+  if(any(lapply(train, class) %in% "factor")) {
+    stop("Columns of 'train' dataframe must be either numeric or character class")
+  }
+  
+  if(any(lapply(predict, class) %in% "factor")) {
+    stop("Columns of 'predict' dataframe must be either numeric or character class")
+  }
+  
+  index_all <- NULL
+  for(i in 1:ncol(predict)){
+    name <- names(predict)[i]
+    p <- predict[,name]
+    t <- train[,name]
+    
+    if(class(t)=="character"){
+      rows <- which(!p %in% t)
+      if(!purrr::is_empty(rows)){
+        index <- data.frame(variable=name,
+                            index=rows,
+                            value=p[rows],
+                            stringsAsFactors = F)
+        
+        index_all = rbind(index_all,index)
+        
+      }else{
+        index_all = index_all
+      }
+    }else{
+      rows <- which(!p >= range(t)[1] | !p <= range(t)[2])
+      if(!purrr::is_empty(rows)){
+        index <- data.frame(variable=name,
+                            index=rows,
+                            value=p[rows],
+                            stringsAsFactors = F)
+        index_all = rbind(index_all,index)
+      }else{
+        index_all = index_all
+      }
+    }
+    
+    index_all = rbind(index_all,index)
+    
+  }
+  
+  return(index_all)
+}
+
+# test function
+# train <- data.frame(a = c("a","b","c","d","e"),
+#                     b = c(1,2,3,4,5),
+#                     c = c(10,11,12,13,14),
+#                     stringsAsFactors = F)
+# 
+# predict <- data.frame(a = c("a","m","c","d","z","b","e"),
+#                       b = c(1,2,3,4,5,1.2,6),
+#                       c = c(10,11,12,100,14,13,11.5),
+#                       stringsAsFactors = F)
+# 
+# sw_within_range(train,predict)
 
 
 

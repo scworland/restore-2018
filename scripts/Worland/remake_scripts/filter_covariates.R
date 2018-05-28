@@ -37,7 +37,8 @@ sw_huc12_filter <- function(df) {
 gages <- remake::fetch('gage_covariates')
 hucs <- remake::fetch('huc12_covariates')
 
-hold <- sw_within_range(gages,hucs)
+hold <- sw_within_range(gages,hucs) %>%
+  filter(!variable %in% c("comid","huc12","lon","lat"))
 
 
 
