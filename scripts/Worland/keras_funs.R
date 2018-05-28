@@ -4,6 +4,8 @@ k_foldcv <- function(k=10,epochs=30,batch_size=250,X=X,Y=Y,data=d,pls=FALSE){
   
   library(keras)
   library(pls)
+  library(dplyr)
+  library(tidyr)
   
   #start the clock and progress bar
   ptm <- proc.time()
@@ -70,8 +72,17 @@ k_foldcv <- function(k=10,epochs=30,batch_size=250,X=X,Y=Y,data=d,pls=FALSE){
         }
       )
     )
-    
+
     # fit model
+    if(length(Ytest)==1){
+      model_fit <- model %>% 
+        fit(x=Xtrain,
+            y=Ytrain, 
+            epochs=epochs, 
+            batch_size = batch_size,
+            validation_data = list(Xtest, Ytest), 
+            verbose=0)
+    }else{
     violation_count <- violationHistory$new()
     model_fit <- model %>% 
       fit(x=Xtrain,
@@ -83,6 +94,7 @@ k_foldcv <- function(k=10,epochs=30,batch_size=250,X=X,Y=Y,data=d,pls=FALSE){
           callbacks=violation_count)
     
     violation_all <- rbind(violation_all,violation_count$val)
+    }
     
     mse_all <- rbind(mse_all, model_fit$metrics$val_loss)
     
@@ -132,138 +144,21 @@ k_foldcv <- function(k=10,epochs=30,batch_size=250,X=X,Y=Y,data=d,pls=FALSE){
       mutate(obs = gather(obs_all,variable,obs)$obs)
   }
   
-  result <- list(average_mse=average_mse,
-                 yhat_all=yhat_all,
-                 obs_all=obs_all,
-                 est_obs=est_obs,
-                 violations=violation_all,
-                 time=proc.time() - ptm)
-  
-  return(result)
-  close(pb)
-  
-}
-
-# quantiles cv
-qk_foldcv <- function(k=10,epochs=30,batch_size=250,Y=Y,X=X,data=d){
-  
-  library(keras)
-  
-  #start the clock and progress bar
-  ptm <- proc.time()
-  pb <- txtProgressBar(min = 0, max = k, style = 3)
-  
-  k <- k
-  N <- nrow(d)
-  indices <- sample(1:N)
-  folds <- cut(indices, breaks = k, labels = FALSE)
-  
-  mse_all <- NULL
-  yhat_all <- NULL
-  for (i in 1:k) {
-    
-    if(i %% 2==0) {
-      # print progress every 2nd iteration
-      setTxtProgressBar(pb, i)
-    }
-    
-    ki <- which(folds == i)
-    n <- length(ki)
-    
-    # training Y data
-    Ytrain <- Y %>% 
-      slice(-ki) %>%
-      mutate_all(funs(1+scale(.))) %>%
-      as.matrix() %>%
-      split(.,col(.)) %>%
-      unname() %>%
-      keras_array()
-    
-    # training scale data
-    scale_train <- Y %>%
-      slice(-ki) %>%
-      gather(variable,values) %>%
-      group_by(variable) %>%
-      summarize(mu = mean(values),
-                sigma = sd(values)) %>%
-      ungroup() 
-    
-    # training X set
-    Xtrain <- X[-ki,]
-    Xtest <- array_reshape(X[ki,],c(n,ncol(X)))
-    
-    # validation sets
-    Ytest <- Y %>% 
-      slice(ki) %>%
-      rowid_to_column() %>%
-      gather(variable,value,-rowid) %>%
-      left_join(scale_train, by = "variable") %>%
-      mutate(value = ((value-mu)/sigma)+1) %>%
-      select(-sigma,-mu) %>%
-      spread(variable,value) %>%
-      select(-rowid) %>%
-      as.matrix() %>%
-      split(.,col(.)) %>%
-      unname() %>%
-      keras_array()
-    
-    # build and fit model
-    model <- build_model()
-    model_fit <- model %>% 
-      fit(x=Xtrain,
-          y=Ytrain, 
-          epochs=epochs, 
-          batch_size = batch_size,
-          validation_data = list(Xtest, Ytest), 
-          #validation_split = 0.1,
-          verbose=0)
-    
-    mse_all <- rbind(mse_all, model_fit$metrics$val_loss)
-    
-    if(k < N){
-      obs <- data.frame(Y[ki,])
-    } else {
-      obs <- data.frame(t(Y[ki,]))
-    }
-    
-    # obs <- Y %>% 
-    #   slice(ki) %>%
-    #   rowid_to_column() %>%
-    #   gather(variable,value,-rowid) %>%
-    #   left_join(scale_train, by = "variable") %>%
-    #   mutate(value = ((value-mu)/sigma)+1) %>%
-    #   select(-sigma,-mu) %>%
-    #   spread(variable,value) %>%
-    #   select(-rowid)
-    
-    # siteno and decade for joining
-    site_no <- data$site_no[ki]
-    decade <- data$decade[ki]
-    
-    yhat <- predict(model, Xtest) %>%
-      data.frame() %>%
-      setNames(colnames(Y)) %>%
-      mutate(site_no = site_no,
-             decade = decade) %>%
-      select(site_no,decade,everything()) %>%
-      gather(variable,model,-site_no,-decade) %>%
-      mutate(obs = gather(obs,variable,obs)$obs) %>%
-      left_join(scale_train,by="variable") %>%
-      mutate(model = ((model-1)*sigma)+mu) %>%
-      select(-mu,-sigma)
-    
-    yhat_all <- rbind(yhat_all,yhat)
+  if(length(Ytest)==1){
+    result <- list(average_mse=average_mse,
+                   yhat_all=yhat_all,
+                   obs_all=obs_all,
+                   est_obs=est_obs,
+                   time=proc.time() - ptm)
+  }else{
+    result <- list(average_mse=average_mse,
+                   yhat_all=yhat_all,
+                   obs_all=obs_all,
+                   est_obs=est_obs,
+                   violations=violation_all,
+                   time=proc.time() - ptm)
   }
-  
-  average_mse <- data.frame(epoch = seq(1:epochs)) %>%
-    mutate(val_mse = apply(mse_all, 2, mean))
-  
-  est_obs <- yhat_all
-  
-  result <- list(average_mse=average_mse,
-                 est_obs=est_obs,
-                 time=proc.time() - ptm)
-  
+
   return(result)
   close(pb)
   

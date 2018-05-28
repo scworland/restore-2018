@@ -22,6 +22,8 @@ ggplot(por) +
   geom_segment(aes(x = start, y = id, xend = end, yend = id,color=kept),alpha=0.3) +
   scale_color_manual(values=c("grey","slateblue3"),name="period of record") +
   labs(x="years",y="Individual gages") +
+  geom_vline(xintercept=1950,linetype="dashed") +
+  theme_bw(base_size=18) +
   theme(legend.position = c(.3, .15),
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank(),

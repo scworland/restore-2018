@@ -32,7 +32,9 @@ test_sites <- unique(yhat$site_no)
 decades <- rev(unique(yhat$decade))
 
 all_x <- read_feather("data/gage/all_gage_covariates.feather") %>%
-  mutate(decade=as.character(decade))
+  mutate(decade=as.character(decade),
+         huc12=as.character(huc12)) %>%
+  select(site_no,comid,huc12,lon,lat,decade,everything())
 
 ref_x <- read_feather("data/gage/all_gage_data.feather")  %>%
   select(comid,site_no,decade) %>%
@@ -90,13 +92,28 @@ for(i in 10:15){
   
 }
 
-ggplot(est_dvlist[[14]]) +
+ggplot(est_dvlist[[10]]) +
   geom_line(aes(date,Q_obs)) +
   geom_line(aes(date,Q_est),color="dodgerblue",alpha=0.7) +
-  facet_wrap(~decade,scales="free",ncol=1) +
+  facet_wrap(~decade,scales="free_x",ncol=2) +
   theme_bw() +
-  ggtitle('Predicted streamflow',subtitle="blue=estimated, back=observed") +
+  # scale_y_log10() +
+  ggtitle('Predicted streamflow for site 02329500',
+          subtitle="blue=estimated, black=observed") +
   labs(y="Q")
 
+hold <- est_dvlist[[10]] %>%
+  select(Q_obs,Q_est) %>%
+  gather(variable,value) %>%
+  group_by(variable) %>%
+  summarize(mn = mean(value),
+            std = sd(value),
+            min = min(value),
+            max = max(value))
+            
+write_csv(all_x,"data/gage/gage_basin_characteristics.csv")
 
+all_huc12 <- read_feather("data/huc12/all_huc12_covariates.feather") %>%
+  mutate(nodat = ifelse(bedperm=="nodata",1,0))
 
+ggplot(all_huc12) + geom_point(aes(x=lon,y=lat,color=as.character(nodat)))

@@ -3,17 +3,19 @@ library(keras)
 library(tidyverse)
 library(feather)
 library(rethinking)
+library(lmomco)
+library(parallel)
 
 # setwd("~/Documents/Restore")
 
-d <- read_feather("data/gage/all_gage_data.feather")
+d <- read_feather("data/gage/all_gage_data2.feather")
 
-Y <- select(d,pplo,L1:T4) %>% 
+Y <- select(d,L1:T4) %>% 
   mutate(T2 = L2/L1,
          L1 = log10(L1)) %>%
-  select(L1,T2,T3,T4,pplo) 
+  select(L1,T2,T3,T4) 
 
-X <- select(d,ppt_mean:statsgo) %>%
+X <- select(d,lon,lat,acc_hdens:statsgo) %>%
   mutate_at(vars(bedperm:statsgo),funs(as.numeric(as.factor(.)))) %>%
   mutate_all(funs(as.vector(scale(.)))) %>%
   select_if(~!any(is.na(.))) %>% 
@@ -24,8 +26,7 @@ build_model <- function(){
   input <- layer_input(shape=dim(X)[2],name="basinchars")
   
   base_model <- input  %>%
-    layer_dense(units = 32, activation='relu') %>%
-    layer_dropout(rate=0.0) 
+    layer_dense(units = 40, activation='relu') 
 
   l1_pred <- base_model %>% 
     layer_dense(units = 1, activation='relu', name="l1") 
@@ -39,14 +40,14 @@ build_model <- function(){
   t4_pred <- base_model %>% 
     layer_dense(units = 1, activation='relu', name="t4") 
   
-  pplo_pred <- base_model %>% 
-    layer_dense(units = 1, activation='softplus', name="pplo") 
+  # pplo_pred <- base_model %>% 
+  #   layer_dense(units = 1, activation='softplus', name="pplo") 
   
-  model <- keras_model(input,list(l1_pred,t2_pred,t3_pred,t4_pred,pplo_pred)) %>%
+  model <- keras_model(input,list(l1_pred,t2_pred,t3_pred,t4_pred)) %>%
     compile(optimizer = "rmsprop",
             loss="mse",
             metrics="mae",
-            loss_weights=c(0.2,0.5,0.5,1,1))
+            loss_weights=c(0.2,0.5,0.5,1))
   
   return(model)
 }
@@ -54,13 +55,13 @@ build_model <- function(){
 # K-fold cross validation
 source("scripts/Worland/keras_funs.R")
 
-cv_results <- k_foldcv(k=10,epochs=125,batch_size=50,Y=Y,X=X,data=d)
+cv_results <- k_foldcv(k=10,epochs=200,batch_size=30,Y=Y,X=X,data=d)
 
-tail(cv_results$average_mse)
-
-ggplot(cv_results$average_mse) +
-  geom_line(aes(x = epoch, y = val_mse))
-
+# tail(cv_results$average_mse)
+# 
+# ggplot(cv_results$average_mse) +
+#   geom_line(aes(x = epoch, y = val_mse))
+# 
 # plots estimated vs observed
 est_obs <- cv_results$est_obs %>%
   # mutate(nnet = ifelse(variable=="L1",10^nnet,nnet),
@@ -69,22 +70,50 @@ est_obs <- cv_results$est_obs %>%
   mutate(col=ifelse(obs>value,1,0))
 
 ggplot(est_obs) +
-  geom_point(aes(obs,value,color=col),alpha=0.2) +
+  geom_point(aes(obs,value,color=decade),alpha=0.7,shape=20) +
+  scale_color_viridis_d() +
   geom_abline(slope=1,intercept=0,linetype="dashed",color="black") +
   facet_wrap(~variable,scales = "free",ncol=2) +
   labs(x="observed L-moment",y="estimated L-moment") +
-  ggtitle("10 fold CV") +
+  #ggtitle("10 fold CV") +
   theme_bw() +
   theme(legend.position = 'none')
 
 # subtitle="where drainage area = mean(log10(lmom[-k])/log10(area[-k]))*log10(area[k])"
 
-est_obs <- cv_results$est_obs %>%
+lmom_est <- cv_results$est_obs %>%
   mutate(nnet = ifelse(variable=="L1",10^nnet,nnet),
          obs = ifelse(variable=="L1",10^obs,obs)) %>%
   select(-obs) %>%
   spread(variable,nnet) %>%
-  select(site_no,decade,L1,T2,T3,T4,pplo)
+  select(site_no,decade,L1,T2,T3,T4)
 
-write_feather(est_obs,"data/gage/lmom_estimates.feather")
+# calculate quantiles from lmoms
+FF <- c(0.0002, 0.0005, 0.0010, 0.0020, 0.0050, 0.0100, 0.0200,
+        0.0500, 0.1000, 0.2000, 0.2500, 0.3000, 0.4000, 0.5000, 
+        0.6000, 0.7000, 0.7500, 0.8000, 0.9000, 0.9500, 0.9800,
+        0.9900, 0.9950, 0.9980, 0.9990, 0.9995, 0.9998)
+
+lmom_list <- lmom_est %>%
+  select(L1,T2,T3,T4) %>%
+  as.matrix() %>%
+  split(.,seq(nrow(.))) 
+
+# takes 10 minutes
+lmom_quants <- mclapply(lmom_list,sw_lmom2q,FF)
+
+# left pad and combine
+aep_all <- mclapply(lmom_quants,sw_left_na,num=27) %>%
+  bind_rows() %>%
+  t() %>%
+  data.frame() %>%
+  set_names(FF*100) %>%
+  mutate(site_no=lmom_est$site_no,
+         decade=lmom_est$decade) %>%
+  gather(variable,aep,-site_no,-decade) %>%
+  mutate(variable=as.numeric(variable),
+         aep = ifelse(aep<0,0,aep)) 
+
+write_feather(aep_all,"data/gage/lmom_estimates.feather")
+
   
