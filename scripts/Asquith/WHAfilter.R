@@ -130,7 +130,7 @@ gage_covariates_WHAfilter <- function(df) {
   df$max    <- P*df$max
   df$L1     <- P*df$L1
   df$L2     <- P*df$L2
-  df$median_nonzero <- df$median_nonzero
+  df$median_nonzero <- P*df$median_nonzero
 
   return(df)
 }
