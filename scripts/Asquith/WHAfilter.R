@@ -24,6 +24,7 @@ gage_covariates_WHAfilter <- function(df) {
   df$acc_nid_storage <- df$acc_nid_storage*0.3048*(1/247.104393047) # to km^2-meter storage
   df$acc_norm_storage <- df$acc_norm_storage*0.3048*(1/247.104393047) # to km^2-meter storage
   df$flood_storage <- (df$acc_nid_storage - df$acc_norm_storage) / df$acc_basin_area # meters of storage
+  df$flood_storage[is.na(df$flood_storage)] <- 0 # resetting the missing
 
   # Two streamgages both had one decade (2000) for which the flood storage is a negative
   # value, and these streamgages are in Florida. This implies that an inconsistency in
