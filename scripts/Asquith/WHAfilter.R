@@ -24,6 +24,7 @@ gage_covariates_WHAfilter <- function(df) {
   df$acc_nid_storage <- df$acc_nid_storage*0.3048*(1/247.104393047) # to km^2-meter storage
   df$acc_norm_storage <- df$acc_norm_storage*0.3048*(1/247.104393047) # to km^2-meter storage
   df$flood_storage <- (df$acc_nid_storage - df$acc_norm_storage) / df$acc_basin_area # meters of storage
+  df$flood_storage[is.na(df$flood_storage)] <- 0 # resetting the missing (just six)
 
   # Two streamgages both had one decade (2000) for which the flood storage is a negative
   # value, and these streamgages are in Florida. This implies that an inconsistency in
@@ -34,7 +35,7 @@ gage_covariates_WHAfilter <- function(df) {
   # $-3.344$~feet but the value for 1990 was $0.400$~feet and for 1980 was $0.275$~feet.
   # For this study, the value for 2000 was assigned that of 1990; held constant, in other
   # words. For streamgage 02296750, the computed flood storage from the raw data was
-  # $-0.174$~feet and for 1980 was $0.142$~feet and for 1990 was $0.158$~feet. For this
+  # $-0.174$~feet for 1980 was $0.142$~feet and for 1990 was $0.158$~feet. For this
   # study, the value for 2000 was assigned as the absolute value for an assumption that
   # data transcription error in the NID is involved.
   # df[DD$site_no == "02295420",] # Asquith testing only
@@ -130,7 +131,7 @@ gage_covariates_WHAfilter <- function(df) {
   df$max    <- P*df$max
   df$L1     <- P*df$L1
   df$L2     <- P*df$L2
-  df$median_nonzero <- df$median_nonzero
+  df$median_nonzero <- P*df$median_nonzero
 
   return(df)
 }
