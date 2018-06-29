@@ -11,7 +11,7 @@ library(cenGAM)
 
 # https://www.sciencebase.gov/catalog/item/5669a79ee4b08895842a1d47
 FDC <- read_feather(file.choose()) # "all_gage_data.feather"
-load(file.choose()) # "spRESTORE_MGCV_BND.RData"
+load(file.choose()) # "RESTORE_MGCV_BND.RData"
 load(file.choose()) # spDNI_1998to2009.RData
 
 sites <- unique(FDC$site_no)
@@ -45,13 +45,13 @@ XY <- coordinates(DD)
 DD$east <- XY[,1]/1000; DD$north <- XY[,2]/1000; rm(XY)
 
 SO <- over(DD, spDNI_1998to2009)
-DD$ANN_DNI <- SO$ANN_DNI
-DD$JAN <- SO$JAN; DD$FEB <- SO$FEB
-DD$MAR <- SO$MAR; DD$APR <- SO$APR
-DD$MAY <- SO$MAY; DD$JUN <- SO$JUN
-DD$JUL <- SO$JUL; DD$AUG <- SO$AUG
-DD$SEP <- SO$SEP; DD$OCT <- SO$OCT
-DD$NOV <- SO$NOV; DD$DEC <- SO$DEC
+DD$dni_ann <- SO$dni_ann
+DD$dni_jan <- SO$JAN; DD$dni_feb <- SO$FEB
+DD$dni_mar <- SO$MAR; DD$dni_apr <- SO$APR
+DD$dni_may <- SO$MAY; DD$dni_jun <- SO$JUN
+DD$dni_jul <- SO$JUL; DD$dni_aug <- SO$AUG
+DD$dni_sep <- SO$SEP; DD$dni_oct <- SO$OCT
+DD$dni_nov <- SO$NOV; DD$dni_dec <- SO$DEC
 rm(SO)
 
 DD$x <- DD$east; DD$y <- DD$north
@@ -102,50 +102,17 @@ length(DD$site_no)
 #n     <- aggregate(DD$n,     by=list(DD$site_no), sum)$x
 #nzero <- aggregate(DD$nzero, by=list(DD$site_no), sum)$x
 
-# storages are in acre-ft
-# 1 km2 = 247.104393047 acres
-DD$flood_storage <- (DD$acc_nid_storage - DD$acc_norm_storage)/(DD$acc_basin_area*247.104393047)
-DD_original <- DD
-
-#               flood_storage
-#02295420 1980  0.2750118
-#02295420 1990  0.4008173
-#02295420 2000 -3.3440962
-#02296750 1950  0.004036043
-#02296750 1960  0.009044272
-#02296750 1970  0.036882952
-#02296750 1980  0.142299683
-#02296750 1990  0.158467423
-#02296750 2000 -0.173860951
-
-DD[DD$site_no == "02295420",]
-DD[DD$site_no == "02296750",]
-DD$flood_storage[                 DD$site_no == "02295420" & DD$decade == "2000"] <-
-                 DD$flood_storage[DD$site_no == "02295420" & DD$decade == "1990"]
-DD$flood_storage[                 DD$site_no == "02296750" & DD$decade == "2000"] <-
-             abs(DD$flood_storage[DD$site_no == "02296750" & DD$decade == "2000"])
-DD[DD$site_no == "02295420",]
-DD[DD$site_no == "02296750",]
-
-DD[DD$flood_storage < 0,] # two sites: 02295420 and 02296750
-
-
-DD$flood_storage <- log10(DD$flood_storage+.01)
-plot(qnorm(pp(DD$flood_storage)), sort(DD$flood_storage))
-message("Maximum log10offets of flood_storage=",max(DD$flood_storage))
-
-
-DD$ppt_mean        <- log10(DD$ppt_mean)
-DD$temp_mean       <- log10(DD$temp_mean)
-DD$acc_basin_area  <- log10(DD$acc_basin_area)
-DD$acc_basin_slope <- log10(DD$acc_basin_slope)
-plot(DD$CDA, DD$acc_basin_area, lwd=0.5,
+DD$ppt_mean    <- log10(DD$ppt_mean)
+DD$temp_mean   <- log10(DD$temp_mean)
+DD$basin_area  <- log10(DD$basin_area)
+DD$basin_slope <- log10(DD$basin_slope)
+plot(DD$CDA, DD$basin_area, lwd=0.5,
      xlab="log10(NWIS CDA)", ylab="log10(NHDplus basin area")
 abline(0,1)
 abline(1/3,1,lty=2); abline(-1/3,1,lty=2)
 abline(1/2,1,lty=2); abline(-1/2,1,lty=3)
 mtext("Diagnostic check on watershed areas")
-jnk <- abs(DD$acc_basin_area - DD$CDA)
+jnk <- abs(DD$basin_area - DD$CDA)
 summary(jnk[jnk > 1/2])
 sites_of_area_bust <- unique(DD$site_no[jnk > 1/2])
 DD_sites_of_area_bust <- DD[DD$site_no == sites_of_area_bust[1], ]
@@ -153,26 +120,31 @@ for(site in sites_of_area_bust[2:length(sites_of_area_bust)]) {
   DD_sites_of_area_bust <- rbind(DD_sites_of_area_bust,DD[DD$site_no == site, ] )
 }
 for(site in sites_of_area_bust) {
-  points(DD$CDA[DD$site_no == site], DD$acc_basin_area[DD$site_no == site], pch=16, col=2)
+  points(DD$CDA[DD$site_no == site], DD$basin_area[DD$site_no == site], pch=16, col=2)
   DD <- DD[DD$site_no != site,]
 }
 text(0,5, paste(sites_of_area_bust, collapse=", "), cex=0.6, pos=4)
 #points(DD$CDA[DD$site_no == "08167000"],
-#       DD$acc_basin_area[DD$site_no == "08167000"], pch=16, col=4)
+#       DD$basin_area[DD$site_no == "08167000"], pch=16, col=4)
 
-DD$decade   <- as.factor(DD$decade)
-DD$bedperm  <- as.factor(DD$bedperm)
-DD$aquifers <- as.factor(DD$aquifers)
-DD$soller   <- as.factor(DD$soller)
-DD$hlr      <- as.factor(DD$hlr)
-DD$ecol3    <- as.factor(DD$ecol3)
-DD$physio   <- as.factor(DD$physio)
-DD$statsgo  <- as.factor(DD$statsgo)
+DD$decade       <- as.factor(DD$decade); levels(DD$decade)
+DD$cat_soller   <- as.factor(DD$cat_soller); levels(DD$cat_soller)  # nodata bust (needs relabeling)
+DD$soller       <- as.factor(DD$soller); levels(DD$soller)
+DD$cat_aquifers <- as.factor(DD$cat_aquifers); levels(DD$cat_aquifers) # nodata bust (needs relabeling)
+DD$aquifers     <- as.factor(DD$aquifers); levels(DD$aquifers)
+DD$bedperm      <- as.factor(DD$bedperm); levels(DD$bedperm)
+DD$cat_physio   <- as.factor(DD$cat_physio); levels(DD$cat_physio)
+DD$physio       <- as.factor(DD$physio); levels(DD$physio)
+DD$cat_ecol3    <- as.factor(DD$cat_ecol3); levels(DD$cat_ecol3)
+DD$ecol3        <- as.factor(DD$ecol3); levels(DD$ecol3)
+DD$hlr          <- as.factor(DD$hlr); levels(DD$hlr)
+DD$statsgo      <- as.factor(DD$statsgo); levels(DD$statsgo)
+DD$ed_rch_zone  <- as.factor(DD$ed_rch_zone); levels(DD$ed_rch_zone)
 
 dotransin <- function(p) 2*asin(sqrt(p/100))
 retransin <- function(p) sin(p/2)^2*100
 
-DD$barren <- dotransin(DD$barren)
+DD$barren              <-  dotransin(DD$barren)
 DD$cultivated_cropland <-  dotransin(DD$cultivated_cropland)
 DD$deciduous_forest    <-  dotransin(DD$deciduous_forest)
 DD$developed           <-  dotransin(DD$developed)
@@ -181,47 +153,46 @@ DD$grassland           <-  dotransin(DD$grassland)
 DD$hay_pasture         <-  dotransin(DD$hay_pasture)
 DD$herbaceous_wetland  <-  dotransin(DD$herbaceous_wetland)
 DD$mixed_forest        <-  dotransin(DD$mixed_forest)
-# Note perennial_ice_snow is 0.00 throughout
-DD$perennial_ice_snow  <-  dotransin(DD$perennial_ice_snow)
 DD$shrubland           <-  dotransin(DD$shrubland)
 DD$water               <-  dotransin(DD$water)
 DD$woody_wetland       <-  dotransin(DD$woody_wetland)
 
 
-DD$alt_ecol3 <- "-0"
+#DD$alt_ecol3 <- "-0"
 #DD$alt_ecol3[DD$ecol3 == "ecol3_26"] <- "-26"
-DD$alt_ecol3[DD$ecol3 == "ecol3_27"] <- "-27"
+#DD$alt_ecol3[DD$ecol3 == "ecol3_27"] <- "-27"
 #DD$alt_ecol3[DD$ecol3 == "ecol3_30"] <- "-30"
-DD$alt_ecol3[DD$ecol3 == "ecol3_31"] <- "-31"
+#DD$alt_ecol3[DD$ecol3 == "ecol3_31"] <- "-31"
 #DD$alt_ecol3[DD$ecol3 == "ecol3_32"] <- "-32"
 #DD$alt_ecol3[DD$ecol3 == "ecol3_33"] <- "-33"
-DD$alt_ecol3[DD$ecol3 == "ecol3_34"] <- "-34"
+#DD$alt_ecol3[DD$ecol3 == "ecol3_34"] <- "-34"
 #DD$alt_ecol3[DD$ecol3 == "ecol3_36"] <- "-36"
-DD$alt_ecol3[DD$ecol3 == "ecol3_75"] <- "-75"
-DD$alt_ecol3 <- as.factor(DD$alt_ecol3)
+#DD$alt_ecol3[DD$ecol3 == "ecol3_75"] <- "-75"
+#DD$alt_ecol3 <- as.factor(DD$alt_ecol3)
 
-DD$trimmed_aquifers <- "aother"
-DD$trimmed_aquifers[DD$aquifers == "TOT_AQ111"] <- "TOT_AQ111(surficial aquifer system)"
-DD$trimmed_aquifers[DD$aquifers == "TOT_AQ413"] <- "TOT_AQ413(Floridan aquifer system)"
-DD$trimmed_aquifers[DD$aquifers == "TOT_AQ201"] <- "TOT_AQ201(coastal lowlands aquifer system)"
-DD$trimmed_aquifers <- as.factor(DD$trimmed_aquifers)
+#DD$trimmed_aquifers <- "aother"
+#DD$trimmed_aquifers[DD$aquifers == "TOT_AQ111"] <- "TOT_AQ111(surficial aquifer system)"
+#DD$trimmed_aquifers[DD$aquifers == "TOT_AQ413"] <- "TOT_AQ413(Floridan aquifer system)"
+#DD$trimmed_aquifers[DD$aquifers == "TOT_AQ201"] <- "TOT_AQ201(coastal lowlands aquifer system)"
+#DD$trimmed_aquifers <- as.factor(DD$trimmed_aquifers)
 
 # This is the coastal plain
-DD$physio <- relevel(DD$physio, "cat_physio_3")
-DD$alt_physio <- "other"
-DD$alt_physio[DD$physio == "cat_physio_3"] <- "Coastal Plain"
-DD$alt_physio[DD$physio == "cat_physio_8"] <- "Appalachian Plateaus"
-DD$alt_physio[DD$physio == "cat_physio_12"] <- "Central Lowland"
-DD$alt_physio[DD$physio == "cat_physio_13"] <- "Great Plains"
-DD$alt_physio <- as.factor(DD$alt_physio)
-DD$alt_physio <- relevel(DD$alt_physio, "other")
+DD$cat_physio <- relevel(DD$cat_physio, "cat_physio_3")
+DD$physio <- relevel(DD$physio, "acc_physio_3")
+#DD$alt_physio <- "other"
+#DD$alt_physio[DD$physio == "cat_physio_3"] <- "Coastal Plain"
+#DD$alt_physio[DD$physio == "cat_physio_8"] <- "Appalachian Plateaus"
+#DD$alt_physio[DD$physio == "cat_physio_12"] <- "Central Lowland"
+#DD$alt_physio[DD$physio == "cat_physio_13"] <- "Great Plains"
+#DD$alt_physio <- as.factor(DD$alt_physio)
+#DD$alt_physio <- relevel(DD$alt_physio, "other")
 
 
 
 DD$edwards_rechzone <- 0
-DD$edwards_rechzone[DD$site_no == "08156800"] <- 1
 DD$edwards_rechzone[DD$site_no == "08155300"] <- 1
 DD$edwards_rechzone[DD$site_no == "08155400"] <- 1
+DD$edwards_rechzone[DD$site_no == "08156800"] <- 1
 DD$edwards_rechzone[DD$site_no == "08181400"] <- 1
 DD$edwards_rechzone[DD$site_no == "08184000"] <- 1
 DD$edwards_rechzone[DD$site_no == "08185000"] <- 1
@@ -239,24 +210,33 @@ D <- D[D$edwards_rechzone != "1",]
 duan_smearing_estimator <- function(model) { sum(10^residuals(model))/length(residuals(model)) }
 
 save(bnd, D, DD, DDo, knots, bnd,
-     DD_original,
      DD_sites_of_area_bust, duan_smearing_estimator, file="DEMO.RData")
 
 # TODO: Need to look at these two neighboring locations in MO on the MAP.
 # 07044000, 07045000
 
-
-# [45] "ppt_mean"            "ppt_sd"              "temp_mean"           "temp_sd"
-# [49] "tot_hdens"           "tot_major"           "tot_ndams"           "tot_nid_storage"
-# [53] "tot_norm_storage"    "barren"              "cultivated_cropland" "deciduous_forest"
-# [57] "developed"           "evergreen_forest"    "grassland"           "hay_pasture"
-# [61] "herbaceous_wetland"  "mixed_forest"        "perennial_ice_snow"  "shrubland"
-# [65] "water"               "woody_wetland"       "tot_bfi"             "sinuosity"
-# [69] "length_km"           "area_sqkm"           "strm_dens"           "tot_twi"
-# [73] "acc_basin_area"      "acc_basin_slope"     "tot_elev_mean"       "tot_elev_min"
-# [77] "tot_elev_max"        "tot_total_road_dens" "tot_rdx"             "bedperm"
-# [81] "aquifers"            "soller"              "hlr"                 "ecol3"
-# [85] "physio"              "statsgo"
+#  [1] "site_no"             "comid"               "huc12"               "decade"              "lon"
+#  [6] "lat"                 "n"                   "nzero"               "pplo"                "min"
+# [11] "f0.02"               "f0.05"               "f0.1"                "f0.2"                "f0.5"
+# [16] "f01"                 "f02"                 "f05"                 "f10"                 "f20"
+# [21] "f25"                 "f30"                 "f40"                 "f50"                 "f60"
+# [26] "f70"                 "f75"                 "f80"                 "f90"                 "f95"
+# [31] "f98"                 "f99"                 "f99.5"               "f99.8"               "f99.9"
+# [36] "f99.95"              "f99.98"              "max"                 "L1"                  "L2"
+# [41] "T3"                  "T4"                  "T5"                  "T6"                  "T7"
+# [46] "T8"                  "median_nonzero"      "major"               "ndams"               "nid_storage"
+# [51] "norm_storage"        "ppt_mean"            "ppt_sd"              "temp_mean"           "temp_sd"
+# [56] "barren"              "cultivated_cropland" "deciduous_forest"    "developed"           "evergreen_forest"
+# [61] "grassland"           "hay_pasture"         "herbaceous_wetland"  "mixed_forest"        "shrubland"
+# [66] "water"               "woody_wetland"       "bfi"                 "sinuosity"           "length_km"
+# [71] "strm_dens"           "twi"                 "basin_area"          "cat_soller"          "soller"
+# [76] "cat_aquifers"        "aquifers"            "bedperm"             "cat_physio"          "physio"
+# [81] "cat_ecol3"           "ecol3"               "hlr"                 "rdx"                 "basin_slope"
+# [86] "elev_mean"           "statsgo"             "flood_storage"       "ed_rch_zone"         "dec_lat_va"
+# [91] "dec_long_va"         "CDA"                 "east"                "north"               "dni_ann"
+# [96] "dni_jan"             "dni_feb"             "dni_mar"             "dni_apr"             "dni_may"
+#[101] "dni_jun"             "dni_jul"             "dni_aug"             "dni_sep"             "dni_oct"
+#[106] "dni_nov"             "dni_dec"             "x"                   "y"                   "edwards_rechzone"
 
 # It appears critical that the boundary have variables named say x,y
 # The knots have the same names (x,y) and most difficult to figure out
@@ -275,7 +255,7 @@ family <- "gaussian"
 Z <- D
 Z$flowtime <- log10(Z$n - Z$nzero)
 Zc <- Surv(Z$flowtime, Z$nzero != 0, type="right")
-SMt <- survreg(Zc~acc_basin_area+ppt_mean+decade-1, data=Z, dist=family)
+SMt <- survreg(Zc~basin_area+ppt_mean+decade-1, data=Z, dist=family)
 Pt <- Pto <- predict(SMt); Pt[Pt > log10(3653)] <- log10(3653)
 
 Z <- D
@@ -283,7 +263,7 @@ x <- Z$east; y <- Z$north
 Z$left.threshold <-  log10(rep(0, length(Z$nzero)))
 Z$right.threshold <- log10(Z$n)
 Z$flowtime <- log10(Z$n - Z$nzero)
-GMt <- gam(flowtime~acc_basin_area+s(ppt_mean, k=2)+decade-1,
+GMt <- gam(flowtime~basin_area+s(ppt_mean, k=2)+decade-1,
            family=tobit1(left.threshold=  Z$left.threshold,
                          right.threshold=Z$right.threshold), data=Z); summary(GMt)
 Gt <- Gto <- predict(GMt); Gt[Gt > log10(3653)] <- log10(3653)
@@ -303,13 +283,13 @@ lines(c(3.3, 4), rep(log10(3653),2), lty=2, lwd=0.65, col=grey(0.5))
 
 abline(0,1, lwd=0.8)
 length(Z$n[Z$nzero == 0])
-#[1] 2011
+#[1] 2007
 length(Z$n[Z$nzero != 0])
-#[1] 738
+#[1] 739
 length(Pto[Pto < log10(3653)])
-#[1] 388
+#[1] 387
 length(Gto[Gto < log10(3653)])
-#[1] 409
+#[1] 414
 txt <- paste0("Number of streamgage:decade records with no zero-flow conditions: 2,011\n",
               "Number of streamgage:decade records with zero-flow conditions: 738\n",
               "Number of survival regression predicted with zero-flow conditions: 388\n",
@@ -333,13 +313,13 @@ Z <- D
 x <- Z$east; y <- Z$north
 Z$flowtime <- log10(Z$n - Z$nzero)
 Zc <- Surv(Z$flowtime, Z$nzero != 0, type="right")
-SM1 <- survreg(Zc~acc_basin_area+ppt_mean+temp_mean+acc_basin_slope+flood_storage+developed+ANN_DNI+bedperm+decade-1, data=Z, dist=family)
+SM1 <- survreg(Zc~basin_area+ppt_mean+temp_mean+basin_slope+flood_storage+developed+dni_ann+bedperm+decade-1, data=Z, dist=family)
 P1 <- P1o <- predict(SM1); P1[P1 > log10(3653)] <- log10(3653)
 plot(Z$flowtime, P1, xlim=c(2.3,3.6), ylim=c(3,3.6), pch=16, col=rgb(0,0,1,.2))
 abline(0,1)
 
-SM0 <- survreg(Zc~acc_basin_area+
-                    ppt_mean+temp_mean+ANN_DNI+
+SM0 <- survreg(Zc~basin_area+
+                    ppt_mean+temp_mean+dni_ann+
                     developed+grassland+
                     bedperm+decade-1, data=Z, dist=family)
 Psurv0 <- Psurv0o <- predict(SM0); Psurv0[Psurv0 > log10(3653)] <- log10(3653)
@@ -353,8 +333,8 @@ x <- Z$east; y <- Z$north
 Z$left.threshold <-  log10(rep(0, length(Z$nzero)))
 Z$right.threshold <- log10(Z$n)
 Z$flowtime <- log10(Z$n - Z$nzero)
-GM0 <- gam(flowtime~acc_basin_area+
-                    ppt_mean+s(temp_mean)+ANN_DNI+
+GM0 <- gam(flowtime~basin_area+
+                    ppt_mean+s(temp_mean)+dni_ann+
                     developed+s(grassland)+
                     bedperm+decade-1,
            family=tobit1(left.threshold=  Z$left.threshold,
@@ -368,21 +348,21 @@ mtext("Model structure not quite exact because of convergence issues in GAM")
 # appear needed to get the GAM to converge. So the model does not quite match
 # that from survreg().
 
-GM1 <- gam(flowtime~acc_basin_area+
-                    s(ppt_mean, k=5)+s(temp_mean)+s(ANN_DNI)+
+GM1 <- gam(flowtime~basin_area+
+                    s(ppt_mean, k=5)+s(temp_mean)+s(dni_ann)+
                     developed+s(grassland)+
                     bedperm+decade-1,
            family=tobit1(left.threshold=  Z$left.threshold,
                          right.threshold=Z$right.threshold), data=Z); summary(GM1)
-GM2 <- gam(flowtime~acc_basin_area+
-                    s(ppt_mean, k=5)+s(temp_mean, k=4)+s(ANN_DNI, k=7)+
+GM2 <- gam(flowtime~basin_area+
+                    s(ppt_mean, k=5)+s(temp_mean, k=4)+s(dni_ann, k=7)+
                     developed+s(grassland)+
                     bedperm+decade-1+
         s(x,y, bs="so", xt=list(bnd=bnd)), knots=knots,
            family=tobit1(left.threshold=  Z$left.threshold,
                          right.threshold=Z$right.threshold), data=Z); summary(GM2)
-GM2.nosoap <- gam(flowtime~acc_basin_area+
-                    s(ppt_mean, k=5)+s(temp_mean, k=4)+s(ANN_DNI, k=7)+
+GM2.nosoap <- gam(flowtime~basin_area+
+                    s(ppt_mean, k=5)+s(temp_mean, k=4)+s(dni_ann, k=7)+
                     developed+s(grassland)+
                     bedperm+decade-1+
         s(x,y), knots=knots,
@@ -469,7 +449,7 @@ mtext("Predictions cenGAM of PPLO (C2)")
 # [61] "herbaceous_wetland"  "mixed_forest"        "perennial_ice_snow"  "shrubland"
 # [65] "water"               "woody_wetland"       "tot_bfi"             "sinuosity"
 # [69] "length_km"           "area_sqkm"           "strm_dens"           "tot_twi"
-# [73] "acc_basin_area"      "acc_basin_slope"     "tot_elev_mean"       "tot_elev_min"
+# [73] "basin_area"      "acc_basin_slope"     "tot_elev_mean"       "tot_elev_min"
 # [77] "tot_elev_max"        "tot_total_road_dens" "tot_rdx"             "bedperm"
 # [81] "aquifers"            "soller"              "hlr"                 "ecol3"
 # [85] "physio"              "statsgo"
@@ -477,8 +457,8 @@ mtext("Predictions cenGAM of PPLO (C2)")
 Z <- D
 x <- Z$x; y <- Z$y
 z <- log10(Z$L1)
-L1   <- gam(z~acc_basin_area +
-              s(ppt_mean, k=5) + s(temp_mean, k=4) + s(ANN_DNI, k=7)+
+L1   <- gam(z~basin_area +
+              s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
               developed+
               mixed_forest+shrubland+
               decade-1+
@@ -495,8 +475,8 @@ pdf("L1.pdf", useDingbats=FALSE)
 dev.off()
 
 z <- D$L2/D$L1 # --------------------------- Coefficient of L-variation
-T2   <- gam(z~acc_basin_area +
-              s(ppt_mean, k=5) + s(temp_mean, k=4) + s(ANN_DNI, k=7)+
+T2   <- gam(z~basin_area +
+              s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
               developed+
               mixed_forest+shrubland+
               decade-1+
@@ -512,8 +492,8 @@ pdf("T2.pdf", useDingbats=FALSE)
 dev.off()
 
 z <- D$T3      # --------------------------- L-skew
-T3   <- gam(z~acc_basin_area +
-              s(ppt_mean, k=5) + s(temp_mean, k=4) + s(ANN_DNI, k=7)+
+T3   <- gam(z~basin_area +
+              s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
               developed+
               mixed_forest+shrubland+
               decade-1+
@@ -530,8 +510,8 @@ dev.off()
 
 
 z <- D$T4      # --------------------------- L-kurtosis
-T4   <- gam(z~acc_basin_area +
-              s(ppt_mean, k=5) + s(temp_mean, k=4) + s(ANN_DNI, k=7)+
+T4   <- gam(z~basin_area +
+              s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
               developed+
               mixed_forest+shrubland+
               decade-1+
@@ -549,8 +529,8 @@ dev.off()
 
 
 z <- D$T5      # --------------------------- Fifth L-moment ratio
-T5   <- gam(z~acc_basin_area +
-              s(ppt_mean, k=5) + s(temp_mean, k=4) + s(ANN_DNI, k=7)+
+T5   <- gam(z~basin_area +
+              s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
               developed+
               mixed_forest+shrubland+
               decade-1+
@@ -567,8 +547,8 @@ dev.off()
 
 
 z <- D$T6      # --------------------------- Sixth L-moment ratio
-T6   <- gam(z~acc_basin_area +
-              s(ppt_mean, k=5) + s(temp_mean, k=4) + s(ANN_DNI, k=7)+
+T6   <- gam(z~basin_area +
+              s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
               developed+
               mixed_forest+shrubland+
               decade-1+
@@ -585,8 +565,8 @@ dev.off()
 
 
 z <- log10(D$f50+1)      # --------------------------- Sixth L-moment ratio
-Q50   <- gam(z~acc_basin_area +
-               s(ppt_mean, k=5) + s(temp_mean, k=4) + s(ANN_DNI, k=7)+
+Q50   <- gam(z~basin_area +
+               s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
                developed+
                mixed_forest+shrubland+
                decade-1+
@@ -604,8 +584,8 @@ dev.off()
 
 sink("right_tail_flowing_fdc.txt")
 z <- log10(D$f90+1)      # --------------------------- Sixth L-moment ratio
-Q90   <- gam(z~acc_basin_area  + s(flood_storage, k=7) +
-              s(ppt_mean, k=5) + s(ANN_DNI, k=7)+
+Q90   <- gam(z~basin_area  + s(flood_storage, k=7) +
+              s(ppt_mean, k=5) + s(dni_ann, k=7)+
               developed+
               mixed_forest+shrubland+
               decade-1+
@@ -623,8 +603,8 @@ dev.off()
 
 
 z <- log10(D$f95+1)      # --------------------------- Sixth L-moment ratio
-Q95   <- gam(z~acc_basin_area + s(flood_storage, k=7) +
-               s(ppt_mean, k=5) + s(ANN_DNI, k=7)+
+Q95   <- gam(z~basin_area + s(flood_storage, k=7) +
+               s(ppt_mean, k=5) + s(dni_ann, k=7)+
                developed+
                mixed_forest+shrubland+
                decade-1+
@@ -642,8 +622,8 @@ dev.off()
 
 
 z <- log10(D$f98+1)      # --------------------------- Sixth L-moment ratio
-Q98   <- gam(z~acc_basin_area + s(flood_storage, k=7) +
-               s(ppt_mean, k=5) + s(ANN_DNI, k=7)+
+Q98   <- gam(z~basin_area + s(flood_storage, k=7) +
+               s(ppt_mean, k=5) + s(dni_ann, k=7)+
                developed+
                mixed_forest+shrubland+
                decade-1+
@@ -660,8 +640,8 @@ text(100, 500, "Q98")
 dev.off()
 
 z <- log10(D$f99+1)      # --------------------------- Sixth L-moment ratio
-Q99   <- gam(z~acc_basin_area + s(flood_storage, k=7) +
-               s(ppt_mean, k=5) + s(ANN_DNI, k=7)+
+Q99   <- gam(z~basin_area + s(flood_storage, k=7) +
+               s(ppt_mean, k=5) + s(dni_ann, k=7)+
                developed+
                mixed_forest+shrubland+
                decade-1+
@@ -679,8 +659,8 @@ dev.off()
 
 
 z <- log10(D$f99.9+1)      # --------------------------- Sixth L-moment ratio
-Q99p9   <- gam(z~acc_basin_area + s(flood_storage, k=7) +
-               s(ppt_mean, k=5) + s(ANN_DNI, k=7)+
+Q99p9   <- gam(z~basin_area + s(flood_storage, k=7) +
+               s(ppt_mean, k=5) + s(dni_ann, k=7)+
                developed+
                mixed_forest+shrubland+
                decade-1+
