@@ -45,7 +45,7 @@ XY <- coordinates(DD)
 DD$east <- XY[,1]/1000; DD$north <- XY[,2]/1000; rm(XY)
 
 SO <- over(DD, spDNI_1998to2009)
-DD$dni_ann <- SO$dni_ann
+DD$dni_ann <- SO$ANN_DNI
 DD$dni_jan <- SO$JAN; DD$dni_feb <- SO$FEB
 DD$dni_mar <- SO$MAR; DD$dni_apr <- SO$APR
 DD$dni_may <- SO$MAY; DD$dni_jun <- SO$JUN
@@ -105,7 +105,7 @@ length(DD$site_no)
 DD$ppt_mean    <- log10(DD$ppt_mean)
 DD$temp_mean   <- log10(DD$temp_mean)
 DD$basin_area  <- log10(DD$basin_area)
-DD$basin_slope <- log10(DD$basin_slope)
+DD$basin_slope <- log10(DD$basin_slope/100)
 plot(DD$CDA, DD$basin_area, lwd=0.5,
      xlab="log10(NWIS CDA)", ylab="log10(NHDplus basin area")
 abline(0,1)
@@ -140,6 +140,7 @@ DD$ecol3        <- as.factor(DD$ecol3); levels(DD$ecol3)
 DD$hlr          <- as.factor(DD$hlr); levels(DD$hlr)
 DD$statsgo      <- as.factor(DD$statsgo); levels(DD$statsgo)
 DD$ed_rch_zone  <- as.factor(DD$ed_rch_zone); levels(DD$ed_rch_zone)
+unique(DD$site_no[DD$ed_rch_zone == "1"])
 
 dotransin <- function(p) 2*asin(sqrt(p/100))
 retransin <- function(p) sin(p/2)^2*100
@@ -156,6 +157,8 @@ DD$mixed_forest        <-  dotransin(DD$mixed_forest)
 DD$shrubland           <-  dotransin(DD$shrubland)
 DD$water               <-  dotransin(DD$water)
 DD$woody_wetland       <-  dotransin(DD$woody_wetland)
+DD$bfi                 <-  dotransin(DD$bfi)
+DD$bfi                 <-  dotransin(DD$bfi)
 
 
 #DD$alt_ecol3 <- "-0"
@@ -189,23 +192,23 @@ DD$physio <- relevel(DD$physio, "acc_physio_3")
 
 
 
-DD$edwards_rechzone <- 0
-DD$edwards_rechzone[DD$site_no == "08155300"] <- 1
-DD$edwards_rechzone[DD$site_no == "08155400"] <- 1
-DD$edwards_rechzone[DD$site_no == "08156800"] <- 1
-DD$edwards_rechzone[DD$site_no == "08181400"] <- 1
-DD$edwards_rechzone[DD$site_no == "08184000"] <- 1
-DD$edwards_rechzone[DD$site_no == "08185000"] <- 1
-DD$edwards_rechzone[DD$site_no == "08190500"] <- 1
-DD$edwards_rechzone[DD$site_no == "08197500"] <- 1
-DD$edwards_rechzone[DD$site_no == "08198500"] <- 1
-DD$edwards_rechzone[DD$site_no == "08200700"] <- 1
-DD$edwards_rechzone[DD$site_no == "08202700"] <- 1
-DD$edwards_rechzone <- as.factor(DD$edwards_rechzone)
+#DD$edwards_rechzone <- 0
+#DD$edwards_rechzone[DD$site_no == "08155300"] <- 1
+#DD$edwards_rechzone[DD$site_no == "08155400"] <- 1
+#DD$edwards_rechzone[DD$site_no == "08156800"] <- 1
+#DD$edwards_rechzone[DD$site_no == "08181400"] <- 1
+#DD$edwards_rechzone[DD$site_no == "08184000"] <- 1
+#DD$edwards_rechzone[DD$site_no == "08185000"] <- 1
+#DD$edwards_rechzone[DD$site_no == "08190500"] <- 1
+#DD$edwards_rechzone[DD$site_no == "08197500"] <- 1
+#DD$edwards_rechzone[DD$site_no == "08198500"] <- 1
+#DD$edwards_rechzone[DD$site_no == "08200700"] <- 1
+#DD$edwards_rechzone[DD$site_no == "08202700"] <- 1
+#DD$edwards_rechzone <- as.factor(DD$edwards_rechzone)
 
 D <- DD;
 
-D <- D[D$edwards_rechzone != "1",]
+D <- D[D$ed_rch_zone != "1",]
 
 duan_smearing_estimator <- function(model) { sum(10^residuals(model))/length(residuals(model)) }
 
