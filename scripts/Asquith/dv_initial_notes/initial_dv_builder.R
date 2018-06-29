@@ -14,10 +14,13 @@ save(DV, file="DV.RData")
 # See file DVissues.txt, and run those processes.
 # Modify DV and then don't forget to save again!
 
-load("DV.RData")
+load(file.choose()) # DV.RData
 
 
-NegativeFlowSites <- c("02300082", "02312700", "02322800",
+NegativeFlowSites <- c(
+ "02300082",
+ "02312700",
+ "02322800",
  "02323592",
  "02453500",
  "02462951",
