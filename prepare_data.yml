@@ -106,7 +106,7 @@ targets:
     command: sw_combine_gage(sites,immutable_vars,dams,housing_density,climate,lulc)
     
   huc12_covariates:  
-    command: sw_combine_huc12(huc12s,immutable_vars,dams,housing_density,climate,lulc)
+    command: sw_combine_huc12(huc12s,immutable_vars,dams,housing_density,climate,lulc,gage_covariates)
     
   data/gage/all_gage_covariates.feather:
     command: write_feather(gage_covariates,target_name)
