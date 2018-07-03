@@ -1,0 +1,48 @@
+trainingInput:
+  scaleTier: CUSTOM
+  masterType: standard
+  hyperparameters:
+    goal: MINIMIZE
+    hyperparameterMetricTag: val_loss
+    maxTrials: 30
+    maxParallelTrials: 1
+    params:
+      - parameterName: dense_units1
+        type: INTEGER
+        minValue: 10
+        maxValue: 50
+        scaleType: UNIT_LINEAR_SCALE
+      - parameterName: dropout1
+        type: DOUBLE
+        minValue: 0.0
+        maxValue: 0.6
+        scaleType: UNIT_LINEAR_SCALE
+      - parameterName: dense_units2
+        type: INTEGER
+        minValue: 10
+        maxValue: 50
+        scaleType: UNIT_LINEAR_SCALE
+      - parameterName: dropout2
+        type: DOUBLE
+        minValue: 0.0
+        maxValue: 0.6
+        scaleType: UNIT_LINEAR_SCALE
+      - parameterName: learning_rate
+        type: DOUBLE
+        minValue: 0.001
+        maxValue: 0.1
+        scaleType: UNIT_LINEAR_SCALE
+      - parameterName: epochs
+        type: INTEGER
+        minValue: 100
+        maxValue: 200
+        scaleType: UNIT_LINEAR_SCALE
+      - parameterName: batch_size
+        type: INTEGER
+        minValue: 25
+        maxValue: 500
+        scaleType: UNIT_LINEAR_SCALE
+        
+        
+        
+        
