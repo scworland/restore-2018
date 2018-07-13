@@ -24,7 +24,7 @@ CDA <- pmin(sitefile$drain_area_va, sitefile$contrib_drain_area_va, na.rm=TRUE)
 sitefile$contrib_drain_area_va <- CDA <- CDA*2.589988 # move to km2
 
 
-LATLONG <- paste0("+init=epsg:4269 +proj=longlat +ellps=GRS80 ",
+LATLONG <- paste0("+proj=longlat +ellps=GRS80 ",
                   "+datum=NAD83 +no_defs +towgs84=0,0,0")
 LATLONG <- sp::CRS(LATLONG)
 ALBEA <- paste0("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 ",
