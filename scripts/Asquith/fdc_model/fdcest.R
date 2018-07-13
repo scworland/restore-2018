@@ -102,6 +102,36 @@ length(DD$site_no)
 #n     <- aggregate(DD$n,     by=list(DD$site_no), sum)$x
 #nzero <- aggregate(DD$nzero, by=list(DD$site_no), sum)$x
 
+
+DD$decade       <- as.factor(DD$decade); levels(DD$decade)
+DD$cat_soller   <- as.factor(DD$cat_soller); levels(DD$cat_soller)  # nodata bust (needs relabeling)
+DD$soller       <- as.factor(DD$soller); levels(DD$soller)
+DD$cat_aquifers <- as.factor(DD$cat_aquifers); levels(DD$cat_aquifers) # nodata bust (needs relabeling)
+DD$aquifers     <- as.factor(DD$aquifers); levels(DD$aquifers)
+DD$bedperm      <- as.factor(DD$bedperm); levels(DD$bedperm)
+DD$cat_physio   <- as.factor(DD$cat_physio); levels(DD$cat_physio)
+DD$physio       <- as.factor(DD$physio); levels(DD$physio)
+DD$cat_ecol3    <- as.factor(DD$cat_ecol3); levels(DD$cat_ecol3)
+DD$ecol3        <- as.factor(DD$ecol3); levels(DD$ecol3)
+DD$hlr          <- as.factor(DD$hlr); levels(DD$hlr)
+DD$statsgo      <- as.factor(DD$statsgo); levels(DD$statsgo)
+DD$ed_rch_zone  <- as.factor(DD$ed_rch_zone); levels(DD$ed_rch_zone)
+unique(DD$site_no[DD$ed_rch_zone == "1"])
+
+length(DD$site_no[DD$physio == "acc_physio_area"])
+#[1] 865
+length(DD$site_no[DD$physio != "acc_physio_area"])
+#[1] 1939
+length(DD$site_no[DD$cat_physio != "cat_physio_area"])
+#[1] 2758
+length(DD$site_no[DD$cat_physio == "cat_physio_area"])
+#[1] 46
+
+plot(DD, lwd=0.5)
+plot(DD[DD$physio == "acc_physio_area",], col=4, add=TRUE, pch=21, bg=8, lwd=.5, cex=1.2)
+plot(DD[DD$cat_physio == "cat_physio_area",], col=2, add=TRUE, pch=21, bg=8, lwd=.5)
+mtext("RED=cat_physio == 'cat_physio_area' and BLUE=physio == 'acc_physio_area'")
+
 DD$ppt_mean    <- log10(DD$ppt_mean)
 DD$temp_mean   <- log10(DD$temp_mean)
 DD$basin_area  <- log10(DD$basin_area)
@@ -127,20 +157,8 @@ text(0,5, paste(sites_of_area_bust, collapse=", "), cex=0.6, pos=4)
 #points(DD$CDA[DD$site_no == "08167000"],
 #       DD$basin_area[DD$site_no == "08167000"], pch=16, col=4)
 
-DD$decade       <- as.factor(DD$decade); levels(DD$decade)
-DD$cat_soller   <- as.factor(DD$cat_soller); levels(DD$cat_soller)  # nodata bust (needs relabeling)
-DD$soller       <- as.factor(DD$soller); levels(DD$soller)
-DD$cat_aquifers <- as.factor(DD$cat_aquifers); levels(DD$cat_aquifers) # nodata bust (needs relabeling)
-DD$aquifers     <- as.factor(DD$aquifers); levels(DD$aquifers)
-DD$bedperm      <- as.factor(DD$bedperm); levels(DD$bedperm)
-DD$cat_physio   <- as.factor(DD$cat_physio); levels(DD$cat_physio)
-DD$physio       <- as.factor(DD$physio); levels(DD$physio)
-DD$cat_ecol3    <- as.factor(DD$cat_ecol3); levels(DD$cat_ecol3)
-DD$ecol3        <- as.factor(DD$ecol3); levels(DD$ecol3)
-DD$hlr          <- as.factor(DD$hlr); levels(DD$hlr)
-DD$statsgo      <- as.factor(DD$statsgo); levels(DD$statsgo)
-DD$ed_rch_zone  <- as.factor(DD$ed_rch_zone); levels(DD$ed_rch_zone)
-unique(DD$site_no[DD$ed_rch_zone == "1"])
+
+
 
 dotransin <- function(p) 2*asin(sqrt(p/100))
 retransin <- function(p) sin(p/2)^2*100
