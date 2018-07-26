@@ -79,7 +79,7 @@ x <- knots$x; y <- knots$y
 #knots <- data.frame(x=c(x, 1375), y=c(y, 600)); rm(x,y)
 points(knots$x, knots$y, pch=16, cex=1.1, col=4)
 
-duan_smearing_estimator <- function(model) { sum(10^residuals(L1))/length(residuals(L1)) }
+duan_smearing_estimator <- function(model) { sum(10^residuals(model))/length(residuals(model)) }
 
 z <- log10(D$L1)
 x <- D$east; y <- D$north
