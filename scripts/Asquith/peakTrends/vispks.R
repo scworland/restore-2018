@@ -45,7 +45,9 @@ if(length(sites) != length(SF$station_nm)) {
 }
 idname <- paste(sites, SF$station_nm) # for a titling of the plots
 
+
 n <- length(sites); i <- 0 # a counter
+allpv <- alltau <- sompv <- somtau <- n.tau <- n.nonlot <- rep(NA, n)
 if(! is.na(pdffile)) pdf(pdffile, useDingbats=FALSE)
 for(site in sites) {
   i <- i + 1
@@ -80,21 +82,38 @@ for(site in sites) {
   if(is.null(pk) | length(pk) == 1) {
 
   } else {
-  plotPeaks(pk, lot=lot, codes=TRUE,
-                 ylab="Peak discharge, in cubic feet per second",
-                 xlim=c(sdecade,edecade), site=pk$idname[1])
-  pdf(paste0(site,".pdf"), useDingbats=FALSE)
     plotPeaks(pk, lot=lot, codes=TRUE,
-                 ylab="Peak discharge, in cubic feet per second",
-                 xlim=c(sdecade,edecade), site=pk$idname[1])
-  dev.off()
-  # If you desire to test or change plotPeaks(), open its sources, changes the
-  # function name to plotPeaks2 and change it here in this loop, then modify
-  # and source it, and rerun this script. Because of this potential desire,
-  # the pkgcoloncolon is not prepended. These are prepended to immediately show which
-  # package is provide what function even though this strictly is not needed.
+                  ylab="Peak discharge, in cubic feet per second",
+                  xlim=c(sdecade,edecade), site=pk$idname[1])
+    pdf(paste0(site,".pdf"), useDingbats=FALSE)
+      plotPeaks(pk, lot=lot, codes=TRUE,
+                    ylab="Peak discharge, in cubic feet per second",
+                    xlim=c(sdecade,edecade), site=pk$idname[1])
+    dev.off()
+    tmpa <- pk[pk$appearsSystematic,]
+    opts <- options(warn=-1)
+    all  <- cor.test(tmpa$water_yr, tmpa$peak_va, method="kendall")
+    alltau[i] <- all$estimate; allpv[i] <- all$p.value; n.tau[i] <- length(tmpa$water_yr)
+    som <- NULL
+    if(lot != 0) {
+      tmpb <- tmpa[tmpa$peak_va > lot, ]
+      som <- cor.test(tmpb$water_yr, tmpb$peak_va, method="kendall")
+      somtau[i] <- som$estimate; sompv[i] <- som$p.value; n.nonlot[i] <- length(tmpb$water_yr)
+    }
+    options(opts)
+    # If you desire to test or change plotPeaks(), open its sources, changes the
+    # function name to plotPeaks2 and change it here in this loop, then modify
+    # and source it, and rerun this script. Because of this potential desire,
+    # the pkgcoloncolon is not prepended. These are prepended to immediately show which
+    # package is provide what function even though this strictly is not needed.
   }
 }
 if(! is.na(pdffile)) dev.off()
 
-if(! is.na(rdfile)) save(PK, LOT, SF, file=rdfile)
+TAU <- data.frame(site_no=sites, n.tau= n.tau, tau=alltau, tau_p.value=allpv,
+                  n.nonlot=n.nonlot, nonlot_tau=somtau, nonlot_p.value=sompv)
+
+if(! is.na(rdfile)) save(PK, LOT, SF, TAU, file=rdfile)
+
+
+#plot(TAU$tau, TAU$nonlot_tau, col=abs(TAU$nonlot_p.value < 0.05)+abs(TAU$tau_p.value < 0.05)+2)
