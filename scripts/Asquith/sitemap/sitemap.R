@@ -31,16 +31,18 @@ for(i in 1:length(north_grids)) {
    gx <- c(gx, east_grids)
 }
 GL <- SpatialPoints(cbind(-gx, gy), proj4string=LATLONG)
-GL <- spTransform(GL, ALBEA)
 XY <- coordinates(GL)
 x <- XY[,1]; y <- XY[,2]
-#ind <- mgcv::inSide(bnd,x,y)
-#XY <- XY[ind,]
-GL <- SpatialPoints(cbind(x,y), proj4string=ALBEA)
+GL <- SpatialPointsDataFrame(cbind(-gx, gy), data=data.frame(onoff=rep(1,length(x))),
+                                    proj4string=LATLONG)
+GL <- spTransform(GL, ALBEA)
 ix <- 1:length(x)
 plot(GL, pch=1, col=2)
 text(XY[,1],XY[,2], ix)
+GL$onoff[c(1,3:9, 12, 14:20, 23, 34, 45)] <- 0
+writeOGR(GL, "gridx2deg", "gridx2deg", driver="ESRI Shapefile")
 GL <- GL[-c(1,3:9, 12, 14:20, 23, 34, 45)]
+
 
 
 
