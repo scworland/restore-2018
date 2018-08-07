@@ -111,7 +111,9 @@ for(site in sites) {
 if(! is.na(pdffile)) dev.off()
 
 TAU <- data.frame(site_no=sites, n.tau= n.tau, tau=alltau, tau_p.value=allpv,
-                  n.nonlot=n.nonlot, nonlot_tau=somtau, nonlot_p.value=sompv)
+                  n.nonlot=n.nonlot, nonlot_tau=somtau, nonlot_p.value=sompv,
+                  sign_reinforcement=as.factor(sign(alltau) + sign(somtau)))
+
 
 if(! is.na(rdfile)) save(PK, LOT, SF, TAU, file=rdfile)
 
