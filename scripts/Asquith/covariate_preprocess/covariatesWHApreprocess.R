@@ -16,7 +16,7 @@ load(file.choose()) # GulfStates.RData
 load(file.choose()) # spDNI_1998to2009.RData
 load(file.choose()) # spRESTORE_MGCV_BND.RData
 
-LATLONG <- paste0("+init=epsg:4269 +proj=longlat +ellps=GRS80 ",
+LATLONG <- paste0("+proj=longlat +ellps=GRS80 ",
                   "+datum=NAD83 +no_defs +towgs84=0,0,0")
 LATLONG <- sp::CRS(LATLONG)
 ALBEA <- paste0("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 ",
@@ -44,12 +44,11 @@ GL <- GL[-c(1,3:9, 12, 14:20, 23, 34, 45)]
 
 
 COV <- COVo <- read_feather(file.choose()) # "all_huc12_covariates.feather"
-length(COVo$comid)                           # [1] 59070
-length(COV$comid[is.na(COV$comid)])          # [1] 1458
+length(COVo$comid)                           # [1] 55128
+length(COV$comid[is.na(COV$comid)])          # [1] 0
 COV <- COV[! is.na(COV$comid),]
-length(COV$comid[is.na(COV$acc_basin_area)]) # [1] 330
-COV <- COV[! is.na(COV$acc_basin_area), ]
-length(COV$comid[is.na(COV$area_sqkm)])      # [1] 210
+length(COV$comid[is.na(COV$basin_area)])     # [1] 0
+COV <- COV[! is.na(COV$basin_area), ]
 
 spCOV <- SpatialPointsDataFrame(cbind(COV$lon,COV$lat), data=COV,
                                 proj4string=LATLONG)
@@ -60,15 +59,20 @@ spCOV$x <- spCOV$east <- XY[,1]/1000; spCOV$y <- spCOV$north <- XY[,2]/1000; rm(
 
 
 SO <- over(spCOV, spDNI_1998to2009)
-spCOV$ANN_DNI <- SO$ANN_DNI
-spCOV$JAN <- SO$JAN; spCOV$FEB <- SO$FEB
-spCOV$MAR <- SO$MAR; spCOV$APR <- SO$APR
-spCOV$MAY <- SO$MAY; spCOV$JUN <- SO$JUN
-spCOV$JUL <- SO$JUL; spCOV$AUG <- SO$AUG
-spCOV$SEP <- SO$SEP; spCOV$OCT <- SO$OCT
-spCOV$NOV <- SO$NOV; spCOV$DEC <- SO$DEC
+spCOV$dni_ann <- SO$ANN_DNI
+spCOV$dni_jan <- SO$JAN; spCOV$dni_feb <- SO$FEB
+spCOV$dni_mar <- SO$MAR; spCOV$dni_apr <- SO$APR
+spCOV$dni_may <- SO$MAY; spCOV$dni_jun <- SO$JUN
+spCOV$dni_jul <- SO$JUL; spCOV$dni_aug <- SO$AUG
+spCOV$dni_sep <- SO$SEP; spCOV$dni_oct <- SO$OCT
+spCOV$dni_nov <- SO$NOV; spCOV$dni_dec <- SO$DEC
 rm(SO)
 
+SO <- data.frame(comid=spCOV$comid,  huc12=spCOV$huc12,
+                 dec_long_va=spCOV$lon, dec_lat_va=spCOV$lat, decade=spCOV$decade,
+                 dni_ann=spCOV$dni_ann, dni_jan=spCOV$dni_jan, dni_feb=spCOV$dni_feb, dni_mar=spCOV$dni_mar, dni_apr=spCOV$dni_apr,
+                 dni_may=spCOV$dni_may, dni_jun=spCOV$dni_jun, dni_jul=spCOV$dni_jul, dni_aug=spCOV$dni_aug, dni_sep=spCOV$dni_sep,
+                 dni_oct=spCOV$dni_oct, dni_nov=spCOV$dni_nov, dni_dec=spCOV$dni_dec, stringsAsFactors=FALSE)
 
 
 COV$acc_nid_storage[COV$acc_basin_area == 0]
@@ -142,6 +146,9 @@ message("REMOVING ecol3_37, ecol3_72, nodata (Ecoregion)")
 length(spCOV$comid[spCOV$ecol3 == "ecol3_37"]) # [1] 198
 length(spCOV$comid[spCOV$ecol3 == "ecol3_72"]) # [1] 12
 length(spCOV$comid[spCOV$ecol3 == "nodata"])   # [1] 30
+spCOV <- spCOV[spCOV$bedperm != "ecol3_37",]
+spCOV <- spCOV[spCOV$bedperm != "ecol3_72",]
+spCOV <- spCOV[spCOV$bedperm != "nodata",]
 
 
 
