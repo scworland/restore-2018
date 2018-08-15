@@ -47,7 +47,7 @@ idname <- paste(sites, SF$station_nm) # for a titling of the plots
 
 
 n <- length(sites); i <- 0 # a counter
-allpv <- alltau <- sompv <- somtau <- n.tau <- n.nonlot <- rep(NA, n)
+allpv <- alltau <- sompv <- somtau <- n.tau <- n.nonlot <- missing <- rep(NA, n)
 if(! is.na(pdffile)) pdf(pdffile, useDingbats=FALSE)
 for(site in sites) {
   i <- i + 1
@@ -55,7 +55,10 @@ for(site in sites) {
   pk <- lot <- NULL # insurance policy to NULLify if code become "complicated"
   if(exists(site, PK)) { # trigger the cache if present
     pk <- get(site, envir=PK) # by this test, the user could avoid repulling
-    if(is.null(pk)) message(" missing ", site)
+    if(is.null(pk)) {
+      message(" missing ", site)
+      missing[i] <- site
+    }
   } else {
     pk <- dataRetrieval::readNWISpeak(site,convert=FALSE) # CONVERT==FALSE!
     if(is.null(pk) | length(pk) == 1) {
@@ -110,12 +113,56 @@ for(site in sites) {
 }
 if(! is.na(pdffile)) dev.off()
 
+
 TAU <- data.frame(site_no=sites, n.tau= n.tau, tau=alltau, tau_p.value=allpv,
                   n.nonlot=n.nonlot, nonlot_tau=somtau, nonlot_p.value=sompv,
                   sign_reinforcement=as.factor(sign(alltau) + sign(somtau)))
 
+missing <- missing[! is.na(missing)]
 
-if(! is.na(rdfile)) save(PK, LOT, SF, TAU, file=rdfile)
+if(! is.na(rdfile)) save(PK, LOT, SF, TAU, missing, file=rdfile)
 
+library(akqdecay)
+DV <- new.env()
+fill_dvenv(siteNumbers=missing, envir=DV)
+DVMX <- NULL
+for(site in sort(ls(DV))) {
+  tmp <- get(site, envir=DV)
+  h <- aggregate(tmp, by=list(tmp$wyear), max)
+  n <- aggregate(tmp, by=list(tmp$wyear), function(t) length(t))
+  d <- data.frame(agency_cd=h$agency_cd, site_no=h$site_no, peak_dt=rep("DATE",length(h$site_no)),
+                  peak_tm=NA, peak_va=h$Flow, peak_cd="1", gage_ht=NA, gage_ht_cd=NA, year_last_pk=NA,
+                  ag_dt=NA, ag_tm=NA, ag_gage_ht=NA, ag_gage_ht_cd=NA,
+                  water_yr=h$wyear, num_dvs=n$wyear, stringsAsFactors=FALSE)
+  d <- d[d$num_dvs >= 357, ] # reject year if about 7 days missing
+  if(is.null(DVMX)) {
+    DVMX <- d
+  } else {
+    DVMX <- rbind(DVMX,d)
+  }
+}
+DVMX$peak_cd[DVMX$site_no == "02301802"] <- "1,C" # 02301802 TAMPA BYPASS CANAL AT S−160,AT TAMPA FL
+DVMX$peak_cd[DVMX$site_no == "02304500"] <- "1,6,C" # 02304500 HILLSBOROUGH RIVER NEAR TAMPA FL
+DVMX$peak_cd[DVMX$site_no == "02343500"] <- "1,C" # 02343500 CHATTAHOOCHEE R AT COLUMBIA, AL
+DVMX$peak_cd[DVMX$site_no == "07024900"] <- "1" # 07024900 RUTHERFORD FORK OBION RIVER NEAR MILAN, TENN
+DVMX$peak_cd[DVMX$site_no == "07359001"] <- "1,6" # 07359001 Ouachita River below Remmel Dam at Jones Mill, AR
+
+for(i in 1:length(DVMX$peak_va)) {
+  site <- DVMX$site_no[i]; wyear <- DVMX$water_yr[i]; peak  <- DVMX$peak_va[i]
+  tmp <- get(site, envir=DV); tmp <- tmp[tmp$wyear == wyear,]
+  dt <- as.character(tmp$Date[tmp$Flow == peak])
+  if(length(dt) == 0) {
+    message(site, " ", peak, " ", wyear)
+  }
+  DVMX$peak_dt[i] <- dt[length(dt)]
+}
+write.table(DVMX, file="noNWISpeaks-sitesIn-all_gage_data_feather.txt", quote=FALSE, sep="\t", row.names=FALSE)
+for(site in sort(unique(DVMX$site_no))) {
+  tmp <- DVMX[DVMX$site_no == site,]
+  tmp$peak_va <- as.numeric(tmp$peak_va) # because convert=FALSE
+  tmp <- MGBT::splitPeakCodes(MGBT::makeWaterYear(tmp)) # see documentation
+  tmp$idname <- idname[grep(site,idname)]
+  assign(site, tmp, envir=PK)
+}
 
 #plot(TAU$tau, TAU$nonlot_tau, col=abs(TAU$nonlot_p.value < 0.05)+abs(TAU$tau_p.value < 0.05)+2)
