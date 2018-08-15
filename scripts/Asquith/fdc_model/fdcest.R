@@ -9,12 +9,91 @@ library(Lmoments)
 library(survival)
 library(cenGAM)
 
-# https://www.sciencebase.gov/catalog/item/5669a79ee4b08895842a1d47
-FDC <- read_feather(file.choose()) # "all_gage_data.feather"
-load(file.choose()) # "RESTORE_MGCV_BND.RData"
-load(file.choose()) # spDNI_1998to2009.RData
 
-sites <- unique(FDC$site_no)
+
+"gamIntervals" <-
+function(gam_predicts_with_se.fit, gam=NULL, sigma=NULL,
+         interval=c("none", "confidence", "prediction"), level=0.95, ...) {
+   # Demo: library(mgcv)
+   #       X <- 2*pi*(1:360)/360 # simulate some X
+   #       Y <- 1.6*sin(X) + 40*cos(X) + rnorm(length(X), sd=12)
+   #     GAM <- gam(Y~s(X)); PGAM <- predict(GAM, se.fit=TRUE)
+   #     PGAM <- gamIntervals(PGAM, gam=GAM)
+   #     print(head(PGAM))
+   #     print(head(PGAM$leverage)); print(head(GAM$hat)) # see they are the value
+   # plot(GAM$hat, (PGAM$se.fit/PGAM$residual.scale)^2)
+   # Compare what the GAM says its leverage values are to back computed.
+   # The plot() only works because predict() called back on the actuall model.
+   if(class(gam)[1] != "gam") {
+      warning("need the actual GAM model too via the 'gam' argument")
+      return()
+   }
+   z <- as.data.frame(gam_predicts_with_se.fit)
+   if(! any(names(z) == "se.fit")) {
+      warning("need gam predictions with se.fit=TRUE passed for 'gam_predicts_with_se.fit'")
+      return()
+   }
+   interval <- match.arg(interval)
+   sum.gam <- summary(gam); n <- sum.gam$n # summary.gam() and the sample size
+   if(is.null(sigma)) sigma <- sqrt(sum.gam$scale)
+   z$residual.scale <- sigma # residual standard error
+   df <- n-sum(gam$edf)           # total degrees of freedom
+   QT <- abs(qt((1-level)/2, df)) # will do the +/- separately
+   z$leverage <- (z$se.fit/sigma)^2
+   if(interval == "none") {
+      z$lwr <- z$upr <- NA
+   } else {
+        one <- ifelse(interval == "confidence", 0, 1)
+        tmp <- sqrt(one+z$leverage)
+      z$lwr <- z$fit - sigma*QT*tmp
+      z$upr <- z$fit + sigma*QT*tmp
+   }
+   print(head(z))
+   attr(z, "interval")                  <- interval
+   attr(z, "level")                     <- level
+   attr(z, "t-dist_degrees_of_freedom") <- df
+   return(z)
+}
+
+
+load("../../../../GIS/RESTORE_MGCV_BND.RData") # "RESTORE_MGCV_BND.RData"
+
+FDC <- read_feather("../../../data/gage/all_gage_flow_stats.feather")
+#nm <- names(FDC); nm[5] <- "dec_long_va"; nm[6] <- "dec_lat_va"; names(FDC) <- nm
+#write_feather(FDC, "../../../data/gage/all_gage_flow_stats.feather")
+
+COV <- read_feather("../../../data/gage/all_gage_covariates.feather")
+#nm <- names(COV); nm[4] <- "dec_long_va"; nm[5] <- "dec_lat_va"; names(COV) <- nm
+#write_feather(COV, "../../../data/gage/all_gage_covariates.feather")
+
+SO <- read_feather("../../../data/gage/all_gage_solar.feather")
+COV <- cbind(COV, SO)
+
+FDC$key <- paste(FDC$site_no,":",FDC$decade, sep="")
+COV$key <- paste(COV$site_no,":",COV$decade, sep="")
+
+DD <- merge(FDC, COV, by="key")
+DD$key <- NULL
+#Warning message:
+#In merge.data.frame(FDC, COV, by = "key") :
+#  column names ‘comid.y’, ‘site_no.y’, ‘huc12.y’, ‘dec_long_va.y’, ‘dec_lat_va.y’, ‘decade.y’ are duplicated in the result
+sum(DD$comid.x != DD$comid.y)
+sum(DD$site_no.x != DD$site_no.y)
+sum(DD$huc12.x != DD$huc12.y)
+sum(DD$dec_long_va.x != DD$dec_long_va.y)
+sum(DD$dec_long_va.x != DD$dec_long_va.y)
+sum(DD$decade.x != DD$decade.y)
+nm <- names(DD); nm[1] <- "comid"; nm[2] <- "site_no"; nm[3] <- "huc12"; nm[4] <- "decade"
+nm[5] <- "dec_long_va"; nm[6] <- "dec_lat_va"
+names(DD) <- nm
+DD$comid.y <- NULL; DD$site_no.y <- NULL; DD$huc12.y <- NULL
+DD$dec_long_va.y <- NULL; DD$dec_lat_va.y <- NULL; DD$decade.y <- NULL
+length(DD$site_no); length(unique(DD$site_no))
+
+DD[! complete.cases(DD),] # Better be zero rows!
+
+
+sites <- unique(DD$site_no)
 sitefile <- dataRetrieval::readNWISsite(sites)
 sitefile <- sitefile[sitefile$agency_cd != "USCE",]
 
@@ -31,11 +110,9 @@ ALBEA <- paste0("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +
                 "+datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0")
 ALBEA <- sp::CRS(ALBEA)
 
-DD <- data.frame(site_no=sitefile$site_no,
-                 dec_lat_va=sitefile$dec_lat_va,
-                 dec_long_va=sitefile$dec_long_va,
+SF <- data.frame(site_no=sitefile$site_no,
                  CDA=log10(CDA), stringsAsFactors=FALSE)
-DD <- merge(FDC, DD, all=TRUE)
+DD <- merge(DD, SF, all=TRUE)
 
 
 DD <- SpatialPointsDataFrame(cbind(DD$dec_long_va, DD$dec_lat_va), DD,
@@ -43,16 +120,6 @@ DD <- SpatialPointsDataFrame(cbind(DD$dec_long_va, DD$dec_lat_va), DD,
 DD <- spTransform(DD, ALBEA)
 XY <- coordinates(DD)
 DD$east <- XY[,1]/1000; DD$north <- XY[,2]/1000; rm(XY)
-
-SO <- over(DD, spDNI_1998to2009)
-DD$dni_ann <- SO$ANN_DNI
-DD$dni_jan <- SO$JAN; DD$dni_feb <- SO$FEB
-DD$dni_mar <- SO$MAR; DD$dni_apr <- SO$APR
-DD$dni_may <- SO$MAY; DD$dni_jun <- SO$JUN
-DD$dni_jul <- SO$JUL; DD$dni_aug <- SO$AUG
-DD$dni_sep <- SO$SEP; DD$dni_oct <- SO$OCT
-DD$dni_nov <- SO$NOV; DD$dni_dec <- SO$DEC
-rm(SO)
 
 DD$x <- DD$east; DD$y <- DD$north
 DDo <- DD
@@ -97,16 +164,10 @@ points(knots$x, knots$y, pch=16, cex=1.1, col=4)
 length(DDo$site_no)
 length(DD$site_no)
 
-#dd <- slot(DD, name="data")
-#for(i in c(4:5, 45:79))
-#n     <- aggregate(DD$n,     by=list(DD$site_no), sum)$x
-#nzero <- aggregate(DD$nzero, by=list(DD$site_no), sum)$x
-
-
 DD$decade       <- as.factor(DD$decade); levels(DD$decade)
-DD$cat_soller   <- as.factor(DD$cat_soller); levels(DD$cat_soller)  # nodata bust (needs relabeling)
+DD$cat_soller   <- as.factor(DD$cat_soller); levels(DD$cat_soller)
 DD$soller       <- as.factor(DD$soller); levels(DD$soller)
-DD$cat_aquifers <- as.factor(DD$cat_aquifers); levels(DD$cat_aquifers) # nodata bust (needs relabeling)
+DD$cat_aquifers <- as.factor(DD$cat_aquifers); levels(DD$cat_aquifers)
 DD$aquifers     <- as.factor(DD$aquifers); levels(DD$aquifers)
 DD$bedperm      <- as.factor(DD$bedperm); levels(DD$bedperm)
 DD$cat_physio   <- as.factor(DD$cat_physio); levels(DD$cat_physio)
@@ -118,19 +179,21 @@ DD$statsgo      <- as.factor(DD$statsgo); levels(DD$statsgo)
 DD$ed_rch_zone  <- as.factor(DD$ed_rch_zone); levels(DD$ed_rch_zone)
 unique(DD$site_no[DD$ed_rch_zone == "1"])
 
-length(DD$site_no[DD$physio == "acc_physio_area"])
-#[1] 865
-length(DD$site_no[DD$physio != "acc_physio_area"])
-#[1] 1939
-length(DD$site_no[DD$cat_physio != "cat_physio_area"])
-#[1] 2758
-length(DD$site_no[DD$cat_physio == "cat_physio_area"])
-#[1] 46
+# only nodata for cat_soller, cat_aquifers, and cat_physio have 1 nodata : site_no 02359315
+summary(DD$cat_soller)
+summary(DD$soller)
+summary(DD$cat_aquifers)
+summary(DD$aquifers)
+summary(DD$bedperm)
+summary(DD$cat_physio)
+summary(DD$physio)
+summary(DD$cat_ecol3)
+summary(DD$ecol3)
+summary(DD$hlr)
+summary(DD$statsgo)
+summary(DD$ed_rch_zone)
 
-plot(DD, lwd=0.5)
-plot(DD[DD$physio == "acc_physio_area",], col=4, add=TRUE, pch=21, bg=8, lwd=.5, cex=1.2)
-plot(DD[DD$cat_physio == "cat_physio_area",], col=2, add=TRUE, pch=21, bg=8, lwd=.5)
-mtext("RED=cat_physio == 'cat_physio_area' and BLUE=physio == 'acc_physio_area'")
+
 
 DD$ppt_mean    <- log10(DD$ppt_mean)
 DD$temp_mean   <- log10(DD$temp_mean)
@@ -158,8 +221,6 @@ text(0,5, paste(sites_of_area_bust, collapse=", "), cex=0.6, pos=4)
 #       DD$basin_area[DD$site_no == "08167000"], pch=16, col=4)
 
 
-
-
 dotransin <- function(p) 2*asin(sqrt(p/100))
 retransin <- function(p) sin(p/2)^2*100
 
@@ -176,39 +237,6 @@ DD$shrubland           <-  dotransin(DD$shrubland)
 DD$water               <-  dotransin(DD$water)
 DD$woody_wetland       <-  dotransin(DD$woody_wetland)
 DD$bfi                 <-  dotransin(DD$bfi)
-DD$bfi                 <-  dotransin(DD$bfi)
-
-
-#DD$alt_ecol3 <- "-0"
-#DD$alt_ecol3[DD$ecol3 == "ecol3_26"] <- "-26"
-#DD$alt_ecol3[DD$ecol3 == "ecol3_27"] <- "-27"
-#DD$alt_ecol3[DD$ecol3 == "ecol3_30"] <- "-30"
-#DD$alt_ecol3[DD$ecol3 == "ecol3_31"] <- "-31"
-#DD$alt_ecol3[DD$ecol3 == "ecol3_32"] <- "-32"
-#DD$alt_ecol3[DD$ecol3 == "ecol3_33"] <- "-33"
-#DD$alt_ecol3[DD$ecol3 == "ecol3_34"] <- "-34"
-#DD$alt_ecol3[DD$ecol3 == "ecol3_36"] <- "-36"
-#DD$alt_ecol3[DD$ecol3 == "ecol3_75"] <- "-75"
-#DD$alt_ecol3 <- as.factor(DD$alt_ecol3)
-
-#DD$trimmed_aquifers <- "aother"
-#DD$trimmed_aquifers[DD$aquifers == "TOT_AQ111"] <- "TOT_AQ111(surficial aquifer system)"
-#DD$trimmed_aquifers[DD$aquifers == "TOT_AQ413"] <- "TOT_AQ413(Floridan aquifer system)"
-#DD$trimmed_aquifers[DD$aquifers == "TOT_AQ201"] <- "TOT_AQ201(coastal lowlands aquifer system)"
-#DD$trimmed_aquifers <- as.factor(DD$trimmed_aquifers)
-
-# This is the coastal plain
-DD$cat_physio <- relevel(DD$cat_physio, "cat_physio_3")
-DD$physio <- relevel(DD$physio, "acc_physio_3")
-#DD$alt_physio <- "other"
-#DD$alt_physio[DD$physio == "cat_physio_3"] <- "Coastal Plain"
-#DD$alt_physio[DD$physio == "cat_physio_8"] <- "Appalachian Plateaus"
-#DD$alt_physio[DD$physio == "cat_physio_12"] <- "Central Lowland"
-#DD$alt_physio[DD$physio == "cat_physio_13"] <- "Great Plains"
-#DD$alt_physio <- as.factor(DD$alt_physio)
-#DD$alt_physio <- relevel(DD$alt_physio, "other")
-
-
 
 #DD$edwards_rechzone <- 0
 #DD$edwards_rechzone[DD$site_no == "08155300"] <- 1
@@ -233,11 +261,8 @@ duan_smearing_estimator <- function(model) { sum(10^residuals(model))/length(res
 save(bnd, D, DD, DDo, knots, bnd,
      DD_sites_of_area_bust, duan_smearing_estimator, file="DEMO.RData")
 
-# TODO: Need to look at these two neighboring locations in MO on the MAP.
-# 07044000, 07045000
-
-#  [1] "site_no"             "comid"               "huc12"               "decade"              "lon"
-#  [6] "lat"                 "n"                   "nzero"               "pplo"                "min"
+#  [1] "site_no"             "comid"               "huc12"               "decade"              "dec_long_va"
+#  [6] "dec_lat_va"          "n"                   "nzero"               "pplo"                "min"
 # [11] "f0.02"               "f0.05"               "f0.1"                "f0.2"                "f0.5"
 # [16] "f01"                 "f02"                 "f05"                 "f10"                 "f20"
 # [21] "f25"                 "f30"                 "f40"                 "f50"                 "f60"
@@ -253,18 +278,19 @@ save(bnd, D, DD, DDo, knots, bnd,
 # [71] "strm_dens"           "twi"                 "basin_area"          "cat_soller"          "soller"
 # [76] "cat_aquifers"        "aquifers"            "bedperm"             "cat_physio"          "physio"
 # [81] "cat_ecol3"           "ecol3"               "hlr"                 "rdx"                 "basin_slope"
-# [86] "elev_mean"           "statsgo"             "flood_storage"       "ed_rch_zone"         "dec_lat_va"
-# [91] "dec_long_va"         "CDA"                 "east"                "north"               "dni_ann"
-# [96] "dni_jan"             "dni_feb"             "dni_mar"             "dni_apr"             "dni_may"
-#[101] "dni_jun"             "dni_jul"             "dni_aug"             "dni_sep"             "dni_oct"
-#[106] "dni_nov"             "dni_dec"             "x"                   "y"                   "edwards_rechzone"
+# [86] "elev_mean"           "statsgo"             "flood_storage"       "ed_rch_zone"         "comid.y"
+# [91] "site_no.y"           "huc12.y"             "dec_long_va.y"       "dec_lat_va.y"        "decade.y"
+# [96] "dni_ann"             "dni_jan"             "dni_feb"             "dni_mar"             "dni_apr"
+#[101] "dni_may"             "dni_jun"             "dni_jul"             "dni_aug"             "dni_sep"
+#[106] "dni_oct"             "dni_nov"             "dni_dec"             "CDA"                 "east"
+#[111] "north"               "x"                   "y"
 
 # It appears critical that the boundary have variables named say x,y
 # The knots have the same names (x,y) and most difficult to figure out
 # the x, y must be passed as same names in to the s(...). The x,y is not
 # the critical piece, it is that they are all the same literal string.
 # For example, v,w would work too.
-plot(bnd[[1]]$x,bnd[[1]]$y,type="l", col=8, lwd=.6, xlim=c(-200,0), ylim=c(750,840))
+plot(bnd[[1]]$x,bnd[[1]]$y,type="l", col=8, lwd=.6)
 points(D$east[D$nzero == 0], D$north[D$nzero == 0], pch=4, lwd=.5, cex=0.9, col=rgb(0,.5,0.5,.5))
 points(D$east[D$nzero > 0 & D$nzero <= 800], D$north[D$nzero > 0 & D$nzero <= 800], pch=4, lwd=.5, cex=0.9, col=rgb(1,0,0.5,.5))
 points(D$east[D$nzero > 3653-2000], D$north[D$nzero > 3653-2000], pch=16, lwd=.5, cex=0.9, col=rgb(0.5,0,1))
@@ -364,7 +390,8 @@ P0 <- P0o <- predict(GM0); P0[P0 > log10(3653)] <- log10(3653)
 plot(Psurv0, P0, xlab="Survival Regression: log10(days of decadal streamflow)",
                  ylab="Censored GAM: log10(days of decadal streamflow)")
 abline(0,1)
-mtext("Model structure not quite exact because of convergence issues in GAM")
+# August 15, 2018 testing with the "final dataset" does not produce convergence warnings.
+#mtext("Model structure not quite exact because of convergence issues in GAM")
 # WHA I would rather not have the smooth on temp_mean and grassland but these
 # appear needed to get the GAM to converge. So the model does not quite match
 # that from survreg().
@@ -432,6 +459,18 @@ abline(0,1)
 PPLO <- GM2
 save(D, SM0, SM1, GM1, GM2, PPLO, file="PPLOS.RData")
 
+sqrt(mean((C2o - Z$flowtime)^2))
+H <- gamIntervals(predict(GM2, se.fit=TRUE), gam=GM2, interval="prediction", sigma=sqrt(mean((C2o - Z$flowtime)^2)))
+
+# Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
+PPLOdf <- data.frame(site_no=Z$site_no, decade=Z$decade,
+                     est_pplo_lwr=(3653-10^H$upr)/3653, est_pplo=(3653-10^H$fit)/3653, est_pplo_upr=(3653-10^H$lwr)/3653)
+PPLOdf$est_pplo_lwr[PPLOdf$est_pplo_lwr < 0] <- 0
+PPLOdf$est_pplo[    PPLOdf$est_pplo     < 0] <- 0
+PPLOdf$est_pplo_upr[PPLOdf$est_pplo_upr < 0] <- 0
+PPLOdf$rse_pplo <- sqrt(mean((C2o - Z$flowtime)^2))
+PPLOdf$se.fit_pplo <- H$se.fit
+
 
 
 plot(bnd[[1]]$x,bnd[[1]]$y,type="l", col=8, lwd=.6)
@@ -463,17 +502,6 @@ mtext("Predictions cenGAM of PPLO (C2)")
 
 ###### END PPLO
 
-# [45] "ppt_mean"            "ppt_sd"              "temp_mean"           "temp_sd"
-# [49] "tot_hdens"           "tot_major"           "tot_ndams"           "tot_nid_storage"
-# [53] "tot_norm_storage"    "barren"              "cultivated_cropland" "deciduous_forest"
-# [57] "developed"           "evergreen_forest"    "grassland"           "hay_pasture"
-# [61] "herbaceous_wetland"  "mixed_forest"        "perennial_ice_snow"  "shrubland"
-# [65] "water"               "woody_wetland"       "tot_bfi"             "sinuosity"
-# [69] "length_km"           "area_sqkm"           "strm_dens"           "tot_twi"
-# [73] "basin_area"      "acc_basin_slope"     "tot_elev_mean"       "tot_elev_min"
-# [77] "tot_elev_max"        "tot_total_road_dens" "tot_rdx"             "bedperm"
-# [81] "aquifers"            "soller"              "hlr"                 "ecol3"
-# [85] "physio"              "statsgo"
 
 Z <- D
 x <- Z$x; y <- Z$y
