@@ -18,12 +18,12 @@ function(gam_predicts_with_se.fit, gam=NULL, sigma=NULL,
    #       X <- 2*pi*(1:360)/360 # simulate some X
    #       Y <- 1.6*sin(X) + 40*cos(X) + rnorm(length(X), sd=12)
    #     GAM <- gam(Y~s(X)); PGAM <- predict(GAM, se.fit=TRUE)
-   #     PGAM <- gamIntervals(PGAM, gam=GAM)
+   #     PGAM <- gamIntervals(PGAM, gam=GAM, interval="confidence")
    #     print(head(PGAM))
    #     print(head(PGAM$leverage)); print(head(GAM$hat)) # see they are the value
    # plot(GAM$hat, (PGAM$se.fit/PGAM$residual.scale)^2)
    # Compare what the GAM says its leverage values are to back computed.
-   # The plot() only works because predict() called back on the actuall model.
+   # The plot() only works because predict() called back on the actual model.
    if(class(gam)[1] != "gam") {
       warning("need the actual GAM model too via the 'gam' argument")
       return()
@@ -48,7 +48,6 @@ function(gam_predicts_with_se.fit, gam=NULL, sigma=NULL,
       z$lwr <- z$fit - sigma*QT*tmp
       z$upr <- z$fit + sigma*QT*tmp
    }
-   print(head(z))
    attr(z, "interval")                  <- interval
    attr(z, "level")                     <- level
    attr(z, "t-dist_degrees_of_freedom") <- df
@@ -71,18 +70,17 @@ COV <- cbind(COV, SO)
 
 FDC$key <- paste(FDC$site_no,":",FDC$decade, sep="")
 COV$key <- paste(COV$site_no,":",COV$decade, sep="")
-
-DD <- merge(FDC, COV, by="key")
+suppressWarnings(DD <- merge(FDC, COV, by="key"))
 DD$key <- NULL
 #Warning message:
 #In merge.data.frame(FDC, COV, by = "key") :
 #  column names ‘comid.y’, ‘site_no.y’, ‘huc12.y’, ‘dec_long_va.y’, ‘dec_lat_va.y’, ‘decade.y’ are duplicated in the result
-sum(DD$comid.x != DD$comid.y)
-sum(DD$site_no.x != DD$site_no.y)
-sum(DD$huc12.x != DD$huc12.y)
+sum(DD$comid.x       != DD$comid.y      )
+sum(DD$site_no.x     != DD$site_no.y    )
+sum(DD$huc12.x       != DD$huc12.y      )
 sum(DD$dec_long_va.x != DD$dec_long_va.y)
 sum(DD$dec_long_va.x != DD$dec_long_va.y)
-sum(DD$decade.x != DD$decade.y)
+sum(DD$decade.x      != DD$decade.y     )
 nm <- names(DD); nm[1] <- "comid"; nm[2] <- "site_no"; nm[3] <- "huc12"; nm[4] <- "decade"
 nm[5] <- "dec_long_va"; nm[6] <- "dec_lat_va"
 names(DD) <- nm
@@ -101,7 +99,7 @@ CDA <- sitefile$contrib_drain_area_va
 CDA[is.na(CDA)] <- sitefile$drain_area_va[is.na(CDA)]
 CDA <- pmin(sitefile$drain_area_va, sitefile$contrib_drain_area_va, na.rm=TRUE)
 sitefile$contrib_drain_area_va <- CDA <- CDA*2.589988 # move to km2
-
+write.table(sitefile, file="sitefile.txt", quote=FALSE, row.names=FALSE, sep="\t")
 
 LATLONG <- paste0("+proj=longlat +ellps=GRS80 ",
                   "+datum=NAD83 +no_defs +towgs84=0,0,0")
@@ -122,7 +120,6 @@ XY <- coordinates(DD)
 DD$east <- XY[,1]/1000; DD$north <- XY[,2]/1000; rm(XY)
 
 DD$x <- DD$east; DD$y <- DD$north
-DDo <- DD
 
 ix <- length(2:(length(bnd_poly_aea[,1])-1))
 ix <- c(1,sort(sample(ix, size=20000, replace=FALSE)),length(bnd_poly_aea[,1]))
@@ -161,22 +158,21 @@ x <- knots$x; y <- knots$y
 #knots <- data.frame(x=c(x, -200), y=c(y, 800)); rm(x,y)
 points(knots$x, knots$y, pch=16, cex=1.1, col=4)
 
-length(DDo$site_no)
 length(DD$site_no)
 
-DD$decade       <- as.factor(DD$decade); levels(DD$decade)
-DD$cat_soller   <- as.factor(DD$cat_soller); levels(DD$cat_soller)
-DD$soller       <- as.factor(DD$soller); levels(DD$soller)
+DD$decade       <- as.factor(DD$decade);       levels(DD$decade)
+DD$cat_soller   <- as.factor(DD$cat_soller);   levels(DD$cat_soller)
+DD$soller       <- as.factor(DD$soller);       levels(DD$soller)
 DD$cat_aquifers <- as.factor(DD$cat_aquifers); levels(DD$cat_aquifers)
-DD$aquifers     <- as.factor(DD$aquifers); levels(DD$aquifers)
-DD$bedperm      <- as.factor(DD$bedperm); levels(DD$bedperm)
-DD$cat_physio   <- as.factor(DD$cat_physio); levels(DD$cat_physio)
-DD$physio       <- as.factor(DD$physio); levels(DD$physio)
-DD$cat_ecol3    <- as.factor(DD$cat_ecol3); levels(DD$cat_ecol3)
-DD$ecol3        <- as.factor(DD$ecol3); levels(DD$ecol3)
-DD$hlr          <- as.factor(DD$hlr); levels(DD$hlr)
-DD$statsgo      <- as.factor(DD$statsgo); levels(DD$statsgo)
-DD$ed_rch_zone  <- as.factor(DD$ed_rch_zone); levels(DD$ed_rch_zone)
+DD$aquifers     <- as.factor(DD$aquifers);     levels(DD$aquifers)
+DD$bedperm      <- as.factor(DD$bedperm);      levels(DD$bedperm)
+DD$cat_physio   <- as.factor(DD$cat_physio);   levels(DD$cat_physio)
+DD$physio       <- as.factor(DD$physio);       levels(DD$physio)
+DD$cat_ecol3    <- as.factor(DD$cat_ecol3);    levels(DD$cat_ecol3)
+DD$ecol3        <- as.factor(DD$ecol3);        levels(DD$ecol3)
+DD$hlr          <- as.factor(DD$hlr);          levels(DD$hlr)
+DD$statsgo      <- as.factor(DD$statsgo);      levels(DD$statsgo)
+DD$ed_rch_zone  <- as.factor(DD$ed_rch_zone);  levels(DD$ed_rch_zone)
 unique(DD$site_no[DD$ed_rch_zone == "1"])
 
 # only nodata for cat_soller, cat_aquifers, and cat_physio have 1 nodata : site_no 02359315
@@ -199,30 +195,9 @@ DD$ppt_mean    <- log10(DD$ppt_mean)
 DD$temp_mean   <- log10(DD$temp_mean)
 DD$basin_area  <- log10(DD$basin_area)
 DD$basin_slope <- log10(DD$basin_slope/100)
-plot(DD$CDA, DD$basin_area, lwd=0.5,
-     xlab="log10(NWIS CDA)", ylab="log10(NHDplus basin area")
-abline(0,1)
-abline(1/3,1,lty=2); abline(-1/3,1,lty=2)
-abline(1/2,1,lty=2); abline(-1/2,1,lty=3)
-mtext("Diagnostic check on watershed areas")
-jnk <- abs(DD$basin_area - DD$CDA)
-summary(jnk[jnk > 1/2])
-sites_of_area_bust <- unique(DD$site_no[jnk > 1/2])
-DD_sites_of_area_bust <- DD[DD$site_no == sites_of_area_bust[1], ]
-for(site in sites_of_area_bust[2:length(sites_of_area_bust)]) {
-  DD_sites_of_area_bust <- rbind(DD_sites_of_area_bust,DD[DD$site_no == site, ] )
-}
-for(site in sites_of_area_bust) {
-  points(DD$CDA[DD$site_no == site], DD$basin_area[DD$site_no == site], pch=16, col=2)
-  DD <- DD[DD$site_no != site,]
-}
-text(0,5, paste(sites_of_area_bust, collapse=", "), cex=0.6, pos=4)
-#points(DD$CDA[DD$site_no == "08167000"],
-#       DD$basin_area[DD$site_no == "08167000"], pch=16, col=4)
-
 
 dotransin <- function(p) 2*asin(sqrt(p/100))
-retransin <- function(p) sin(p/2)^2*100
+retransin <- function(p)    sin(p/2)^2*100
 
 DD$barren              <-  dotransin(DD$barren)
 DD$cultivated_cropland <-  dotransin(DD$cultivated_cropland)
@@ -251,6 +226,33 @@ DD$bfi                 <-  dotransin(DD$bfi)
 #DD$edwards_rechzone[DD$site_no == "08200700"] <- 1
 #DD$edwards_rechzone[DD$site_no == "08202700"] <- 1
 #DD$edwards_rechzone <- as.factor(DD$edwards_rechzone)
+
+DDo <- DD
+
+
+plot(DD$CDA, DD$basin_area, lwd=0.5,
+     xlab="log10(NWIS CDA)", ylab="log10(NHDplus basin area")
+abline(0,1)
+abline(1/3,1,lty=2); abline(-1/3,1,lty=2)
+abline(1/2,1,lty=2); abline(-1/2,1,lty=3)
+mtext("Diagnostic check on watershed areas")
+jnk <- abs(DD$basin_area - DD$CDA)
+summary(jnk[jnk > 1/2])
+sites_of_area_bust <- unique(DD$site_no[jnk > 1/2])
+DD_sites_of_area_bust <- DD[DD$site_no == sites_of_area_bust[1], ]
+for(site in sites_of_area_bust[2:length(sites_of_area_bust)]) {
+  DD_sites_of_area_bust <- rbind(DD_sites_of_area_bust,DD[DD$site_no == site, ] )
+}
+for(site in sites_of_area_bust) {
+  points(DD$CDA[DD$site_no == site], DD$basin_area[DD$site_no == site], pch=16, col=2)
+  DD <- DD[DD$site_no != site,]
+}
+text(0,5, paste(sites_of_area_bust, collapse=", "), cex=0.6, pos=4)
+#points(DD$CDA[DD$site_no == "08167000"],
+#       DD$basin_area[DD$site_no == "08167000"], pch=16, col=4)
+
+
+
 
 D <- DD;
 
@@ -360,20 +362,11 @@ Z <- D
 x <- Z$east; y <- Z$north
 Z$flowtime <- log10(Z$n - Z$nzero)
 Zc <- Surv(Z$flowtime, Z$nzero != 0, type="right")
-SM1 <- survreg(Zc~basin_area+ppt_mean+temp_mean+basin_slope+flood_storage+developed+dni_ann+bedperm+decade-1, data=Z, dist=family)
-P1 <- P1o <- predict(SM1); P1[P1 > log10(3653)] <- log10(3653)
-plot(Z$flowtime, P1, xlim=c(2.3,3.6), ylim=c(3,3.6), pch=16, col=rgb(0,0,1,.2))
-abline(0,1)
-
 SM0 <- survreg(Zc~basin_area+
                     ppt_mean+temp_mean+dni_ann+
                     developed+grassland+
                     bedperm+decade-1, data=Z, dist=family)
 Psurv0 <- Psurv0o <- predict(SM0); Psurv0[Psurv0 > log10(3653)] <- log10(3653)
-plot(Z$flowtime, Psurv0, xlim=c(2.3,3.6), ylim=c(3,3.6), pch=16, col=rgb(0,0,1,.2))
-abline(0,1)
-
-
 
 Z <- D
 x <- Z$east; y <- Z$north
@@ -397,7 +390,7 @@ abline(0,1)
 # that from survreg().
 
 GM1 <- gam(flowtime~basin_area+
-                    s(ppt_mean, k=5)+s(temp_mean)+s(dni_ann)+
+                    s(ppt_mean, k=5)+s(temp_mean, k=4)+s(dni_ann, k=7)+
                     developed+s(grassland)+
                     bedperm+decade-1,
            family=tobit1(left.threshold=  Z$left.threshold,
@@ -409,67 +402,115 @@ GM2 <- gam(flowtime~basin_area+
         s(x,y, bs="so", xt=list(bnd=bnd)), knots=knots,
            family=tobit1(left.threshold=  Z$left.threshold,
                          right.threshold=Z$right.threshold), data=Z); summary(GM2)
-GM2.nosoap <- gam(flowtime~basin_area+
+GM3 <- gam(flowtime~basin_area+
                     s(ppt_mean, k=5)+s(temp_mean, k=4)+s(dni_ann, k=7)+
                     developed+s(grassland)+
                     bedperm+decade-1+
         s(x,y), knots=knots,
            family=tobit1(left.threshold=  Z$left.threshold,
-                         right.threshold=Z$right.threshold), data=Z); summary(GM2.nosoap)
+                         right.threshold=Z$right.threshold), data=Z); summary(GM3)
 
-P <- Po <- predict(SM1); P[P > log10(3653)] <- log10(3653)
+P <- Po <- predict(SM0); P[P > log10(3653)] <- log10(3653)
 C1 <- C1o <- predict(GM1); C1[C1 > log10(3653)] <- log10(3653)
 C2 <- C2o <- predict(GM2); C2[C2 > log10(3653)] <- log10(3653)
+C3 <- C3o <- predict(GM3); C3[C3 > log10(3653)] <- log10(3653)
 pa <- abs(P - Z$flowtime)
 ca <- abs(C1- Z$flowtime)
 cb <- abs(C2- Z$flowtime)
+cc <- abs(C3- Z$flowtime)
 summary(pa)
 summary(ca)
 summary(cb)
+summary(cc)
 
 
 plot(Z$flowtime, P, xlim=c(2.9,3.6), ylim=c(3,3.6), type="n")
 abline(0,1)
 points(Z$flowtime ,P, pch=16, col=rgb(0,0,1,.5), cex=0.5)
 points(Z$flowtime,C2, pch=16, col=rgb(1,0,0,.2), cex=0.5)
-#for(i in 1:length(P)) {
-#  if(abs(P[i]-C1[i]) < .01) next
-#  try(arrows(Z$flowtime[i],P[i],Z$flowtime[i],C1[i],
-#             lwd=0.5, angle=10, length=.1, col=4), silent=TRUE)
-#}
 for(i in 1:length(P)) {
   if(abs(P[i]-C2[i]) < .02) next
   try(arrows(Z$flowtime[i],P[i],Z$flowtime[i],C2[i],
              lwd=0.5, angle=20, length=.1, col=2), silent=TRUE)
 }
 
-plot( qnorm(pp(pa)), sort(pa), type="l", xlim=c(0,4))
-lines(qnorm(pp(ca)), sort(ca), col=4)
-lines(qnorm(pp(cb)), sort(cb), col=2)
-points(qnorm(pp(cb)), sort(cb), col=2, lwd=0.5)
+plot(  qnorm(pp(pa)), sort(pa), type="l", xlim=c(0,4))
+lines( qnorm(pp(ca)), sort(ca), col=4)
+lines( qnorm(pp(cb)), sort(cb), col=2)
+lines( qnorm(pp(cc)), sort(cc), col=3)
+points(qnorm(pp(cc)), sort(cc), col=3, lwd=0.5)
 
 Ppplo  <- (3653-10^P) /3653
 C1pplo <- (3653-10^C1)/3653
 C2pplo <- (3653-10^C2)/3653
+C3pplo <- (3653-10^C3)/3653
 plot(  Z$pplo, Ppplo, xlim=c(0,1), ylim=c(0,1))
 points(Z$pplo, C2pplo, col=2)
 points(Z$pplo, C2pplo, col=4)
+points(Z$pplo, C3pplo, col=3)
 abline(0,1)
 
 PPLO <- GM2
-save(D, SM0, SM1, GM1, GM2, PPLO, file="PPLOS.RData")
+save(DDo, DD, D, SM0, GM1, GM2, PPLO, file="PPLOS.RData")
 
-sqrt(mean((C2o - Z$flowtime)^2))
-H <- gamIntervals(predict(GM2, se.fit=TRUE), gam=GM2, interval="prediction", sigma=sqrt(mean((C2o - Z$flowtime)^2)))
+sigma <- sqrt(mean((C2o - Z$flowtime)^2))
+PGAM <- gamIntervals(predict(GM2, se.fit=TRUE), gam=GM2, interval="prediction", sigma=sigma)
+# In an uncensored data world, the following will be a 1:1 relation (see gamIntervals), but we won't fully
+# see that when there is the censoring. But the abline will plot through the middle of the data cloud.
+plot(PPLO$hat, (PGAM$se.fit/PGAM$residual.scale)^2)
+abline(0,1)
 
 # Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
-PPLOdf <- data.frame(site_no=Z$site_no, decade=Z$decade,
-                     est_pplo_lwr=(3653-10^H$upr)/3653, est_pplo=(3653-10^H$fit)/3653, est_pplo_upr=(3653-10^H$lwr)/3653)
+PPLOdf <- data.frame(site_no=Z$site_no, decade=Z$decade, inModel=TRUE, pplo=Z$pplo,
+                     est_pplo_lwr=(3653-10^PGAM$upr)/3653,
+                     est_pplo    =(3653-10^PGAM$fit)/3653,
+                     est_pplo_upr=(3653-10^PGAM$lwr)/3653, stringsAsFactors=FALSE)
 PPLOdf$est_pplo_lwr[PPLOdf$est_pplo_lwr < 0] <- 0
 PPLOdf$est_pplo[    PPLOdf$est_pplo     < 0] <- 0
 PPLOdf$est_pplo_upr[PPLOdf$est_pplo_upr < 0] <- 0
-PPLOdf$rse_pplo <- sqrt(mean((C2o - Z$flowtime)^2))
-PPLOdf$se.fit_pplo <- H$se.fit
+PPLOdf$rse_pplo <- sigma
+PPLOdf$se.fit_pplo <- PGAM$se.fit
+
+sites_to_fill <- unique(c(sites_of_area_bust, DDo$site_no[DDo$ed_rch_zone == 1]))
+i <- 0
+for(site in sites_to_fill) {
+  for(decade in as.character(DDo$decade[DDo$site_no == site])) {
+    i <- i + 1
+    message(site," ", decade, " ", i)
+    tmp <- data.frame(site_no=site, decade=decade, inModel=FALSE,
+                      pplo=DDo$pplo[DDo$site_no == site & DDo$decade == decade],
+                      est_pplo_lwr=NA, est_pplo=NA, est_pplo_upr=NA,
+                      rse_pplo=NA, se.fit_pplo=NA, stringsAsFactors=FALSE)
+    PPLOdf <- rbind(PPLOdf, tmp)
+  }
+  tmp <- DDo[DDo$site_no == site,]
+  jnk <- predict(PPLO, newdata=tmp, se.fit=TRUE)
+}
+PPLOdf <- PPLOdf[order(PPLOdf$site_no, PPLOdf$decade),]
+
+for(site in sites_to_fill) {
+  tmp <- DDo[DDo$site_no == site,]
+  jnk <- predict(PPLO, newdata=tmp, se.fit=TRUE)
+  pgk <- gamIntervals(jnk, gam=GM2, interval="prediction", sigma=sigma)
+  df <- data.frame(site_no=tmp$site_no, decade=tmp$decade, inModel=0,
+                   pplo=tmp$pplo,
+                   est_pplo_lwr=(3653-10^pgk$upr)/3653,
+                   est_pplo    =(3653-10^pgk$fit)/3653,
+                   est_pplo_upr=(3653-10^pgk$lwr)/3653, stringsAsFactors=FALSE)
+  df$est_pplo_lwr[df$est_pplo_lwr < 0] <- 0
+  df$est_pplo[    df$est_pplo     < 0] <- 0
+  df$est_pplo_upr[df$est_pplo_upr < 0] <- 0
+  df$rse_pplo <- sigma
+  df$se.fit_pplo <- pgk$se.fit
+  PPLOdf[PPLOdf$site_no == site,] <- df
+}
+
+sum(abs(PPLOdf$est_pplo - PPLOdf$pplo) <= 0   )/length(DDo$site_no)
+sum(abs(PPLOdf$est_pplo - PPLOdf$pplo) <= 0.02)/length(DDo$site_no)
+sum(abs(PPLOdf$est_pplo - PPLOdf$pplo) <= 0.05)/length(DDo$site_no)
+sum(abs(PPLOdf$est_pplo - PPLOdf$pplo) <= 0.10)/length(DDo$site_no)
+
+write_feather(PPLOdf, "all_gage_est_pplo.feather")
 
 
 
@@ -479,14 +520,11 @@ points(D$east[D$nzero > 0 & D$nzero <= 800], D$north[D$nzero > 0 & D$nzero <= 80
 points(D$east[D$nzero > 3653-2000], D$north[D$nzero > 3653-2000], pch=16, lwd=.5, cex=0.9, col=rgb(0.5,0,1))
 mtext("Raw of PPLO")
 
-
-
 plot(bnd[[1]]$x,bnd[[1]]$y,type="l", col=8, lwd=.6)
 points(D$east[P == log10(3653)], D$north[P == log10(3653)], pch=4, lwd=.5, cex=0.9, col=rgb(0,.5,0.5,.5))
 points(D$east[P < log10(3653)], D$north[P < log10(3653)], pch=4, lwd=.5, cex=0.9, col=rgb(1,0,0.5,.5))
 points(D$east[P < log10(2000)], D$north[P < log10(2000)], pch=16, lwd=.5, cex=0.9, col=rgb(0.5,0,1,.5))
-mtext("Predictions of PPLO")
-
+mtext("Survival Regression Predictions of PPLO")
 
 plot(bnd[[1]]$x,bnd[[1]]$y,type="l", col=8, lwd=.6)
 points(D$east[C1 == log10(3653)], D$north[C1 == log10(3653)], pch=4, lwd=.5, cex=0.9, col=rgb(0,.5,0.5,.5))
@@ -499,6 +537,13 @@ points(D$east[C2 == log10(3653)], D$north[C2 == log10(3653)], pch=4, lwd=.5, cex
 points(D$east[C2 < log10(3653)], D$north[C2 < log10(3653)], pch=4, lwd=.5, cex=0.9, col=rgb(1,0,0.5,.5))
 points(D$east[C2 < log10(2000)], D$north[C2 < log10(2000)], pch=16, lwd=.5, cex=0.9, col=rgb(0.5,0,1,.5))
 mtext("Predictions cenGAM of PPLO (C2)")
+
+plot(bnd[[1]]$x,bnd[[1]]$y,type="l", col=8, lwd=.6)
+points(D$east[C3 == log10(3653)], D$north[C3 == log10(3653)], pch=4, lwd=.5, cex=0.9, col=rgb(0,.5,0.5,.5))
+points(D$east[C3 < log10(3653)], D$north[C3 < log10(3653)], pch=4, lwd=.5, cex=0.9, col=rgb(1,0,0.5,.5))
+points(D$east[C3 < log10(2000)], D$north[C3 < log10(2000)], pch=16, lwd=.5, cex=0.9, col=rgb(0.5,0,1,.5))
+mtext("Predictions cenGAM of PPLO (C3)")
+
 
 ###### END PPLO
 
@@ -517,11 +562,59 @@ L1$duan_smearing <- duan_smearing_estimator(L1)
 pdf("L1.pdf", useDingbats=FALSE)
   plot(z, fitted.values(L1))
   abline(0,1)
-  plot(L1, scheme=2)
+  plot(L1, scheme=2, residuals=TRUE)
   points(Z$x, Z$y, pch=4, lwd=.5, cex=0.9, col=8)
   points(knots$x, knots$y, pch=16, cex=1.1, col=4)
   text(100, 500, "L1")
 dev.off()
+
+
+PGAM <- gamIntervals(predict(L1, se.fit=TRUE), gam=L1, interval="prediction")
+#plot(L1$hat, (PGAM$se.fit/PGAM$residual.scale)^2)
+#abline(0,1)
+sigma <- PGAM$residual.scale[1]
+# Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
+L1df <- data.frame(site_no=Z$site_no, decade=Z$decade, inModel=TRUE, duan_smearing=L1$duan_smearing, L1=Z$L1,
+                     est_L1_lwr=10^PGAM$upr,
+                     est_L1    =10^PGAM$fit,
+                     est_L1_upr=10^PGAM$lwr, stringsAsFactors=FALSE)
+L1df$rse_L1 <- sigma
+L1df$se.fit_L1 <- PGAM$se.fit
+
+sites_to_fill <- unique(c(sites_of_area_bust, DDo$site_no[DDo$ed_rch_zone == 1]))
+i <- 0
+for(site in sites_to_fill) {
+  for(decade in as.character(DDo$decade[DDo$site_no == site])) {
+    i <- i + 1
+    message(site," ", decade, " ", i)
+    tmp <- data.frame(site_no=site, decade=decade, inModel=FALSE, duan_smearing=L1$duan_smearing,
+                      L1=DDo$L1[DDo$site_no == site & DDo$decade == decade],
+                      est_L1_lwr=NA, est_L1=NA, est_L1_upr=NA,
+                      rse_L1=NA, se.fit_L1=NA, stringsAsFactors=FALSE)
+    L1df <- rbind(L1df, tmp)
+  }
+  tmp <- DDo[DDo$site_no == site,]
+  jnk <- predict(L1, newdata=tmp, se.fit=TRUE)
+}
+L1df <- L1df[order(L1df$site_no, L1df$decade),]
+
+for(site in sites_to_fill) {
+  tmp <- DDo[DDo$site_no == site,]
+  jnk <- predict(L1, newdata=tmp, se.fit=TRUE)
+  pgk <- gamIntervals(jnk, gam=L1, interval="prediction")
+  df <- data.frame(site_no=tmp$site_no, decade=tmp$decade, inModel=0, duan_smearing=L1$duan_smearing,
+                   L1=tmp$L1,
+                   est_L1_lwr=10^pgk$upr,
+                   est_L1    =10^pgk$fit,
+                   est_L1_upr=10^pgk$lwr, stringsAsFactors=FALSE)
+  df$rse_L1 <- sigma
+  df$se.fit_L1 <- pgk$se.fit
+  L1df[L1df$site_no == site,] <- df
+}
+
+write_feather(L1df, "all_gage_est_L1.feather")
+
+
 
 z <- D$L2/D$L1 # --------------------------- Coefficient of L-variation
 T2   <- gam(z~basin_area +
@@ -534,11 +627,61 @@ T2   <- gam(z~basin_area +
 pdf("T2.pdf", useDingbats=FALSE)
   plot(z, fitted.values(T2))
   abline(0,1)
-  plot(T2, scheme=2)
+  plot(T2, scheme=2, residuals=TRUE)
   points(D$x, D$y, pch=4, lwd=.5, cex=0.9, col=8)
   points(knots$x, knots$y, pch=16, cex=1.1, col=4)
   text(100, 500, "Tau2")
 dev.off()
+
+
+
+PGAM <- gamIntervals(predict(T2, se.fit=TRUE), gam=T2, interval="prediction")
+#plot(T2$hat, (PGAM$se.fit/PGAM$residual.scale)^2)
+#abline(0,1)
+sigma <- PGAM$residual.scale[1]
+# Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
+T2df <- data.frame(site_no=Z$site_no, decade=Z$decade, inModel=TRUE, T2=Z$L2/Z$L1,
+                     est_T2_lwr=PGAM$upr,
+                     est_T2    =PGAM$fit,
+                     est_T2_upr=PGAM$lwr, stringsAsFactors=FALSE)
+T2df$rse_T2 <- sigma
+T2df$se.fit_T2 <- PGAM$se.fit
+
+sites_to_fill <- unique(c(sites_of_area_bust, DDo$site_no[DDo$ed_rch_zone == 1]))
+i <- 0
+for(site in sites_to_fill) {
+  for(decade in as.character(DDo$decade[DDo$site_no == site])) {
+    i <- i + 1
+    message(site," ", decade, " ", i)
+    tmp <- data.frame(site_no=site, decade=decade, inModel=FALSE,
+                      T2=DDo$L2[DDo$site_no == site & DDo$decade == decade]/DDo$L1[DDo$site_no == site & DDo$decade == decade],
+                      est_T2_lwr=NA, est_T2=NA, est_T2_upr=NA,
+                      rse_T2=NA, se.fit_T2=NA, stringsAsFactors=FALSE)
+    T2df <- rbind(T2df, tmp)
+  }
+  tmp <- DDo[DDo$site_no == site,]
+  jnk <- predict(T2, newdata=tmp, se.fit=TRUE)
+}
+T2df <- T2df[order(T2df$site_no, T2df$decade),]
+
+for(site in sites_to_fill) {
+  tmp <- DDo[DDo$site_no == site,]
+  jnk <- predict(T2, newdata=tmp, se.fit=TRUE)
+  pgk <- gamIntervals(jnk, gam=T2, interval="prediction")
+  df <- data.frame(site_no=tmp$site_no, decade=tmp$decade, inModel=0,
+                   T2=tmp$L2/tmp$L1,
+                   est_T2_lwr=pgk$upr,
+                   est_T2    =pgk$fit,
+                   est_T2_upr=pgk$lwr, stringsAsFactors=FALSE)
+  df$rse_T2 <- sigma
+  df$se.fit_T2 <- pgk$se.fit
+  T2df[T2df$site_no == site,] <- df
+}
+
+write_feather(T2df, "all_gage_est_T2.feather")
+
+
+
 
 z <- D$T3      # --------------------------- L-skew
 T3   <- gam(z~basin_area +
@@ -551,11 +694,60 @@ T3   <- gam(z~basin_area +
 pdf("T3.pdf", useDingbats=FALSE)
   plot(z, fitted.values(T3))
   abline(0,1)
-  plot(T3, scheme=2)
+  plot(T3, scheme=2, residuals=TRUE)
   points(D$x, D$y, pch=4, lwd=.5, cex=0.9, col=8)
   points(knots$x, knots$y, pch=16, cex=1.1, col=4)
   text(100, 500, "Tau3")
 dev.off()
+
+
+PGAM <- gamIntervals(predict(T3, se.fit=TRUE), gam=T3, interval="prediction")
+#plot(T3$hat, (PGAM$se.fit/PGAM$residual.scale)^2)
+#abline(0,1)
+sigma <- PGAM$residual.scale[1]
+# Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
+T3df <- data.frame(site_no=Z$site_no, decade=Z$decade, inModel=TRUE, T3=Z$T3,
+                     est_T3_lwr=PGAM$upr,
+                     est_T3    =PGAM$fit,
+                     est_T3_upr=PGAM$lwr, stringsAsFactors=FALSE)
+T3df$rse_T3 <- sigma
+T3df$se.fit_T3 <- PGAM$se.fit
+
+sites_to_fill <- unique(c(sites_of_area_bust, DDo$site_no[DDo$ed_rch_zone == 1]))
+i <- 0
+for(site in sites_to_fill) {
+  for(decade in as.character(DDo$decade[DDo$site_no == site])) {
+    i <- i + 1
+    message(site," ", decade, " ", i)
+    tmp <- data.frame(site_no=site, decade=decade, inModel=FALSE,
+                      T3=DDo$T3[DDo$site_no == site & DDo$decade == decade],
+                      est_T3_lwr=NA, est_T3=NA, est_T3_upr=NA,
+                      rse_T3=NA, se.fit_T3=NA, stringsAsFactors=FALSE)
+    T3df <- rbind(T3df, tmp)
+  }
+  tmp <- DDo[DDo$site_no == site,]
+  jnk <- predict(T3, newdata=tmp, se.fit=TRUE)
+}
+T3df <- T3df[order(T3df$site_no, T3df$decade),]
+
+for(site in sites_to_fill) {
+  tmp <- DDo[DDo$site_no == site,]
+  jnk <- predict(T3, newdata=tmp, se.fit=TRUE)
+  pgk <- gamIntervals(jnk, gam=T3, interval="prediction")
+  df <- data.frame(site_no=tmp$site_no, decade=tmp$decade, inModel=0,
+                   T3=tmp$T3,
+                   est_T3_lwr=pgk$upr,
+                   est_T3    =pgk$fit,
+                   est_T3_upr=pgk$lwr, stringsAsFactors=FALSE)
+  df$rse_T3 <- sigma
+  df$se.fit_T3 <- pgk$se.fit
+  T3df[T3df$site_no == site,] <- df
+}
+
+write_feather(T3df, "all_gage_est_T3.feather")
+
+
+
 
 
 z <- D$T4      # --------------------------- L-kurtosis
@@ -569,11 +761,58 @@ T4   <- gam(z~basin_area +
 pdf("T4.pdf", useDingbats=FALSE)
   plot(z, fitted.values(T4))
   abline(0,1)
-  plot(T4, scheme=2)
+  plot(T4, scheme=2, residuals=TRUE)
   points(D$x, D$y, pch=4, lwd=.5, cex=0.9, col=8)
   points(knots$x, knots$y, pch=16, cex=1.1, col=4)
   text(100, 500, "Tau4")
 dev.off()
+
+
+PGAM <- gamIntervals(predict(T4, se.fit=TRUE), gam=T4, interval="prediction")
+#plot(T4$hat, (PGAM$se.fit/PGAM$residual.scale)^2)
+#abline(0,1)
+sigma <- PGAM$residual.scale[1]
+# Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
+T4df <- data.frame(site_no=Z$site_no, decade=Z$decade, inModel=TRUE, T4=Z$T4,
+                     est_T4_lwr=PGAM$upr,
+                     est_T4    =PGAM$fit,
+                     est_T4_upr=PGAM$lwr, stringsAsFactors=FALSE)
+T4df$rse_T4 <- sigma
+T4df$se.fit_T4 <- PGAM$se.fit
+
+sites_to_fill <- unique(c(sites_of_area_bust, DDo$site_no[DDo$ed_rch_zone == 1]))
+i <- 0
+for(site in sites_to_fill) {
+  for(decade in as.character(DDo$decade[DDo$site_no == site])) {
+    i <- i + 1
+    message(site," ", decade, " ", i)
+    tmp <- data.frame(site_no=site, decade=decade, inModel=FALSE,
+                      T4=DDo$T4[DDo$site_no == site & DDo$decade == decade],
+                      est_T4_lwr=NA, est_T4=NA, est_T4_upr=NA,
+                      rse_T4=NA, se.fit_T4=NA, stringsAsFactors=FALSE)
+    T4df <- rbind(T4df, tmp)
+  }
+  tmp <- DDo[DDo$site_no == site,]
+  jnk <- predict(T4, newdata=tmp, se.fit=TRUE)
+}
+T4df <- T4df[order(T4df$site_no, T4df$decade),]
+
+for(site in sites_to_fill) {
+  tmp <- DDo[DDo$site_no == site,]
+  jnk <- predict(T4, newdata=tmp, se.fit=TRUE)
+  pgk <- gamIntervals(jnk, gam=T4, interval="prediction")
+  df <- data.frame(site_no=tmp$site_no, decade=tmp$decade, inModel=0,
+                   T4=tmp$T4,
+                   est_T4_lwr=pgk$upr,
+                   est_T4    =pgk$fit,
+                   est_T4_upr=pgk$lwr, stringsAsFactors=FALSE)
+  df$rse_T4 <- sigma
+  df$se.fit_T4 <- pgk$se.fit
+  T4df[T4df$site_no == site,] <- df
+}
+
+write_feather(T4df, "all_gage_est_T4.feather")
+
 
 
 
@@ -588,11 +827,60 @@ T5   <- gam(z~basin_area +
 pdf("T5.pdf", useDingbats=FALSE)
   plot(z, fitted.values(T5))
   abline(0,1)
-  plot(T5, scheme=2)
+  plot(T5, scheme=2, residuals=TRUE)
   points(D$x, D$y, pch=4, lwd=.5, cex=0.9, col=8)
   points(knots$x, knots$y, pch=16, cex=1.1, col=4)
   text(100, 500, "Tau5")
 dev.off()
+
+
+PGAM <- gamIntervals(predict(T5, se.fit=TRUE), gam=T5, interval="prediction")
+#plot(T5$hat, (PGAM$se.fit/PGAM$residual.scale)^2)
+#abline(0,1)
+sigma <- PGAM$residual.scale[1]
+# Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
+T5df <- data.frame(site_no=Z$site_no, decade=Z$decade, inModel=TRUE, T5=Z$T5,
+                     est_T5_lwr=PGAM$upr,
+                     est_T5    =PGAM$fit,
+                     est_T5_upr=PGAM$lwr, stringsAsFactors=FALSE)
+T5df$rse_T5 <- sigma
+T5df$se.fit_T5 <- PGAM$se.fit
+
+sites_to_fill <- unique(c(sites_of_area_bust, DDo$site_no[DDo$ed_rch_zone == 1]))
+i <- 0
+for(site in sites_to_fill) {
+  for(decade in as.character(DDo$decade[DDo$site_no == site])) {
+    i <- i + 1
+    message(site," ", decade, " ", i)
+    tmp <- data.frame(site_no=site, decade=decade, inModel=FALSE,
+                      T5=DDo$T5[DDo$site_no == site & DDo$decade == decade],
+                      est_T5_lwr=NA, est_T5=NA, est_T5_upr=NA,
+                      rse_T5=NA, se.fit_T5=NA, stringsAsFactors=FALSE)
+    T5df <- rbind(T5df, tmp)
+  }
+  tmp <- DDo[DDo$site_no == site,]
+  jnk <- predict(T5, newdata=tmp, se.fit=TRUE)
+}
+T5df <- T5df[order(T5df$site_no, T5df$decade),]
+
+for(site in sites_to_fill) {
+  tmp <- DDo[DDo$site_no == site,]
+  jnk <- predict(T5, newdata=tmp, se.fit=TRUE)
+  pgk <- gamIntervals(jnk, gam=T5, interval="prediction")
+  df <- data.frame(site_no=tmp$site_no, decade=tmp$decade, inModel=0,
+                   T5=tmp$T5,
+                   est_T5_lwr=pgk$upr,
+                   est_T5    =pgk$fit,
+                   est_T5_upr=pgk$lwr, stringsAsFactors=FALSE)
+  df$rse_T5 <- sigma
+  df$se.fit_T5 <- pgk$se.fit
+  T5df[T5df$site_no == site,] <- df
+}
+
+write_feather(T5df, "all_gage_est_T5.feather")
+
+
+
 
 
 z <- D$T6      # --------------------------- Sixth L-moment ratio
@@ -606,126 +894,468 @@ T6   <- gam(z~basin_area +
 pdf("T6.pdf", useDingbats=FALSE)
   plot(z, fitted.values(T6))
   abline(0,1)
-  plot(T6, scheme=2)
+  plot(T6, scheme=2, residuals=TRUE)
   points(D$x, D$y, pch=4, lwd=.5, cex=0.9, col=8)
   points(knots$x, knots$y, pch=16, cex=1.1, col=4)
   text(100, 500, "Tau6")
 dev.off()
 
+PGAM <- gamIntervals(predict(T6, se.fit=TRUE), gam=T6, interval="prediction")
+#plot(T6$hat, (PGAM$se.fit/PGAM$residual.scale)^2)
+#abline(0,1)
+sigma <- PGAM$residual.scale[1]
+# Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
+T6df <- data.frame(site_no=Z$site_no, decade=Z$decade, inModel=TRUE, T6=Z$T6,
+                     est_T6_lwr=PGAM$upr,
+                     est_T6    =PGAM$fit,
+                     est_T6_upr=PGAM$lwr, stringsAsFactors=FALSE)
+T6df$rse_T6 <- sigma
+T6df$se.fit_T6 <- PGAM$se.fit
+
+sites_to_fill <- unique(c(sites_of_area_bust, DDo$site_no[DDo$ed_rch_zone == 1]))
+i <- 0
+for(site in sites_to_fill) {
+  for(decade in as.character(DDo$decade[DDo$site_no == site])) {
+    i <- i + 1
+    message(site," ", decade, " ", i)
+    tmp <- data.frame(site_no=site, decade=decade, inModel=FALSE,
+                      T6=DDo$T6[DDo$site_no == site & DDo$decade == decade],
+                      est_T6_lwr=NA, est_T6=NA, est_T6_upr=NA,
+                      rse_T6=NA, se.fit_T6=NA, stringsAsFactors=FALSE)
+    T6df <- rbind(T6df, tmp)
+  }
+  tmp <- DDo[DDo$site_no == site,]
+  jnk <- predict(T6, newdata=tmp, se.fit=TRUE)
+}
+T6df <- T6df[order(T6df$site_no, T6df$decade),]
+
+for(site in sites_to_fill) {
+  tmp <- DDo[DDo$site_no == site,]
+  jnk <- predict(T6, newdata=tmp, se.fit=TRUE)
+  pgk <- gamIntervals(jnk, gam=T6, interval="prediction")
+  df <- data.frame(site_no=tmp$site_no, decade=tmp$decade, inModel=0,
+                   T6=tmp$T6,
+                   est_T6_lwr=pgk$upr,
+                   est_T6    =pgk$fit,
+                   est_T6_upr=pgk$lwr, stringsAsFactors=FALSE)
+  df$rse_T6 <- sigma
+  df$se.fit_T6 <- pgk$se.fit
+  T6df[T6df$site_no == site,] <- df
+}
+
+write_feather(T6df, "all_gage_est_T6.feather")
+
+
+
+
+
 
 z <- log10(D$f50+1)      # --------------------------- Sixth L-moment ratio
-Q50   <- gam(z~basin_area +
+F50   <- gam(z~basin_area +
                s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
                developed+
                mixed_forest+shrubland+
                decade-1+
                s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
              family="gaussian")
-pdf("Q50.pdf", useDingbats=FALSE)
-plot(z, fitted.values(Q50))
+pdf("F50.pdf", useDingbats=FALSE)
+plot(z, fitted.values(F50))
 abline(0,1)
-plot(Q50, scheme=2)
+plot(F50, scheme=2, residuals=TRUE)
 points(D$x, D$y, pch=4, lwd=.5, cex=0.9, col=8)
 points(knots$x, knots$y, pch=16, cex=1.1, col=4)
-text(100, 500, "Q50")
+text(100, 500, "F50")
 dev.off()
 
 
+
+PGAM <- gamIntervals(predict(F50, se.fit=TRUE), gam=F50, interval="prediction")
+#plot(F50$hat, (PGAM$se.fit/PGAM$residual.scale)^2)
+#abline(0,1)
+sigma <- PGAM$residual.scale[1]
+# Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
+F50df <- data.frame(site_no=Z$site_no, decade=Z$decade, inModel=TRUE, f50=Z$f50,
+                     est_f50_lwr=10^PGAM$upr-1,
+                     est_f50    =10^PGAM$fit-1,
+                     est_f50_upr=10^PGAM$lwr-1, stringsAsFactors=FALSE)
+F50df$rse_f50 <- sigma
+F50df$se.fit_f50 <- PGAM$se.fit
+
+sites_to_fill <- unique(c(sites_of_area_bust, DDo$site_no[DDo$ed_rch_zone == 1]))
+i <- 0
+for(site in sites_to_fill) {
+  for(decade in as.character(DDo$decade[DDo$site_no == site])) {
+    i <- i + 1
+    message(site," ", decade, " ", i)
+    tmp <- data.frame(site_no=site, decade=decade, inModel=FALSE,
+                      f50=DDo$f50[DDo$site_no == site & DDo$decade == decade],
+                      est_f50_lwr=NA, est_f50=NA, est_f50_upr=NA,
+                      rse_f50=NA, se.fit_f50=NA, stringsAsFactors=FALSE)
+    F50df <- rbind(F50df, tmp)
+  }
+  tmp <- DDo[DDo$site_no == site,]
+  jnk <- predict(F50, newdata=tmp, se.fit=TRUE)
+}
+F50df <- F50df[order(F50df$site_no, F50df$decade),]
+
+for(site in sites_to_fill) {
+  tmp <- DDo[DDo$site_no == site,]
+  jnk <- predict(F50, newdata=tmp, se.fit=TRUE)
+  pgk <- gamIntervals(jnk, gam=F50, interval="prediction")
+  df <- data.frame(site_no=tmp$site_no, decade=tmp$decade, inModel=0,
+                   f50=tmp$f50,
+                   est_f50_lwr=10^pgk$upr-1,
+                   est_f50    =10^pgk$fit-1,
+                   est_f50_upr=10^pgk$lwr-1, stringsAsFactors=FALSE)
+  df$rse_f50 <- sigma
+  df$se.fit_f50 <- pgk$se.fit
+  F50df[F50df$site_no == site,] <- df
+}
+
+write_feather(F50df, "all_gage_est_f50.feather")
+
+
+
+
+
+
+
+
+
 sink("right_tail_flowing_fdc.txt")
-z <- log10(D$f90+1)      # --------------------------- Sixth L-moment ratio
-Q90   <- gam(z~basin_area  + s(flood_storage, k=7) +
+z <- log10(D$f90+1)      # ---------------------------
+F90   <- gam(z~basin_area  + s(flood_storage, k=7) +
               s(ppt_mean, k=5) + s(dni_ann, k=7)+
               developed+
               mixed_forest+shrubland+
               decade-1+
               s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
               family="gaussian")
-print(summary(Q90))
-pdf("Q90.pdf", useDingbats=FALSE)
-  plot(z, fitted.values(Q90))
+print(summary(F90))
+pdf("F90.pdf", useDingbats=FALSE)
+  plot(z, fitted.values(F90))
   abline(0,1)
-  plot(Q90, scheme=2, residuals=TRUE)
+  plot(F90, scheme=2, residuals=TRUE)
   points(D$x, D$y, pch=4, lwd=.5, cex=0.9, col=8)
   points(knots$x, knots$y, pch=16, cex=1.1, col=4)
-  text(100, 500, "Q90")
+  text(100, 500, "F90")
 dev.off()
 
 
-z <- log10(D$f95+1)      # --------------------------- Sixth L-moment ratio
-Q95   <- gam(z~basin_area + s(flood_storage, k=7) +
+
+PGAM <- gamIntervals(predict(F90, se.fit=TRUE), gam=F90, interval="prediction")
+#plot(F90$hat, (PGAM$se.fit/PGAM$residual.scale)^2)
+#abline(0,1)
+sigma <- PGAM$residual.scale[1]
+# Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
+F90df <- data.frame(site_no=Z$site_no, decade=Z$decade, inModel=TRUE, f90=Z$f90,
+                     est_f90_lwr=10^PGAM$upr-1,
+                     est_f90    =10^PGAM$fit-1,
+                     est_f90_upr=10^PGAM$lwr-1, stringsAsFactors=FALSE)
+F90df$rse_f90 <- sigma
+F90df$se.fit_f90 <- PGAM$se.fit
+
+sites_to_fill <- unique(c(sites_of_area_bust, DDo$site_no[DDo$ed_rch_zone == 1]))
+i <- 0
+for(site in sites_to_fill) {
+  for(decade in as.character(DDo$decade[DDo$site_no == site])) {
+    i <- i + 1
+    message(site," ", decade, " ", i)
+    tmp <- data.frame(site_no=site, decade=decade, inModel=FALSE,
+                      f90=DDo$f90[DDo$site_no == site & DDo$decade == decade],
+                      est_f90_lwr=NA, est_f90=NA, est_f90_upr=NA,
+                      rse_f90=NA, se.fit_f90=NA, stringsAsFactors=FALSE)
+    F90df <- rbind(F90df, tmp)
+  }
+  tmp <- DDo[DDo$site_no == site,]
+  jnk <- predict(F90, newdata=tmp, se.fit=TRUE)
+}
+F90df <- F90df[order(F90df$site_no, F90df$decade),]
+
+for(site in sites_to_fill) {
+  tmp <- DDo[DDo$site_no == site,]
+  jnk <- predict(F90, newdata=tmp, se.fit=TRUE)
+  pgk <- gamIntervals(jnk, gam=F90, interval="prediction")
+  df <- data.frame(site_no=tmp$site_no, decade=tmp$decade, inModel=0,
+                   f90=tmp$f90,
+                   est_f90_lwr=10^pgk$upr-1,
+                   est_f90    =10^pgk$fit-1,
+                   est_f90_upr=10^pgk$lwr-1, stringsAsFactors=FALSE)
+  df$rse_f90 <- sigma
+  df$se.fit_f90 <- pgk$se.fit
+  F90df[F90df$site_no == site,] <- df
+}
+
+write_feather(F90df, "all_gage_est_f90.feather")
+
+
+
+z <- log10(D$f95+1)      # ---------------------------
+F95   <- gam(z~basin_area + s(flood_storage, k=7) +
                s(ppt_mean, k=5) + s(dni_ann, k=7)+
                developed+
                mixed_forest+shrubland+
                decade-1+
                s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
              family="gaussian")
-print(summary(Q95))
-pdf("Q95.pdf", useDingbats=FALSE)
-plot(z, fitted.values(Q95))
+print(summary(F95))
+pdf("F95.pdf", useDingbats=FALSE)
+plot(z, fitted.values(F95))
 abline(0,1)
-plot(Q95, scheme=2, residuals=TRUE)
+plot(F95, scheme=2, residuals=TRUE)
 points(D$x, D$y, pch=4, lwd=.5, cex=0.9, col=8)
 points(knots$x, knots$y, pch=16, cex=1.1, col=4)
-text(100, 500, "Q95")
+text(100, 500, "F95")
 dev.off()
 
 
-z <- log10(D$f98+1)      # --------------------------- Sixth L-moment ratio
-Q98   <- gam(z~basin_area + s(flood_storage, k=7) +
+
+PGAM <- gamIntervals(predict(F95, se.fit=TRUE), gam=F95, interval="prediction")
+#plot(F95$hat, (PGAM$se.fit/PGAM$residual.scale)^2)
+#abline(0,1)
+sigma <- PGAM$residual.scale[1]
+# Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
+F95df <- data.frame(site_no=Z$site_no, decade=Z$decade, inModel=TRUE, f95=Z$f95,
+                     est_f95_lwr=10^PGAM$upr-1,
+                     est_f95    =10^PGAM$fit-1,
+                     est_f95_upr=10^PGAM$lwr-1, stringsAsFactors=FALSE)
+F95df$rse_f95 <- sigma
+F95df$se.fit_f95 <- PGAM$se.fit
+
+sites_to_fill <- unique(c(sites_of_area_bust, DDo$site_no[DDo$ed_rch_zone == 1]))
+i <- 0
+for(site in sites_to_fill) {
+  for(decade in as.character(DDo$decade[DDo$site_no == site])) {
+    i <- i + 1
+    message(site," ", decade, " ", i)
+    tmp <- data.frame(site_no=site, decade=decade, inModel=FALSE,
+                      f95=DDo$f95[DDo$site_no == site & DDo$decade == decade],
+                      est_f95_lwr=NA, est_f95=NA, est_f95_upr=NA,
+                      rse_f95=NA, se.fit_f95=NA, stringsAsFactors=FALSE)
+    F95df <- rbind(F95df, tmp)
+  }
+  tmp <- DDo[DDo$site_no == site,]
+  jnk <- predict(F95, newdata=tmp, se.fit=TRUE)
+}
+F95df <- F95df[order(F95df$site_no, F95df$decade),]
+
+for(site in sites_to_fill) {
+  tmp <- DDo[DDo$site_no == site,]
+  jnk <- predict(F95, newdata=tmp, se.fit=TRUE)
+  pgk <- gamIntervals(jnk, gam=F95, interval="prediction")
+  df <- data.frame(site_no=tmp$site_no, decade=tmp$decade, inModel=0,
+                   f95=tmp$f95,
+                   est_f95_lwr=10^pgk$upr-1,
+                   est_f95    =10^pgk$fit-1,
+                   est_f95_upr=10^pgk$lwr-1, stringsAsFactors=FALSE)
+  df$rse_f95 <- sigma
+  df$se.fit_f95 <- pgk$se.fit
+  F95df[F95df$site_no == site,] <- df
+}
+
+write_feather(F95df, "all_gage_est_f95.feather")
+
+
+
+
+z <- log10(D$f98+1)      # ---------------------------
+F98   <- gam(z~basin_area + s(flood_storage, k=7) +
                s(ppt_mean, k=5) + s(dni_ann, k=7)+
                developed+
                mixed_forest+shrubland+
                decade-1+
                s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
              family="gaussian")
-print(summary(Q98))
-pdf("Q98.pdf", useDingbats=FALSE)
-plot(z, fitted.values(Q98))
+print(summary(F98))
+pdf("F98.pdf", useDingbats=FALSE)
+plot(z, fitted.values(F98))
 abline(0,1)
-plot(Q98, scheme=2, residuals=TRUE)
+plot(F98, scheme=2, residuals=TRUE)
 points(D$x, D$y, pch=4, lwd=.5, cex=0.9, col=8)
 points(knots$x, knots$y, pch=16, cex=1.1, col=4)
-text(100, 500, "Q98")
+text(100, 500, "F98")
 dev.off()
 
-z <- log10(D$f99+1)      # --------------------------- Sixth L-moment ratio
-Q99   <- gam(z~basin_area + s(flood_storage, k=7) +
+PGAM <- gamIntervals(predict(F98, se.fit=TRUE), gam=F98, interval="prediction")
+#plot(F98$hat, (PGAM$se.fit/PGAM$residual.scale)^2)
+#abline(0,1)
+sigma <- PGAM$residual.scale[1]
+# Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
+F98df <- data.frame(site_no=Z$site_no, decade=Z$decade, inModel=TRUE, f98=Z$f98,
+                     est_f98_lwr=10^PGAM$upr-1,
+                     est_f98    =10^PGAM$fit-1,
+                     est_f98_upr=10^PGAM$lwr-1, stringsAsFactors=FALSE)
+F98df$rse_f98 <- sigma
+F98df$se.fit_f98 <- PGAM$se.fit
+
+sites_to_fill <- unique(c(sites_of_area_bust, DDo$site_no[DDo$ed_rch_zone == 1]))
+i <- 0
+for(site in sites_to_fill) {
+  for(decade in as.character(DDo$decade[DDo$site_no == site])) {
+    i <- i + 1
+    message(site," ", decade, " ", i)
+    tmp <- data.frame(site_no=site, decade=decade, inModel=FALSE,
+                      f98=DDo$f98[DDo$site_no == site & DDo$decade == decade],
+                      est_f98_lwr=NA, est_f98=NA, est_f98_upr=NA,
+                      rse_f98=NA, se.fit_f98=NA, stringsAsFactors=FALSE)
+    F98df <- rbind(F98df, tmp)
+  }
+  tmp <- DDo[DDo$site_no == site,]
+  jnk <- predict(F98, newdata=tmp, se.fit=TRUE)
+}
+F98df <- F98df[order(F98df$site_no, F98df$decade),]
+
+for(site in sites_to_fill) {
+  tmp <- DDo[DDo$site_no == site,]
+  jnk <- predict(F98, newdata=tmp, se.fit=TRUE)
+  pgk <- gamIntervals(jnk, gam=F98, interval="prediction")
+  df <- data.frame(site_no=tmp$site_no, decade=tmp$decade, inModel=0,
+                   f98=tmp$f98,
+                   est_f98_lwr=10^pgk$upr-1,
+                   est_f98    =10^pgk$fit-1,
+                   est_f98_upr=10^pgk$lwr-1, stringsAsFactors=FALSE)
+  df$rse_f98 <- sigma
+  df$se.fit_f98 <- pgk$se.fit
+  F98df[F98df$site_no == site,] <- df
+}
+
+write_feather(F98df, "all_gage_est_f98.feather")
+
+
+
+
+z <- log10(D$f99+1)      # ---------------------------
+F99   <- gam(z~basin_area + s(flood_storage, k=7) +
                s(ppt_mean, k=5) + s(dni_ann, k=7)+
                developed+
                mixed_forest+shrubland+
                decade-1+
                s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
              family="gaussian")
-print(summary(Q99))
-pdf("Q99.pdf", useDingbats=FALSE)
-plot(z, fitted.values(Q99))
+print(summary(F99))
+pdf("F99.pdf", useDingbats=FALSE)
+plot(z, fitted.values(F99))
 abline(0,1)
-plot(Q99, scheme=2, residuals=TRUE)
+plot(F99, scheme=2, residuals=TRUE)
 points(D$x, D$y, pch=4, lwd=.5, cex=0.9, col=8)
 points(knots$x, knots$y, pch=16, cex=1.1, col=4)
-text(100, 500, "Q99")
+text(100, 500, "F99")
 dev.off()
 
 
-z <- log10(D$f99.9+1)      # --------------------------- Sixth L-moment ratio
-Q99p9   <- gam(z~basin_area + s(flood_storage, k=7) +
+PGAM <- gamIntervals(predict(F99, se.fit=TRUE), gam=F99, interval="prediction")
+#plot(F99$hat, (PGAM$se.fit/PGAM$residual.scale)^2)
+#abline(0,1)
+sigma <- PGAM$residual.scale[1]
+# Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
+F99df <- data.frame(site_no=Z$site_no, decade=Z$decade, inModel=TRUE, f99=Z$f99,
+                     est_f99_lwr=10^PGAM$upr-1,
+                     est_f99    =10^PGAM$fit-1,
+                     est_f99_upr=10^PGAM$lwr-1, stringsAsFactors=FALSE)
+F99df$rse_f99 <- sigma
+F99df$se.fit_f99 <- PGAM$se.fit
+
+sites_to_fill <- unique(c(sites_of_area_bust, DDo$site_no[DDo$ed_rch_zone == 1]))
+i <- 0
+for(site in sites_to_fill) {
+  for(decade in as.character(DDo$decade[DDo$site_no == site])) {
+    i <- i + 1
+    message(site," ", decade, " ", i)
+    tmp <- data.frame(site_no=site, decade=decade, inModel=FALSE,
+                      f99=DDo$f99[DDo$site_no == site & DDo$decade == decade],
+                      est_f99_lwr=NA, est_f99=NA, est_f99_upr=NA,
+                      rse_f99=NA, se.fit_f99=NA, stringsAsFactors=FALSE)
+    F99df <- rbind(F99df, tmp)
+  }
+  tmp <- DDo[DDo$site_no == site,]
+  jnk <- predict(F99, newdata=tmp, se.fit=TRUE)
+}
+F99df <- F99df[order(F99df$site_no, F99df$decade),]
+
+for(site in sites_to_fill) {
+  tmp <- DDo[DDo$site_no == site,]
+  jnk <- predict(F99, newdata=tmp, se.fit=TRUE)
+  pgk <- gamIntervals(jnk, gam=F99, interval="prediction")
+  df <- data.frame(site_no=tmp$site_no, decade=tmp$decade, inModel=0,
+                   f99=tmp$f99,
+                   est_f99_lwr=10^pgk$upr-1,
+                   est_f99    =10^pgk$fit-1,
+                   est_f99_upr=10^pgk$lwr-1, stringsAsFactors=FALSE)
+  df$rse_f99 <- sigma
+  df$se.fit_f99 <- pgk$se.fit
+  F99df[F99df$site_no == site,] <- df
+}
+
+write_feather(F99df, "all_gage_est_f99.feather")
+
+
+
+z <- log10(D$f99.9+1)      # ---------------------------
+F99p9   <- gam(z~basin_area + s(flood_storage, k=7) +
                s(ppt_mean, k=5) + s(dni_ann, k=7)+
                developed+
                mixed_forest+shrubland+
                decade-1+
                s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
              family="gaussian")
-print(summary(Q99p9))
-pdf("Q99p9.pdf", useDingbats=FALSE)
-plot(z, fitted.values(Q99p9))
+print(summary(F99p9))
+pdf("F99p9.pdf", useDingbats=FALSE)
+plot(z, fitted.values(F99p9))
 abline(0,1)
-plot(Q99p9, scheme=2, residuals=TRUE)
+plot(F99p9, scheme=2, residuals=TRUE)
 points(D$x, D$y, pch=4, lwd=.5, cex=0.9, col=8)
 points(knots$x, knots$y, pch=16, cex=1.1, col=4)
-text(100, 500, "Q99p9")
+text(100, 500, "F99p9")
 dev.off()
 
 
-save(D, PPLO, L1, T2, T3, T4, T5, T6, Q50, Q90, Q95, Q98, Q99, Q99p9, file="Models.RData")
+
+PGAM <- gamIntervals(predict(F99p9, se.fit=TRUE), gam=F99p9, interval="prediction")
+#plot(F99p9$hat, (PGAM$se.fit/PGAM$residual.scale)^2)
+#abline(0,1)
+sigma <- PGAM$residual.scale[1]
+# Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
+F99p9df <- data.frame(site_no=Z$site_no, decade=Z$decade, inModel=TRUE, f99.9=Z$f99.9,
+                     est_f99.9_lwr=10^PGAM$upr-1,
+                     est_f99.9    =10^PGAM$fit-1,
+                     est_f99.9_upr=10^PGAM$lwr-1, stringsAsFactors=FALSE)
+F99p9df$rse_f99.9 <- sigma
+F99p9df$se.fit_f99.9 <- PGAM$se.fit
+
+sites_to_fill <- unique(c(sites_of_area_bust, DDo$site_no[DDo$ed_rch_zone == 1]))
+i <- 0
+for(site in sites_to_fill) {
+  for(decade in as.character(DDo$decade[DDo$site_no == site])) {
+    i <- i + 1
+    message(site," ", decade, " ", i)
+    tmp <- data.frame(site_no=site, decade=decade, inModel=FALSE,
+                      f99.9=DDo$f99.9[DDo$site_no == site & DDo$decade == decade],
+                      est_f99.9_lwr=NA, est_f99.9=NA, est_f99.9_upr=NA,
+                      rse_f99.9=NA, se.fit_f99.9=NA, stringsAsFactors=FALSE)
+    F99p9df <- rbind(F99p9df, tmp)
+  }
+  tmp <- DDo[DDo$site_no == site,]
+  jnk <- predict(F99p9, newdata=tmp, se.fit=TRUE)
+}
+F99p9df <- F99p9df[order(F99p9df$site_no, F99p9df$decade),]
+
+for(site in sites_to_fill) {
+  tmp <- DDo[DDo$site_no == site,]
+  jnk <- predict(F99p9, newdata=tmp, se.fit=TRUE)
+  pgk <- gamIntervals(jnk, gam=F99p9, interval="prediction")
+  df <- data.frame(site_no=tmp$site_no, decade=tmp$decade, inModel=0,
+                   f99.9=tmp$f99.9,
+                   est_f99.9_lwr=10^pgk$upr-1,
+                   est_f99.9    =10^pgk$fit-1,
+                   est_f99.9_upr=10^pgk$lwr-1, stringsAsFactors=FALSE)
+  df$rse_f99.9 <- sigma
+  df$se.fit_f99.9 <- pgk$se.fit
+  F99p9df[F99p9df$site_no == site,] <- df
+}
+
+write_feather(F99p9df, "all_gage_est_f99p9.feather")
 
 sink()
+
+save(DDo, DD, D, PPLO, L1, T2, T3, T4, T5, T6,
+     F50, F90, F95, F98, F99, F99p9, file="Models.RData")
