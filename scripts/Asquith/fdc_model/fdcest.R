@@ -8,7 +8,7 @@ library(lmomco)
 library(Lmoments)
 library(survival)
 library(cenGAM)
-
+library(hydroGOF)
 
 
 "gamIntervals" <-
@@ -116,9 +116,7 @@ DD <- merge(DD, SF, all=TRUE)
 DD <- SpatialPointsDataFrame(cbind(DD$dec_long_va, DD$dec_lat_va), DD,
                              proj4string=LATLONG)
 DD <- spTransform(DD, ALBEA)
-XY <- coordinates(DD)
-DD$east <- XY[,1]/1000; DD$north <- XY[,2]/1000; rm(XY)
-
+XY <- coordinates(DD); DD$east <- XY[,1]/1000; DD$north <- XY[,2]/1000; rm(XY)
 DD$x <- DD$east; DD$y <- DD$north
 
 ix <- length(2:(length(bnd_poly_aea[,1])-1))
@@ -457,11 +455,14 @@ sigma <- sqrt(mean((C2o - Z$flowtime)^2))
 PGAM <- gamIntervals(predict(GM2, se.fit=TRUE), gam=GM2, interval="prediction", sigma=sigma)
 # In an uncensored data world, the following will be a 1:1 relation (see gamIntervals), but we won't fully
 # see that when there is the censoring. But the abline will plot through the middle of the data cloud.
-plot(PPLO$hat, (PGAM$se.fit/PGAM$residual.scale)^2)
-abline(0,1)
+#plot(PPLO$hat, (PGAM$se.fit/PGAM$residual.scale)^2)
+#abline(0,1)
 
 # Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
-PPLOdf <- data.frame(site_no=Z$site_no, decade=Z$decade, inModel=TRUE, pplo=Z$pplo,
+PPLOdf <- data.frame(comid=Z$comid, site_no=Z$site_no, huc12=Z$huc12,
+                     decade=Z$decade,
+                     dec_long_va=Z$dec_long_va, dec_lat_va=Z$dec_lat_va,
+                     in_model_pplo=TRUE, pplo=Z$pplo,
                      est_pplo_lwr=(3653-10^PGAM$upr)/3653,
                      est_pplo    =(3653-10^PGAM$fit)/3653,
                      est_pplo_upr=(3653-10^PGAM$lwr)/3653, stringsAsFactors=FALSE)
@@ -477,7 +478,13 @@ for(site in sites_to_fill) {
   for(decade in as.character(DDo$decade[DDo$site_no == site])) {
     i <- i + 1
     message(site," ", decade, " ", i)
-    tmp <- data.frame(site_no=site, decade=decade, inModel=FALSE,
+    tmp <- data.frame(comid=DDo$comid[DDo$site_no == site & DDo$decade == decade],
+                      site_no=site,
+                      huc12=DDo$huc12[DDo$site_no == site & DDo$decade == decade],
+                      decade=decade,
+                      dec_long_va=DDo$dec_long_va[DDo$site_no == site & DDo$decade == decade],
+                      dec_lat_va=DDo$dec_lat_va[DDo$site_no == site & DDo$decade == decade],
+                      in_model_pplo=FALSE,
                       pplo=DDo$pplo[DDo$site_no == site & DDo$decade == decade],
                       est_pplo_lwr=NA, est_pplo=NA, est_pplo_upr=NA,
                       rse_pplo=NA, se.fit_pplo=NA, stringsAsFactors=FALSE)
@@ -492,7 +499,10 @@ for(site in sites_to_fill) {
   tmp <- DDo[DDo$site_no == site,]
   jnk <- predict(PPLO, newdata=tmp, se.fit=TRUE)
   pgk <- gamIntervals(jnk, gam=GM2, interval="prediction", sigma=sigma)
-  df <- data.frame(site_no=tmp$site_no, decade=tmp$decade, inModel=0,
+  df <- data.frame(comid=tmp$comid, site_no=tmp$site_no, huc12=tmp$huc12,
+                   decade=tmp$decade,
+                   dec_long_va=tmp$dec_long_va, dec_lat_va=tmp$dec_lat_va,
+                   in_model_pplo=0,
                    pplo=tmp$pplo,
                    est_pplo_lwr=(3653-10^pgk$upr)/3653,
                    est_pplo    =(3653-10^pgk$fit)/3653,
@@ -504,6 +514,8 @@ for(site in sites_to_fill) {
   df$se.fit_pplo <- pgk$se.fit
   PPLOdf[PPLOdf$site_no == site,] <- df
 }
+PPLOdf$in_model_pplo[PPLOdf$in_model_pplo == 1] <- "yes"
+PPLOdf$in_model_pplo[PPLOdf$in_model_pplo == 0] <- "no"
 
 sum(abs(PPLOdf$est_pplo - PPLOdf$pplo) <= 0   )/length(DDo$site_no)
 sum(abs(PPLOdf$est_pplo - PPLOdf$pplo) <= 0.02)/length(DDo$site_no)
@@ -574,10 +586,13 @@ PGAM <- gamIntervals(predict(L1, se.fit=TRUE), gam=L1, interval="prediction")
 #abline(0,1)
 sigma <- PGAM$residual.scale[1]
 # Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
-L1df <- data.frame(site_no=Z$site_no, decade=Z$decade, inModel=TRUE, duan_smearing=L1$duan_smearing, L1=Z$L1,
-                     est_L1_lwr=10^PGAM$upr,
+L1df <- data.frame(comid=Z$comid, site_no=Z$site_no, huc12=Z$huc12,
+                     decade=Z$decade,
+                     dec_long_va=Z$dec_long_va, dec_lat_va=Z$dec_lat_va,
+                     in_model_L1=TRUE, duan_smearing=L1$duan_smearing, L1=Z$L1,
+                     est_lwr_L1=10^PGAM$lwr,
                      est_L1    =10^PGAM$fit,
-                     est_L1_upr=10^PGAM$lwr, stringsAsFactors=FALSE)
+                     est_upr_L1=10^PGAM$upr, stringsAsFactors=FALSE)
 L1df$rse_L1 <- sigma
 L1df$se.fit_L1 <- PGAM$se.fit
 
@@ -587,9 +602,15 @@ for(site in sites_to_fill) {
   for(decade in as.character(DDo$decade[DDo$site_no == site])) {
     i <- i + 1
     message(site," ", decade, " ", i)
-    tmp <- data.frame(site_no=site, decade=decade, inModel=FALSE, duan_smearing=L1$duan_smearing,
+    tmp <- data.frame(comid=DDo$comid[DDo$site_no == site & DDo$decade == decade],
+                      site_no=site,
+                      huc12=DDo$huc12[DDo$site_no == site & DDo$decade == decade],
+                      decade=decade,
+                      dec_long_va=DDo$dec_long_va[DDo$site_no == site & DDo$decade == decade],
+                      dec_lat_va=DDo$dec_lat_va[DDo$site_no == site & DDo$decade == decade],
+                      in_model_L1=FALSE, duan_smearing=L1$duan_smearing,
                       L1=DDo$L1[DDo$site_no == site & DDo$decade == decade],
-                      est_L1_lwr=NA, est_L1=NA, est_L1_upr=NA,
+                      est_lwr_L1=NA, est_L1=NA, est_upr_L1=NA,
                       rse_L1=NA, se.fit_L1=NA, stringsAsFactors=FALSE)
     L1df <- rbind(L1df, tmp)
   }
@@ -602,11 +623,14 @@ for(site in sites_to_fill) {
   tmp <- DDo[DDo$site_no == site,]
   jnk <- predict(L1, newdata=tmp, se.fit=TRUE)
   pgk <- gamIntervals(jnk, gam=L1, interval="prediction")
-  df <- data.frame(site_no=tmp$site_no, decade=tmp$decade, inModel=0, duan_smearing=L1$duan_smearing,
+  df <- data.frame(comid=tmp$comid, site_no=tmp$site_no, huc12=tmp$huc12,
+                   decade=tmp$decade,
+                   dec_long_va=tmp$dec_long_va, dec_lat_va=tmp$dec_lat_va,
+                   in_model_L1=0, duan_smearing=L1$duan_smearing,
                    L1=tmp$L1,
-                   est_L1_lwr=10^pgk$upr,
+                   est_lwr_L1=10^pgk$lwr,
                    est_L1    =10^pgk$fit,
-                   est_L1_upr=10^pgk$lwr, stringsAsFactors=FALSE)
+                   est_upr_L1=10^pgk$upr, stringsAsFactors=FALSE)
   df$rse_L1 <- sigma
   df$se.fit_L1 <- pgk$se.fit
   L1df[L1df$site_no == site,] <- df
@@ -640,10 +664,13 @@ PGAM <- gamIntervals(predict(T2, se.fit=TRUE), gam=T2, interval="prediction")
 #abline(0,1)
 sigma <- PGAM$residual.scale[1]
 # Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
-T2df <- data.frame(site_no=Z$site_no, decade=Z$decade, inModel=TRUE, T2=Z$L2/Z$L1,
-                     est_T2_lwr=PGAM$upr,
+T2df <- data.frame(comid=Z$comid, site_no=Z$site_no, huc12=Z$huc12,
+                     decade=Z$decade,
+                     dec_long_va=Z$dec_long_va, dec_lat_va=Z$dec_lat_va,
+                     in_model_T2=TRUE, T2=Z$L2/Z$L1,
+                     est_lwr_T2=PGAM$lwr,
                      est_T2    =PGAM$fit,
-                     est_T2_upr=PGAM$lwr, stringsAsFactors=FALSE)
+                     est_upr_T2=PGAM$upr, stringsAsFactors=FALSE)
 T2df$rse_T2 <- sigma
 T2df$se.fit_T2 <- PGAM$se.fit
 
@@ -653,9 +680,15 @@ for(site in sites_to_fill) {
   for(decade in as.character(DDo$decade[DDo$site_no == site])) {
     i <- i + 1
     message(site," ", decade, " ", i)
-    tmp <- data.frame(site_no=site, decade=decade, inModel=FALSE,
+    tmp <- data.frame(comid=DDo$comid[DDo$site_no == site & DDo$decade == decade],
+                      site_no=site,
+                      huc12=DDo$huc12[DDo$site_no == site & DDo$decade == decade],
+                      decade=decade,
+                      dec_long_va=DDo$dec_long_va[DDo$site_no == site & DDo$decade == decade],
+                      dec_lat_va=DDo$dec_lat_va[DDo$site_no == site & DDo$decade == decade],
+                      in_model_T2=FALSE,
                       T2=DDo$L2[DDo$site_no == site & DDo$decade == decade]/DDo$L1[DDo$site_no == site & DDo$decade == decade],
-                      est_T2_lwr=NA, est_T2=NA, est_T2_upr=NA,
+                      est_lwr_T2=NA, est_T2=NA, est_upr_T2=NA,
                       rse_T2=NA, se.fit_T2=NA, stringsAsFactors=FALSE)
     T2df <- rbind(T2df, tmp)
   }
@@ -668,11 +701,14 @@ for(site in sites_to_fill) {
   tmp <- DDo[DDo$site_no == site,]
   jnk <- predict(T2, newdata=tmp, se.fit=TRUE)
   pgk <- gamIntervals(jnk, gam=T2, interval="prediction")
-  df <- data.frame(site_no=tmp$site_no, decade=tmp$decade, inModel=0,
+  df <- data.frame(comid=tmp$comid, site_no=tmp$site_no, huc12=tmp$huc12,
+                   decade=tmp$decade,
+                   dec_long_va=tmp$dec_long_va, dec_lat_va=tmp$dec_lat_va,
+                   in_model_T2=0,
                    T2=tmp$L2/tmp$L1,
-                   est_T2_lwr=pgk$upr,
+                   est_lwr_T2=pgk$lwr,
                    est_T2    =pgk$fit,
-                   est_T2_upr=pgk$lwr, stringsAsFactors=FALSE)
+                   est_upr_T2=pgk$upr, stringsAsFactors=FALSE)
   df$rse_T2 <- sigma
   df$se.fit_T2 <- pgk$se.fit
   T2df[T2df$site_no == site,] <- df
@@ -706,10 +742,13 @@ PGAM <- gamIntervals(predict(T3, se.fit=TRUE), gam=T3, interval="prediction")
 #abline(0,1)
 sigma <- PGAM$residual.scale[1]
 # Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
-T3df <- data.frame(site_no=Z$site_no, decade=Z$decade, inModel=TRUE, T3=Z$T3,
-                     est_T3_lwr=PGAM$upr,
+T3df <- data.frame(comid=Z$comid, site_no=Z$site_no, huc12=Z$huc12,
+                     decade=Z$decade,
+                     dec_long_va=Z$dec_long_va, dec_lat_va=Z$dec_lat_va,
+                     in_model_T3=TRUE, T3=Z$T3,
+                     est_lwr_T3=PGAM$lwr,
                      est_T3    =PGAM$fit,
-                     est_T3_upr=PGAM$lwr, stringsAsFactors=FALSE)
+                     est_upr_T3=PGAM$upr, stringsAsFactors=FALSE)
 T3df$rse_T3 <- sigma
 T3df$se.fit_T3 <- PGAM$se.fit
 
@@ -719,9 +758,15 @@ for(site in sites_to_fill) {
   for(decade in as.character(DDo$decade[DDo$site_no == site])) {
     i <- i + 1
     message(site," ", decade, " ", i)
-    tmp <- data.frame(site_no=site, decade=decade, inModel=FALSE,
+    tmp <- data.frame(comid=DDo$comid[DDo$site_no == site & DDo$decade == decade],
+                      site_no=site,
+                      huc12=DDo$huc12[DDo$site_no == site & DDo$decade == decade],
+                      decade=decade,
+                      dec_long_va=DDo$dec_long_va[DDo$site_no == site & DDo$decade == decade],
+                      dec_lat_va=DDo$dec_lat_va[DDo$site_no == site & DDo$decade == decade],
+                      in_model_T3=FALSE,
                       T3=DDo$T3[DDo$site_no == site & DDo$decade == decade],
-                      est_T3_lwr=NA, est_T3=NA, est_T3_upr=NA,
+                      est_lwr_T3=NA, est_T3=NA, est_upr_T3=NA,
                       rse_T3=NA, se.fit_T3=NA, stringsAsFactors=FALSE)
     T3df <- rbind(T3df, tmp)
   }
@@ -734,11 +779,14 @@ for(site in sites_to_fill) {
   tmp <- DDo[DDo$site_no == site,]
   jnk <- predict(T3, newdata=tmp, se.fit=TRUE)
   pgk <- gamIntervals(jnk, gam=T3, interval="prediction")
-  df <- data.frame(site_no=tmp$site_no, decade=tmp$decade, inModel=0,
+  df <- data.frame(comid=tmp$comid, site_no=tmp$site_no, huc12=tmp$huc12,
+                   decade=tmp$decade,
+                   dec_long_va=tmp$dec_long_va, dec_lat_va=tmp$dec_lat_va,
+                   in_model_T3=0,
                    T3=tmp$T3,
-                   est_T3_lwr=pgk$upr,
+                   est_lwr_T3=pgk$lwr,
                    est_T3    =pgk$fit,
-                   est_T3_upr=pgk$lwr, stringsAsFactors=FALSE)
+                   est_upr_T3=pgk$upr, stringsAsFactors=FALSE)
   df$rse_T3 <- sigma
   df$se.fit_T3 <- pgk$se.fit
   T3df[T3df$site_no == site,] <- df
@@ -773,10 +821,13 @@ PGAM <- gamIntervals(predict(T4, se.fit=TRUE), gam=T4, interval="prediction")
 #abline(0,1)
 sigma <- PGAM$residual.scale[1]
 # Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
-T4df <- data.frame(site_no=Z$site_no, decade=Z$decade, inModel=TRUE, T4=Z$T4,
-                     est_T4_lwr=PGAM$upr,
+T4df <- data.frame(comid=Z$comid, site_no=Z$site_no, huc12=Z$huc12,
+                     decade=Z$decade,
+                     dec_long_va=Z$dec_long_va, dec_lat_va=Z$dec_lat_va,
+                     in_model_T4=TRUE, T4=Z$T4,
+                     est_lwr_T4=PGAM$lwr,
                      est_T4    =PGAM$fit,
-                     est_T4_upr=PGAM$lwr, stringsAsFactors=FALSE)
+                     est_upr_T4=PGAM$upr, stringsAsFactors=FALSE)
 T4df$rse_T4 <- sigma
 T4df$se.fit_T4 <- PGAM$se.fit
 
@@ -786,9 +837,15 @@ for(site in sites_to_fill) {
   for(decade in as.character(DDo$decade[DDo$site_no == site])) {
     i <- i + 1
     message(site," ", decade, " ", i)
-    tmp <- data.frame(site_no=site, decade=decade, inModel=FALSE,
+    tmp <- data.frame(comid=DDo$comid[DDo$site_no == site & DDo$decade == decade],
+                      site_no=site,
+                      huc12=DDo$huc12[DDo$site_no == site & DDo$decade == decade],
+                      decade=decade,
+                      dec_long_va=DDo$dec_long_va[DDo$site_no == site & DDo$decade == decade],
+                      dec_lat_va=DDo$dec_lat_va[DDo$site_no == site & DDo$decade == decade],
+                      in_model_T4=FALSE,
                       T4=DDo$T4[DDo$site_no == site & DDo$decade == decade],
-                      est_T4_lwr=NA, est_T4=NA, est_T4_upr=NA,
+                      est_lwr_T4=NA, est_T4=NA, est_upr_T4=NA,
                       rse_T4=NA, se.fit_T4=NA, stringsAsFactors=FALSE)
     T4df <- rbind(T4df, tmp)
   }
@@ -801,11 +858,14 @@ for(site in sites_to_fill) {
   tmp <- DDo[DDo$site_no == site,]
   jnk <- predict(T4, newdata=tmp, se.fit=TRUE)
   pgk <- gamIntervals(jnk, gam=T4, interval="prediction")
-  df <- data.frame(site_no=tmp$site_no, decade=tmp$decade, inModel=0,
+  df <- data.frame(comid=tmp$comid, site_no=tmp$site_no, huc12=tmp$huc12,
+                   decade=tmp$decade,
+                   dec_long_va=tmp$dec_long_va, dec_lat_va=tmp$dec_lat_va,
+                   in_model_T4=0,
                    T4=tmp$T4,
-                   est_T4_lwr=pgk$upr,
+                   est_lwr_T4=pgk$lwr,
                    est_T4    =pgk$fit,
-                   est_T4_upr=pgk$lwr, stringsAsFactors=FALSE)
+                   est_upr_T4=pgk$upr, stringsAsFactors=FALSE)
   df$rse_T4 <- sigma
   df$se.fit_T4 <- pgk$se.fit
   T4df[T4df$site_no == site,] <- df
@@ -839,10 +899,13 @@ PGAM <- gamIntervals(predict(T5, se.fit=TRUE), gam=T5, interval="prediction")
 #abline(0,1)
 sigma <- PGAM$residual.scale[1]
 # Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
-T5df <- data.frame(site_no=Z$site_no, decade=Z$decade, inModel=TRUE, T5=Z$T5,
-                     est_T5_lwr=PGAM$upr,
+T5df <- data.frame(comid=Z$comid, site_no=Z$site_no, huc12=Z$huc12,
+                     decade=Z$decade,
+                     dec_long_va=Z$dec_long_va, dec_lat_va=Z$dec_lat_va,
+                     in_model_T5=TRUE, T5=Z$T5,
+                     est_lwr_T5=PGAM$lwr,
                      est_T5    =PGAM$fit,
-                     est_T5_upr=PGAM$lwr, stringsAsFactors=FALSE)
+                     est_upr_T5=PGAM$upr, stringsAsFactors=FALSE)
 T5df$rse_T5 <- sigma
 T5df$se.fit_T5 <- PGAM$se.fit
 
@@ -852,9 +915,15 @@ for(site in sites_to_fill) {
   for(decade in as.character(DDo$decade[DDo$site_no == site])) {
     i <- i + 1
     message(site," ", decade, " ", i)
-    tmp <- data.frame(site_no=site, decade=decade, inModel=FALSE,
+    tmp <- data.frame(comid=DDo$comid[DDo$site_no == site & DDo$decade == decade],
+                      site_no=site,
+                      huc12=DDo$huc12[DDo$site_no == site & DDo$decade == decade],
+                      decade=decade,
+                      dec_long_va=DDo$dec_long_va[DDo$site_no == site & DDo$decade == decade],
+                      dec_lat_va=DDo$dec_lat_va[DDo$site_no == site & DDo$decade == decade],
+                      in_model_T5=FALSE,
                       T5=DDo$T5[DDo$site_no == site & DDo$decade == decade],
-                      est_T5_lwr=NA, est_T5=NA, est_T5_upr=NA,
+                      est_lwr_T5=NA, est_T5=NA, est_upr_T5=NA,
                       rse_T5=NA, se.fit_T5=NA, stringsAsFactors=FALSE)
     T5df <- rbind(T5df, tmp)
   }
@@ -867,11 +936,14 @@ for(site in sites_to_fill) {
   tmp <- DDo[DDo$site_no == site,]
   jnk <- predict(T5, newdata=tmp, se.fit=TRUE)
   pgk <- gamIntervals(jnk, gam=T5, interval="prediction")
-  df <- data.frame(site_no=tmp$site_no, decade=tmp$decade, inModel=0,
+  df <- data.frame(comid=tmp$comid, site_no=tmp$site_no, huc12=tmp$huc12,
+                   decade=tmp$decade,
+                   dec_long_va=tmp$dec_long_va, dec_lat_va=tmp$dec_lat_va,
+                   in_model_T5=0,
                    T5=tmp$T5,
-                   est_T5_lwr=pgk$upr,
+                   est_lwr_T5=pgk$lwr,
                    est_T5    =pgk$fit,
-                   est_T5_upr=pgk$lwr, stringsAsFactors=FALSE)
+                   est_upr_T5=pgk$upr, stringsAsFactors=FALSE)
   df$rse_T5 <- sigma
   df$se.fit_T5 <- pgk$se.fit
   T5df[T5df$site_no == site,] <- df
@@ -905,10 +977,13 @@ PGAM <- gamIntervals(predict(T6, se.fit=TRUE), gam=T6, interval="prediction")
 #abline(0,1)
 sigma <- PGAM$residual.scale[1]
 # Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
-T6df <- data.frame(site_no=Z$site_no, decade=Z$decade, inModel=TRUE, T6=Z$T6,
-                     est_T6_lwr=PGAM$upr,
+T6df <- data.frame(comid=Z$comid, site_no=Z$site_no, huc12=Z$huc12,
+                     decade=Z$decade,
+                     dec_long_va=Z$dec_long_va, dec_lat_va=Z$dec_lat_va,
+                     in_model_T6=TRUE, T6=Z$T6,
+                     est_lwr_T6=PGAMlwr,
                      est_T6    =PGAM$fit,
-                     est_T6_upr=PGAM$lwr, stringsAsFactors=FALSE)
+                     est_upr_T6=PGAM$upr, stringsAsFactors=FALSE)
 T6df$rse_T6 <- sigma
 T6df$se.fit_T6 <- PGAM$se.fit
 
@@ -918,9 +993,15 @@ for(site in sites_to_fill) {
   for(decade in as.character(DDo$decade[DDo$site_no == site])) {
     i <- i + 1
     message(site," ", decade, " ", i)
-    tmp <- data.frame(site_no=site, decade=decade, inModel=FALSE,
+    tmp <- data.frame(comid=DDo$comid[DDo$site_no == site & DDo$decade == decade],
+                      site_no=site,
+                      huc12=DDo$huc12[DDo$site_no == site & DDo$decade == decade],
+                      decade=decade,
+                      dec_long_va=DDo$dec_long_va[DDo$site_no == site & DDo$decade == decade],
+                      dec_lat_va=DDo$dec_lat_va[DDo$site_no == site & DDo$decade == decade],
+                      in_model_T6=FALSE,
                       T6=DDo$T6[DDo$site_no == site & DDo$decade == decade],
-                      est_T6_lwr=NA, est_T6=NA, est_T6_upr=NA,
+                      est_lwr_T6=NA, est_T6=NA, est_upr_T6=NA,
                       rse_T6=NA, se.fit_T6=NA, stringsAsFactors=FALSE)
     T6df <- rbind(T6df, tmp)
   }
@@ -933,11 +1014,14 @@ for(site in sites_to_fill) {
   tmp <- DDo[DDo$site_no == site,]
   jnk <- predict(T6, newdata=tmp, se.fit=TRUE)
   pgk <- gamIntervals(jnk, gam=T6, interval="prediction")
-  df <- data.frame(site_no=tmp$site_no, decade=tmp$decade, inModel=0,
+  df <- data.frame(comid=tmp$comid, site_no=tmp$site_no, huc12=tmp$huc12,
+                   decade=tmp$decade,
+                   dec_long_va=tmp$dec_long_va, dec_lat_va=tmp$dec_lat_va,
+                   in_model_T6=0,
                    T6=tmp$T6,
-                   est_T6_lwr=pgk$upr,
+                   est_lwr_T6=pgk$lwr,
                    est_T6    =pgk$fit,
-                   est_T6_upr=pgk$lwr, stringsAsFactors=FALSE)
+                   est_upr_T6=pgk$upr, stringsAsFactors=FALSE)
   df$rse_T6 <- sigma
   df$se.fit_T6 <- pgk$se.fit
   T6df[T6df$site_no == site,] <- df
@@ -950,7 +1034,7 @@ write_feather(T6df, "all_gage_est_T6.feather")
 
 
 
-z <- log10(D$f50+1)      # --------------------------- Sixth L-moment ratio
+z <- log10(D$f50+1)      # ---------------------------
 F50   <- gam(z~basin_area +
                s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
                developed+
@@ -974,10 +1058,13 @@ PGAM <- gamIntervals(predict(F50, se.fit=TRUE), gam=F50, interval="prediction")
 #abline(0,1)
 sigma <- PGAM$residual.scale[1]
 # Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
-F50df <- data.frame(site_no=Z$site_no, decade=Z$decade, inModel=TRUE, f50=Z$f50,
-                     est_f50_lwr=10^PGAM$upr-1,
+F50df <- data.frame(comid=Z$comid, site_no=Z$site_no, huc12=Z$huc12,
+                     decade=Z$decade,
+                     dec_long_va=Z$dec_long_va, dec_lat_va=Z$dec_lat_va,
+                     in_model_f50=TRUE, f50=Z$f50,
+                     est_lwr_f50=10^PGAM$lwr-1,
                      est_f50    =10^PGAM$fit-1,
-                     est_f50_upr=10^PGAM$lwr-1, stringsAsFactors=FALSE)
+                     est_upr_f50=10^PGAM$upr-1, stringsAsFactors=FALSE)
 F50df$rse_f50 <- sigma
 F50df$se.fit_f50 <- PGAM$se.fit
 
@@ -987,9 +1074,15 @@ for(site in sites_to_fill) {
   for(decade in as.character(DDo$decade[DDo$site_no == site])) {
     i <- i + 1
     message(site," ", decade, " ", i)
-    tmp <- data.frame(site_no=site, decade=decade, inModel=FALSE,
+    tmp <- data.frame(comid=DDo$comid[DDo$site_no == site & DDo$decade == decade],
+                      site_no=site,
+                      huc12=DDo$huc12[DDo$site_no == site & DDo$decade == decade],
+                      decade=decade,
+                      dec_long_va=DDo$dec_long_va[DDo$site_no == site & DDo$decade == decade],
+                      dec_lat_va=DDo$dec_lat_va[DDo$site_no == site & DDo$decade == decade],
+                      in_model_f50=FALSE,
                       f50=DDo$f50[DDo$site_no == site & DDo$decade == decade],
-                      est_f50_lwr=NA, est_f50=NA, est_f50_upr=NA,
+                      est_lwr_f50=NA, est_f50=NA, est_upr_f50=NA,
                       rse_f50=NA, se.fit_f50=NA, stringsAsFactors=FALSE)
     F50df <- rbind(F50df, tmp)
   }
@@ -1002,27 +1095,27 @@ for(site in sites_to_fill) {
   tmp <- DDo[DDo$site_no == site,]
   jnk <- predict(F50, newdata=tmp, se.fit=TRUE)
   pgk <- gamIntervals(jnk, gam=F50, interval="prediction")
-  df <- data.frame(site_no=tmp$site_no, decade=tmp$decade, inModel=0,
+  df <- data.frame(comid=tmp$comid, site_no=tmp$site_no, huc12=tmp$huc12,
+                   decade=tmp$decade,
+                   dec_long_va=tmp$dec_long_va, dec_lat_va=tmp$dec_lat_va,
+                   in_model_f50=0,
                    f50=tmp$f50,
-                   est_f50_lwr=10^pgk$upr-1,
+                   est_lwr_f50=10^pgk$lwr-1,
                    est_f50    =10^pgk$fit-1,
-                   est_f50_upr=10^pgk$lwr-1, stringsAsFactors=FALSE)
+                   est_upr_f50=10^pgk$upr-1, stringsAsFactors=FALSE)
   df$rse_f50 <- sigma
   df$se.fit_f50 <- pgk$se.fit
   F50df[F50df$site_no == site,] <- df
 }
+F50df$est_f50[F50df$est_f50 < 0] <- 0
+F50df$est_lwr_f50[F50df$est_lwr_f50 < 0] <- 0
+F50df$est_upr_f50[F50df$est_upr_f50 < 0] <- 0
 
 write_feather(F50df, "all_gage_est_f50.feather")
 
 
 
-
-
-
-
-
-
-sink("right_tail_flowing_fdc.txt")
+#sink("right_tail_flowing_fdc.txt")
 z <- log10(D$f90+1)      # ---------------------------
 F90   <- gam(z~basin_area  + s(flood_storage, k=7) +
               s(ppt_mean, k=5) + s(dni_ann, k=7)+
@@ -1048,10 +1141,13 @@ PGAM <- gamIntervals(predict(F90, se.fit=TRUE), gam=F90, interval="prediction")
 #abline(0,1)
 sigma <- PGAM$residual.scale[1]
 # Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
-F90df <- data.frame(site_no=Z$site_no, decade=Z$decade, inModel=TRUE, f90=Z$f90,
-                     est_f90_lwr=10^PGAM$upr-1,
+F90df <- data.frame(comid=Z$comid, site_no=Z$site_no, huc12=Z$huc12,
+                     decade=Z$decade,
+                     dec_long_va=Z$dec_long_va, dec_lat_va=Z$dec_lat_va,
+                     in_model_f90=TRUE, f90=Z$f90,
+                     est_lwr_f90=10^PGAM$lwr-1,
                      est_f90    =10^PGAM$fit-1,
-                     est_f90_upr=10^PGAM$lwr-1, stringsAsFactors=FALSE)
+                     est_upr_f90=10^PGAM$upr-1, stringsAsFactors=FALSE)
 F90df$rse_f90 <- sigma
 F90df$se.fit_f90 <- PGAM$se.fit
 
@@ -1061,9 +1157,15 @@ for(site in sites_to_fill) {
   for(decade in as.character(DDo$decade[DDo$site_no == site])) {
     i <- i + 1
     message(site," ", decade, " ", i)
-    tmp <- data.frame(site_no=site, decade=decade, inModel=FALSE,
+    tmp <- data.frame(comid=DDo$comid[DDo$site_no == site & DDo$decade == decade],
+                      site_no=site,
+                      huc12=DDo$huc12[DDo$site_no == site & DDo$decade == decade],
+                      decade=decade,
+                      dec_long_va=DDo$dec_long_va[DDo$site_no == site & DDo$decade == decade],
+                      dec_lat_va=DDo$dec_lat_va[DDo$site_no == site & DDo$decade == decade],
+                      in_model_f90=FALSE,
                       f90=DDo$f90[DDo$site_no == site & DDo$decade == decade],
-                      est_f90_lwr=NA, est_f90=NA, est_f90_upr=NA,
+                      est_lwr_f90=NA, est_f90=NA, est_upr_f90=NA,
                       rse_f90=NA, se.fit_f90=NA, stringsAsFactors=FALSE)
     F90df <- rbind(F90df, tmp)
   }
@@ -1076,15 +1178,22 @@ for(site in sites_to_fill) {
   tmp <- DDo[DDo$site_no == site,]
   jnk <- predict(F90, newdata=tmp, se.fit=TRUE)
   pgk <- gamIntervals(jnk, gam=F90, interval="prediction")
-  df <- data.frame(site_no=tmp$site_no, decade=tmp$decade, inModel=0,
+  df <- data.frame(comid=tmp$comid, site_no=tmp$site_no, huc12=tmp$huc12,
+                   decade=tmp$decade,
+                   dec_long_va=tmp$dec_long_va, dec_lat_va=tmp$dec_lat_va,
+                   in_model_f90=0,
                    f90=tmp$f90,
-                   est_f90_lwr=10^pgk$upr-1,
+                   est_lwr_f90=10^pgk$lwr-1,
                    est_f90    =10^pgk$fit-1,
-                   est_f90_upr=10^pgk$lwr-1, stringsAsFactors=FALSE)
+                   est_upr_f90=10^pgk$upr-1, stringsAsFactors=FALSE)
   df$rse_f90 <- sigma
   df$se.fit_f90 <- pgk$se.fit
   F90df[F90df$site_no == site,] <- df
 }
+F90df$est_f90[F90df$est_f90 < 0] <- 0
+F90df$est_lwr_f90[F90df$est_lwr_f90 < 0] <- 0
+F90df$est_upr_f90[F90df$est_upr_f90 < 0] <- 0
+
 
 write_feather(F90df, "all_gage_est_f90.feather")
 
@@ -1115,10 +1224,13 @@ PGAM <- gamIntervals(predict(F95, se.fit=TRUE), gam=F95, interval="prediction")
 #abline(0,1)
 sigma <- PGAM$residual.scale[1]
 # Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
-F95df <- data.frame(site_no=Z$site_no, decade=Z$decade, inModel=TRUE, f95=Z$f95,
-                     est_f95_lwr=10^PGAM$upr-1,
+F95df <- data.frame(comid=Z$comid, site_no=Z$site_no, huc12=Z$huc12,
+                     decade=Z$decade,
+                     dec_long_va=Z$dec_long_va, dec_lat_va=Z$dec_lat_va,
+                     in_model_f95=TRUE, f95=Z$f95,
+                     est_lwr_f95=10^PGAM$lwr-1,
                      est_f95    =10^PGAM$fit-1,
-                     est_f95_upr=10^PGAM$lwr-1, stringsAsFactors=FALSE)
+                     est_upr_f95=10^PGAM$upr-1, stringsAsFactors=FALSE)
 F95df$rse_f95 <- sigma
 F95df$se.fit_f95 <- PGAM$se.fit
 
@@ -1128,9 +1240,15 @@ for(site in sites_to_fill) {
   for(decade in as.character(DDo$decade[DDo$site_no == site])) {
     i <- i + 1
     message(site," ", decade, " ", i)
-    tmp <- data.frame(site_no=site, decade=decade, inModel=FALSE,
+    tmp <- data.frame(comid=DDo$comid[DDo$site_no == site & DDo$decade == decade],
+                      site_no=site,
+                      huc12=DDo$huc12[DDo$site_no == site & DDo$decade == decade],
+                      decade=decade,
+                      dec_long_va=DDo$dec_long_va[DDo$site_no == site & DDo$decade == decade],
+                      dec_lat_va=DDo$dec_lat_va[DDo$site_no == site & DDo$decade == decade],
+                      in_model_f95=FALSE,
                       f95=DDo$f95[DDo$site_no == site & DDo$decade == decade],
-                      est_f95_lwr=NA, est_f95=NA, est_f95_upr=NA,
+                      est_lwr_f95=NA, est_f95=NA, est_upr_f95=NA,
                       rse_f95=NA, se.fit_f95=NA, stringsAsFactors=FALSE)
     F95df <- rbind(F95df, tmp)
   }
@@ -1143,15 +1261,21 @@ for(site in sites_to_fill) {
   tmp <- DDo[DDo$site_no == site,]
   jnk <- predict(F95, newdata=tmp, se.fit=TRUE)
   pgk <- gamIntervals(jnk, gam=F95, interval="prediction")
-  df <- data.frame(site_no=tmp$site_no, decade=tmp$decade, inModel=0,
+  df <- data.frame(comid=tmp$comid, site_no=tmp$site_no, huc12=tmp$huc12,
+                   decade=tmp$decade,
+                   dec_long_va=tmp$dec_long_va, dec_lat_va=tmp$dec_lat_va,
+                   in_model_f95=0,
                    f95=tmp$f95,
-                   est_f95_lwr=10^pgk$upr-1,
+                   est_lwr_f95=10^pgk$lwr-1,
                    est_f95    =10^pgk$fit-1,
-                   est_f95_upr=10^pgk$lwr-1, stringsAsFactors=FALSE)
+                   est_upr_f95=10^pgk$upr-1, stringsAsFactors=FALSE)
   df$rse_f95 <- sigma
   df$se.fit_f95 <- pgk$se.fit
   F95df[F95df$site_no == site,] <- df
 }
+F95df$est_f95[F95df$est_f95 < 0] <- 0
+F95df$est_lwr_f95[F95df$est_lwr_f95 < 0] <- 0
+F95df$est_upr_f95[F95df$est_upr_f95 < 0] <- 0
 
 write_feather(F95df, "all_gage_est_f95.feather")
 
@@ -1181,10 +1305,13 @@ PGAM <- gamIntervals(predict(F98, se.fit=TRUE), gam=F98, interval="prediction")
 #abline(0,1)
 sigma <- PGAM$residual.scale[1]
 # Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
-F98df <- data.frame(site_no=Z$site_no, decade=Z$decade, inModel=TRUE, f98=Z$f98,
-                     est_f98_lwr=10^PGAM$upr-1,
+F98df <- data.frame(comid=Z$comid, site_no=Z$site_no, huc12=Z$huc12,
+                     decade=Z$decade,
+                     dec_long_va=Z$dec_long_va, dec_lat_va=Z$dec_lat_va,
+                     in_model_f98=TRUE, f98=Z$f98,
+                     est_lwr_f98=10^PGAM$lwr-1,
                      est_f98    =10^PGAM$fit-1,
-                     est_f98_upr=10^PGAM$lwr-1, stringsAsFactors=FALSE)
+                     est_upr_f98=10^PGAM$upr-1, stringsAsFactors=FALSE)
 F98df$rse_f98 <- sigma
 F98df$se.fit_f98 <- PGAM$se.fit
 
@@ -1194,9 +1321,15 @@ for(site in sites_to_fill) {
   for(decade in as.character(DDo$decade[DDo$site_no == site])) {
     i <- i + 1
     message(site," ", decade, " ", i)
-    tmp <- data.frame(site_no=site, decade=decade, inModel=FALSE,
+    tmp <- data.frame(comid=DDo$comid[DDo$site_no == site & DDo$decade == decade],
+                      site_no=site,
+                      huc12=DDo$huc12[DDo$site_no == site & DDo$decade == decade],
+                      decade=decade,
+                      dec_long_va=DDo$dec_long_va[DDo$site_no == site & DDo$decade == decade],
+                      dec_lat_va=DDo$dec_lat_va[DDo$site_no == site & DDo$decade == decade],
+                      in_model_f98=FALSE,
                       f98=DDo$f98[DDo$site_no == site & DDo$decade == decade],
-                      est_f98_lwr=NA, est_f98=NA, est_f98_upr=NA,
+                      est_lwr_f98=NA, est_f98=NA, est_upr_f98=NA,
                       rse_f98=NA, se.fit_f98=NA, stringsAsFactors=FALSE)
     F98df <- rbind(F98df, tmp)
   }
@@ -1209,15 +1342,21 @@ for(site in sites_to_fill) {
   tmp <- DDo[DDo$site_no == site,]
   jnk <- predict(F98, newdata=tmp, se.fit=TRUE)
   pgk <- gamIntervals(jnk, gam=F98, interval="prediction")
-  df <- data.frame(site_no=tmp$site_no, decade=tmp$decade, inModel=0,
+  df <- data.frame(comid=tmp$comid, site_no=tmp$site_no, huc12=tmp$huc12,
+                   decade=tmp$decade,
+                   dec_long_va=tmp$dec_long_va, dec_lat_va=tmp$dec_lat_va,
+                   in_model_f98=0,
                    f98=tmp$f98,
-                   est_f98_lwr=10^pgk$upr-1,
+                   est_lwr_f98=10^pgk$lwr-1,
                    est_f98    =10^pgk$fit-1,
-                   est_f98_upr=10^pgk$lwr-1, stringsAsFactors=FALSE)
+                   est_upr_f98=10^pgk$upr-1, stringsAsFactors=FALSE)
   df$rse_f98 <- sigma
   df$se.fit_f98 <- pgk$se.fit
   F98df[F98df$site_no == site,] <- df
 }
+F98df$est_f98[F98df$est_f98 < 0] <- 0
+F98df$est_lwr_f98[F98df$est_lwr_f98 < 0] <- 0
+F98df$est_upr_f98[F98df$est_upr_f98 < 0] <- 0
 
 write_feather(F98df, "all_gage_est_f98.feather")
 
@@ -1248,10 +1387,13 @@ PGAM <- gamIntervals(predict(F99, se.fit=TRUE), gam=F99, interval="prediction")
 #abline(0,1)
 sigma <- PGAM$residual.scale[1]
 # Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
-F99df <- data.frame(site_no=Z$site_no, decade=Z$decade, inModel=TRUE, f99=Z$f99,
-                     est_f99_lwr=10^PGAM$upr-1,
+F99df <- data.frame(comid=Z$comid, site_no=Z$site_no, huc12=Z$huc12,
+                     decade=Z$decade,
+                     dec_long_va=Z$dec_long_va, dec_lat_va=Z$dec_lat_va,
+                     in_model_f99=TRUE, f99=Z$f99,
+                     est_lwr_f99=10^PGAM$lwr-1,
                      est_f99    =10^PGAM$fit-1,
-                     est_f99_upr=10^PGAM$lwr-1, stringsAsFactors=FALSE)
+                     est_upr_f99=10^PGAM$upr-1, stringsAsFactors=FALSE)
 F99df$rse_f99 <- sigma
 F99df$se.fit_f99 <- PGAM$se.fit
 
@@ -1261,9 +1403,15 @@ for(site in sites_to_fill) {
   for(decade in as.character(DDo$decade[DDo$site_no == site])) {
     i <- i + 1
     message(site," ", decade, " ", i)
-    tmp <- data.frame(site_no=site, decade=decade, inModel=FALSE,
+    tmp <- data.frame(comid=DDo$comid[DDo$site_no == site & DDo$decade == decade],
+                      site_no=site,
+                      huc12=DDo$huc12[DDo$site_no == site & DDo$decade == decade],
+                      decade=decade,
+                      dec_long_va=DDo$dec_long_va[DDo$site_no == site & DDo$decade == decade],
+                      dec_lat_va=DDo$dec_lat_va[DDo$site_no == site & DDo$decade == decade],
+                      in_model_f99=FALSE,
                       f99=DDo$f99[DDo$site_no == site & DDo$decade == decade],
-                      est_f99_lwr=NA, est_f99=NA, est_f99_upr=NA,
+                      est_lwr_f99=NA, est_f99=NA, est_upr_f99=NA,
                       rse_f99=NA, se.fit_f99=NA, stringsAsFactors=FALSE)
     F99df <- rbind(F99df, tmp)
   }
@@ -1276,15 +1424,21 @@ for(site in sites_to_fill) {
   tmp <- DDo[DDo$site_no == site,]
   jnk <- predict(F99, newdata=tmp, se.fit=TRUE)
   pgk <- gamIntervals(jnk, gam=F99, interval="prediction")
-  df <- data.frame(site_no=tmp$site_no, decade=tmp$decade, inModel=0,
+  df <- data.frame(comid=tmp$comid, site_no=tmp$site_no, huc12=tmp$huc12,
+                   decade=tmp$decade,
+                   dec_long_va=tmp$dec_long_va, dec_lat_va=tmp$dec_lat_va,
+                   in_model_f99=0,
                    f99=tmp$f99,
-                   est_f99_lwr=10^pgk$upr-1,
+                   est_lwr_f99=10^pgk$lwr-1,
                    est_f99    =10^pgk$fit-1,
-                   est_f99_upr=10^pgk$lwr-1, stringsAsFactors=FALSE)
+                   est_upr_f99=10^pgk$upr-1, stringsAsFactors=FALSE)
   df$rse_f99 <- sigma
   df$se.fit_f99 <- pgk$se.fit
   F99df[F99df$site_no == site,] <- df
 }
+F99df$est_f99[F99df$est_f99 < 0] <- 0
+F99df$est_lwr_f99[F99df$est_lwr_f99 < 0] <- 0
+F99df$est_upr_f99[F99df$est_upr_f99 < 0] <- 0
 
 write_feather(F99df, "all_gage_est_f99.feather")
 
@@ -1315,10 +1469,13 @@ PGAM <- gamIntervals(predict(F99p9, se.fit=TRUE), gam=F99p9, interval="predictio
 #abline(0,1)
 sigma <- PGAM$residual.scale[1]
 # Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
-F99p9df <- data.frame(site_no=Z$site_no, decade=Z$decade, inModel=TRUE, f99.9=Z$f99.9,
-                     est_f99.9_lwr=10^PGAM$upr-1,
+F99p9df <- data.frame(comid=Z$comid, site_no=Z$site_no, huc12=Z$huc12,
+                     decade=Z$decade,
+                     dec_long_va=Z$dec_long_va, dec_lat_va=Z$dec_lat_va,
+                     in_model_f99.9=TRUE, f99.9=Z$f99.9,
+                     est_lwr_f99.9=10^PGAM$lwr-1,
                      est_f99.9    =10^PGAM$fit-1,
-                     est_f99.9_upr=10^PGAM$lwr-1, stringsAsFactors=FALSE)
+                     est_upr_f99.9=10^PGAM$upr-1, stringsAsFactors=FALSE)
 F99p9df$rse_f99.9 <- sigma
 F99p9df$se.fit_f99.9 <- PGAM$se.fit
 
@@ -1328,9 +1485,15 @@ for(site in sites_to_fill) {
   for(decade in as.character(DDo$decade[DDo$site_no == site])) {
     i <- i + 1
     message(site," ", decade, " ", i)
-    tmp <- data.frame(site_no=site, decade=decade, inModel=FALSE,
+    tmp <- data.frame(comid=DDo$comid[DDo$site_no == site & DDo$decade == decade],
+                      site_no=site,
+                      huc12=DDo$huc12[DDo$site_no == site & DDo$decade == decade],
+                      decade=decade,
+                      dec_long_va=DDo$dec_long_va[DDo$site_no == site & DDo$decade == decade],
+                      dec_lat_va=DDo$dec_lat_va[DDo$site_no == site & DDo$decade == decade],
+                      in_model_f99.9=FALSE,
                       f99.9=DDo$f99.9[DDo$site_no == site & DDo$decade == decade],
-                      est_f99.9_lwr=NA, est_f99.9=NA, est_f99.9_upr=NA,
+                      est_lwr_f99.9=NA, est_f99.9=NA, est_upr_f99.9=NA,
                       rse_f99.9=NA, se.fit_f99.9=NA, stringsAsFactors=FALSE)
     F99p9df <- rbind(F99p9df, tmp)
   }
@@ -1343,19 +1506,136 @@ for(site in sites_to_fill) {
   tmp <- DDo[DDo$site_no == site,]
   jnk <- predict(F99p9, newdata=tmp, se.fit=TRUE)
   pgk <- gamIntervals(jnk, gam=F99p9, interval="prediction")
-  df <- data.frame(site_no=tmp$site_no, decade=tmp$decade, inModel=0,
+  df <- data.frame(comid=tmp$comid, site_no=tmp$site_no, huc12=tmp$huc12,
+                   decade=tmp$decade,
+                   dec_long_va=tmp$dec_long_va, dec_lat_va=tmp$dec_lat_va,
+                   in_model_f99.9=0,
                    f99.9=tmp$f99.9,
-                   est_f99.9_lwr=10^pgk$upr-1,
+                   est_lwr_f99.9=10^pgk$lwr-1,
                    est_f99.9    =10^pgk$fit-1,
-                   est_f99.9_upr=10^pgk$lwr-1, stringsAsFactors=FALSE)
+                   est_upr_f99.9=10^pgk$upr-1, stringsAsFactors=FALSE)
   df$rse_f99.9 <- sigma
   df$se.fit_f99.9 <- pgk$se.fit
   F99p9df[F99p9df$site_no == site,] <- df
 }
+F99p9df$est_f99.9[F99p9df$est_f99.9 < 0] <- 0
+F99p9df$est_lwr_f99.9[F99p9df$est_lwr_f99.9 < 0] <- 0
+F99p9df$est_upr_f99.9[F99p9df$est_upr_f99.9 < 0] <- 0
 
 write_feather(F99p9df, "all_gage_est_f99p9.feather")
 
-sink()
+#sink()
 
 save(DDo, DD, D, PPLO, L1, T2, T3, T4, T5, T6,
      F50, F90, F95, F98, F99, F99p9, file="Models.RData")
+
+
+plot(PPLOdf$pplo, PPLOdf$est_pplo,
+     xlab="Observed value", ylab="Fitted value")
+mtext(paste0("PPLO: NSE=",round(NSE(PPLOdf$est_pplo, PPLOdf$pplo), digits=2)))
+abline(0,1)
+
+plot(log10(L1df$L1), log10(L1df$est_L1),
+     xlab="Observed value", ylab="Fitted value")
+mtext(paste0("L1: NSE=",round(NSE(L1df$duan_smearing*L1df$est_L1, L1df$L1), digits=2)))
+abline(0,1)
+
+plot(T2df$T2, T2df$est_T2,
+     xlab="Observed value", ylab="Fitted value")
+mtext(paste0("T2: NSE=",round(NSE(T2df$est_T2, T2df$T2), digits=2)))
+abline(0,1)
+
+plot(T3df$T3, T3df$est_T3,
+     xlab="Observed value", ylab="Fitted value")
+mtext(paste0("T3: NSE=",round(NSE(T3df$est_T3, T3df$T3), digits=2)))
+abline(0,1)
+
+plot(T4df$T4, T4df$est_T4,
+     xlab="Observed value", ylab="Fitted value")
+mtext(paste0("T4: NSE=",round(NSE(T4df$est_T4, T4df$T4), digits=2)))
+abline(0,1)
+
+plot(T5df$T5, T5df$est_T5,
+     xlab="Observed value", ylab="Fitted value")
+mtext(paste0("T5: NSE=",round(NSE(T5df$est_T5, T5df$T5), digits=2)))
+abline(0,1)
+
+plot(T6df$T6, T6df$est_T6,
+     xlab="Observed value", ylab="Fitted value")
+mtext(paste0("T6: NSE=",round(NSE(T6df$est_T6, T6df$T6), digits=2)))
+abline(0,1)
+
+plot(log10(F50df$f50), log10(F50df$est_f50),
+     xlab="Observed value", ylab="Fitted value")
+mtext(paste0("f50: NSE=",round(NSE(F50df$est_f50, F50df$f50), digits=2)))
+abline(0,1)
+
+plot(log10(F90df$f90), log10(F90df$est_f90),
+     xlab="Observed value", ylab="Fitted value")
+mtext(paste0("f90: NSE=",round(NSE(F90df$est_f90, F90df$f90), digits=2)))
+abline(0,1)
+
+plot(log10(F95df$f95), log10(F95df$est_f95),
+     xlab="Observed value", ylab="Fitted value")
+mtext(paste0("f95: NSE=",round(NSE(F95df$est_f95, F95df$f95), digits=2)))
+abline(0,1)
+
+plot(log10(F98df$f98), log10(F98df$est_f98),
+     xlab="Observed value", ylab="Fitted value")
+mtext(paste0("f98: NSE=",round(NSE(F98df$est_f98, F98df$f98), digits=2)))
+abline(0,1)
+
+plot(log10(F99df$f99), log10(F99df$est_f99),
+     xlab="Observed value", ylab="Fitted value")
+mtext(paste0("f99: NSE=",round(NSE(F99df$est_f99, F99df$f99), digits=2)))
+abline(0,1)
+
+plot(log10(F99p9df$f99.9), log10(F99p9df$est_f99.9),
+     xlab="Observed value", ylab="Fitted value")
+mtext(paste0("f99.9: NSE=",round(NSE(F99p9df$est_f99.9, F99p9df$f99.9), digits=2)))
+abline(0,1)
+
+#"F50df"   "F90df"   "F95df"   "F98df"   "F99df"   "F99p9df" "L1df"    "PPLOdf"
+#"T2df"    "T3df"    "T4df"    "T5df"    "T6df"
+
+go <- function(parent=L1df) {
+  coverages <- NULL
+  rse <- rsecv <- biascv <- 0; i <- 0
+  for(site in unique(D$site_no)) { i <- i + 1
+    Z <- D[D$site_no != site,]; x <- Z$x; y <- Z$y
+    z <- log10(Z$L1) # LOOK HERE
+    model   <- gam(z~basin_area +
+               s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
+               developed+
+               mixed_forest+shrubland+
+               decade-1+
+               s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=Z, #, bs="so", xt=list(bnd=bnd)
+               family="gaussian")
+    rse[i] <- sqrt(summary(model)$scale)
+    tmp <- D[D$site_no == site,]; val <- log10(tmp$L1) # LOOK HERE
+    pgk <- predict(model, newdata=tmp, se.fit=TRUE)
+    res <- (val - pgk$fit); biascv[i] <- mean(res)
+    res <- sum(res^2); rsecv[i] <- sqrt(mean(res))
+    message(site, ", Bias=",biascv[i],", RSE=",rse[i],", RSEcv=",rsecv[i])
+    covers <- parent$est_lwr_L1[parent$site_no == site] <= 10^val &
+              parent$est_upr_L1[parent$site_no == site] >= 10^val # LOOK HERE
+    if(is.null(coverages)) {
+      coverages <- covers
+    } else {
+      s <- (length(coverages)+1); ss <- s:(s+length(val)-1)
+      #print(c(length(ss),length(covers),length(val)))
+      coverages[ss] <- covers
+    }
+    #print(parent$est_lwr_L1[parent$site_no == site])
+    #print(10^val)
+    #print(parent$est_upr_L1[parent$site_no == site])
+    #print(covers)
+  }
+  print(summary(biascv))
+  print(summary(rse))
+  print(summary(rsecv))
+  return(coverages)
+}
+
+
+
