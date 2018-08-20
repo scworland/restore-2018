@@ -448,11 +448,11 @@ points(Z$pplo, C2pplo, col=4)
 points(Z$pplo, C3pplo, col=3)
 abline(0,1)
 
-PPLO <- GM2
+PPLO <- GM3
 save(DDo, DD, D, SM0, GM1, GM2, PPLO, file="PPLOS.RData")
 
-sigma <- sqrt(mean((C2o - Z$flowtime)^2))
-PGAM <- gamIntervals(predict(GM2, se.fit=TRUE), gam=GM2, interval="prediction", sigma=sigma)
+pplo.sigma <- sqrt(mean((C3o - Z$flowtime)^2))
+PGAM <- gamIntervals(predict(GM3, se.fit=TRUE), gam=GM3, interval="prediction", sigma=pplo.sigma)
 # In an uncensored data world, the following will be a 1:1 relation (see gamIntervals), but we won't fully
 # see that when there is the censoring. But the abline will plot through the middle of the data cloud.
 #plot(PPLO$hat, (PGAM$se.fit/PGAM$residual.scale)^2)
@@ -463,13 +463,13 @@ PPLOdf <- data.frame(comid=Z$comid, site_no=Z$site_no, huc12=Z$huc12,
                      decade=Z$decade,
                      dec_long_va=Z$dec_long_va, dec_lat_va=Z$dec_lat_va,
                      in_model_pplo=TRUE, pplo=Z$pplo,
-                     est_pplo_lwr=(3653-10^PGAM$upr)/3653,
+                     est_lwr_pplo=(3653-10^PGAM$upr)/3653,
                      est_pplo    =(3653-10^PGAM$fit)/3653,
-                     est_pplo_upr=(3653-10^PGAM$lwr)/3653, stringsAsFactors=FALSE)
-PPLOdf$est_pplo_lwr[PPLOdf$est_pplo_lwr < 0] <- 0
+                     est_upr_pplo=(3653-10^PGAM$lwr)/3653, stringsAsFactors=FALSE)
+PPLOdf$est_lwr_pplo[PPLOdf$est_lwr_pplo < 0] <- 0
 PPLOdf$est_pplo[    PPLOdf$est_pplo     < 0] <- 0
-PPLOdf$est_pplo_upr[PPLOdf$est_pplo_upr < 0] <- 0
-PPLOdf$rse_pplo <- sigma
+PPLOdf$est_upr_pplo[PPLOdf$est_upr_pplo < 0] <- 0
+PPLOdf$rse_pplo <- pplo.sigma
 PPLOdf$se.fit_pplo <- PGAM$se.fit
 
 sites_to_fill <- unique(c(sites_of_area_bust, DDo$site_no[DDo$ed_rch_zone == 1]))
@@ -486,7 +486,7 @@ for(site in sites_to_fill) {
                       dec_lat_va=DDo$dec_lat_va[DDo$site_no == site & DDo$decade == decade],
                       in_model_pplo=FALSE,
                       pplo=DDo$pplo[DDo$site_no == site & DDo$decade == decade],
-                      est_pplo_lwr=NA, est_pplo=NA, est_pplo_upr=NA,
+                      est_lwr_pplo=NA, est_pplo=NA, est_upr_pplo=NA,
                       rse_pplo=NA, se.fit_pplo=NA, stringsAsFactors=FALSE)
     PPLOdf <- rbind(PPLOdf, tmp)
   }
@@ -498,19 +498,19 @@ PPLOdf <- PPLOdf[order(PPLOdf$site_no, PPLOdf$decade),]
 for(site in sites_to_fill) {
   tmp <- DDo[DDo$site_no == site,]
   jnk <- predict(PPLO, newdata=tmp, se.fit=TRUE)
-  pgk <- gamIntervals(jnk, gam=GM2, interval="prediction", sigma=sigma)
+  pgk <- gamIntervals(jnk, gam=GM2, interval="prediction", sigma=pplo.sigma)
   df <- data.frame(comid=tmp$comid, site_no=tmp$site_no, huc12=tmp$huc12,
                    decade=tmp$decade,
                    dec_long_va=tmp$dec_long_va, dec_lat_va=tmp$dec_lat_va,
                    in_model_pplo=0,
                    pplo=tmp$pplo,
-                   est_pplo_lwr=(3653-10^pgk$upr)/3653,
+                   est_lwr_pplo=(3653-10^pgk$upr)/3653,
                    est_pplo    =(3653-10^pgk$fit)/3653,
-                   est_pplo_upr=(3653-10^pgk$lwr)/3653, stringsAsFactors=FALSE)
-  df$est_pplo_lwr[df$est_pplo_lwr < 0] <- 0
+                   est_upr_pplo=(3653-10^pgk$lwr)/3653, stringsAsFactors=FALSE)
+  df$est_lwr_pplo[df$est_lwr_pplo < 0] <- 0
   df$est_pplo[    df$est_pplo     < 0] <- 0
-  df$est_pplo_upr[df$est_pplo_upr < 0] <- 0
-  df$rse_pplo <- sigma
+  df$est_upr_pplo[df$est_upr_pplo < 0] <- 0
+  df$rse_pplo <- pplo.sigma
   df$se.fit_pplo <- pgk$se.fit
   PPLOdf[PPLOdf$site_no == site,] <- df
 }
@@ -568,7 +568,7 @@ L1   <- gam(z~basin_area +
               developed+
               mixed_forest+shrubland+
               decade-1+
-              s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=Z,
+              s(x, y), knots=knots, data=Z, # , bs="so", xt=list(bnd=bnd)
               family="gaussian")
 L1$duan_smearing <- duan_smearing_estimator(L1)
 pdf("L1.pdf", useDingbats=FALSE)
@@ -646,7 +646,7 @@ T2   <- gam(z~basin_area +
               developed+
               mixed_forest+shrubland+
               decade-1+
-              s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
+              s(x, y), knots=knots, data=D, # , bs="so", xt=list(bnd=bnd)
               family="gaussian")
 pdf("T2.pdf", useDingbats=FALSE)
   plot(z, fitted.values(T2))
@@ -725,7 +725,7 @@ T3   <- gam(z~basin_area +
               developed+
               mixed_forest+shrubland+
               decade-1+
-              s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
+              s(x, y), knots=knots, data=D, #, bs="so", xt=list(bnd=bnd)
               family="gaussian")
 pdf("T3.pdf", useDingbats=FALSE)
   plot(z, fitted.values(T3))
@@ -804,7 +804,7 @@ T4   <- gam(z~basin_area +
               developed+
               mixed_forest+shrubland+
               decade-1+
-              s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
+              s(x, y), knots=knots, data=D, # , bs="so", xt=list(bnd=bnd)
               family="gaussian")
 pdf("T4.pdf", useDingbats=FALSE)
   plot(z, fitted.values(T4))
@@ -882,7 +882,7 @@ T5   <- gam(z~basin_area +
               developed+
               mixed_forest+shrubland+
               decade-1+
-              s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
+              s(x, y), knots=knots, data=D, #, bs="so", xt=list(bnd=bnd)
               family="gaussian")
 pdf("T5.pdf", useDingbats=FALSE)
   plot(z, fitted.values(T5))
@@ -961,7 +961,7 @@ T6   <- gam(z~basin_area +
               developed+
               mixed_forest+shrubland+
               decade-1+
-              s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
+              s(x, y), knots=knots, data=D, #, bs="so", xt=list(bnd=bnd)
               family="gaussian")
 pdf("T6.pdf", useDingbats=FALSE)
   plot(z, fitted.values(T6))
@@ -981,7 +981,7 @@ T6df <- data.frame(comid=Z$comid, site_no=Z$site_no, huc12=Z$huc12,
                      decade=Z$decade,
                      dec_long_va=Z$dec_long_va, dec_lat_va=Z$dec_lat_va,
                      in_model_T6=TRUE, T6=Z$T6,
-                     est_lwr_T6=PGAMlwr,
+                     est_lwr_T6=PGAM$lwr,
                      est_T6    =PGAM$fit,
                      est_upr_T6=PGAM$upr, stringsAsFactors=FALSE)
 T6df$rse_T6 <- sigma
@@ -1040,7 +1040,7 @@ F50   <- gam(z~basin_area +
                developed+
                mixed_forest+shrubland+
                decade-1+
-               s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
+               s(x, y), knots=knots, data=D, #, bs="so", xt=list(bnd=bnd)
              family="gaussian")
 pdf("F50.pdf", useDingbats=FALSE)
 plot(z, fitted.values(F50))
@@ -1122,7 +1122,7 @@ F90   <- gam(z~basin_area  + s(flood_storage, k=7) +
               developed+
               mixed_forest+shrubland+
               decade-1+
-              s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
+              s(x, y), knots=knots, data=D, #, bs="so", xt=list(bnd=bnd)
               family="gaussian")
 print(summary(F90))
 pdf("F90.pdf", useDingbats=FALSE)
@@ -1205,7 +1205,7 @@ F95   <- gam(z~basin_area + s(flood_storage, k=7) +
                developed+
                mixed_forest+shrubland+
                decade-1+
-               s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
+               s(x, y), knots=knots, data=D, #, bs="so", xt=list(bnd=bnd)
              family="gaussian")
 print(summary(F95))
 pdf("F95.pdf", useDingbats=FALSE)
@@ -1288,7 +1288,7 @@ F98   <- gam(z~basin_area + s(flood_storage, k=7) +
                developed+
                mixed_forest+shrubland+
                decade-1+
-               s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
+               s(x, y), knots=knots, data=D, #, bs="so", xt=list(bnd=bnd)
              family="gaussian")
 print(summary(F98))
 pdf("F98.pdf", useDingbats=FALSE)
@@ -1369,7 +1369,7 @@ F99   <- gam(z~basin_area + s(flood_storage, k=7) +
                developed+
                mixed_forest+shrubland+
                decade-1+
-               s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
+               s(x, y), knots=knots, data=D, #, bs="so", xt=list(bnd=bnd)
              family="gaussian")
 print(summary(F99))
 pdf("F99.pdf", useDingbats=FALSE)
@@ -1450,7 +1450,7 @@ F99p9   <- gam(z~basin_area + s(flood_storage, k=7) +
                developed+
                mixed_forest+shrubland+
                decade-1+
-               s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=D,
+               s(x, y), knots=knots, data=D, #, bs="so", xt=list(bnd=bnd)
              family="gaussian")
 print(summary(F99p9))
 pdf("F99p9.pdf", useDingbats=FALSE)
@@ -1598,7 +1598,7 @@ abline(0,1)
 #"F50df"   "F90df"   "F95df"   "F98df"   "F99df"   "F99p9df" "L1df"    "PPLOdf"
 #"T2df"    "T3df"    "T4df"    "T5df"    "T6df"
 
-go <- function(parent=L1df) {
+cvL1 <- function(parent=L1df) {
   coverages <- NULL
   rse <- rsecv <- biascv <- 0; i <- 0
   for(site in unique(D$site_no)) { i <- i + 1
@@ -1609,7 +1609,7 @@ go <- function(parent=L1df) {
                developed+
                mixed_forest+shrubland+
                decade-1+
-               s(x, y, bs="so", xt=list(bnd=bnd)), knots=knots, data=Z, #, bs="so", xt=list(bnd=bnd)
+               s(x, y), knots=knots, data=Z, #, bs="so", xt=list(bnd=bnd)
                family="gaussian")
     rse[i] <- sqrt(summary(model)$scale)
     tmp <- D[D$site_no == site,]; val <- log10(tmp$L1) # LOOK HERE
@@ -1631,7 +1631,48 @@ go <- function(parent=L1df) {
     #print(parent$est_upr_L1[parent$site_no == site])
     #print(covers)
   }
-  print(summary(biascv))
+  print(summary(biascv));   print(summary(abs(biascv)))
+  print(summary(rse))
+  print(summary(rsecv))
+  return(coverages)
+}
+
+cvPPLO <- function(parent=PPLOdf, sigma=pplo.sigma) {
+  coverages <- NULL
+  rse <- rsecv <- biascv <- 0; i <- 0
+  for(site in unique(D$site_no)) { i <- i + 1
+    Z <- D[D$site_no != site,]; x <- Z$x; y <- Z$y
+    Z$left.threshold <-  log10(rep(0, length(Z$nzero)))
+    Z$right.threshold <- log10(Z$n)
+    Z$flowtime <- log10(Z$n - Z$nzero)
+    model <- gam(flowtime~basin_area+
+                    s(ppt_mean, k=5)+s(temp_mean, k=4)+s(dni_ann, k=7)+
+                    developed+s(grassland)+
+                    bedperm+decade-1+
+        s(x,y), knots=knots,
+           family=tobit1(left.threshold=  Z$left.threshold,
+                         right.threshold=Z$right.threshold), data=Z)
+    rse[i] <- sigma
+    tmp <- D[D$site_no == site,]; val <- tmp$pplo # LOOK HERE
+    pgk <- predict(model, newdata=tmp, se.fit=TRUE)
+    res <- (val - (3653-10^pgk$fit)/3653); biascv[i] <- mean(res)
+    res <- sum(res^2); rsecv[i] <- sqrt(mean(res))
+    message(site, ", Bias=",biascv[i],", RSE=",rse[i],", RSEcv=",rsecv[i])
+    covers <- parent$est_lwr_pplo[parent$site_no == site] <= val &
+              parent$est_upr_pplo[parent$site_no == site] >= val # LOOK HERE
+    if(is.null(coverages)) {
+      coverages <- covers
+    } else {
+      s <- (length(coverages)+1); ss <- s:(s+length(val)-1)
+      #print(c(length(ss),length(covers),length(val)))
+      coverages[ss] <- covers
+    }
+    #print(parent$est_lwr_pplo[parent$site_no == site])
+    #print(val)
+    #print(parent$est_upr_pplo[parent$site_no == site])
+    #print(covers)
+  }
+  print(summary(biascv));   print(summary(abs(biascv)))
   print(summary(rse))
   print(summary(rsecv))
   return(coverages)
