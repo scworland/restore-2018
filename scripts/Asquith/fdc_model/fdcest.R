@@ -1621,7 +1621,7 @@ cvPPLOgo <- function(parent=PPLOdf, sigma=pplo.sigma, sites_to_fill=sites_to_fil
   sites <- decades <- values <- ests <- estlwrs <- estuprs <- NULL
   estft <- estlwrft <- estuprft <- NULL
   rse <- rsecv <- biascv <- 0; i <- 0
-  for(site in unique(D$site_no)[1:4]) { i <- i + 1
+  for(site in unique(D$site_no)) { i <- i + 1
     Z <- D[D$site_no != site,]; x <- Z$x; y <- Z$y
     Z$left.threshold <-  log10(rep(0, length(Z$nzero)))
     Z$right.threshold <- log10(Z$n)
@@ -1731,7 +1731,7 @@ cvL1go <- function(parent=L1df) {
 }
 
 cvL1 <- cvL1go()
-#cvPPLO <- cvPPLOgo()
+cvPPLO <- cvPPLOgo()
 
   for(site in sites_to_fill) {
      tmp <- DDo[DDo$site_no == site,]
