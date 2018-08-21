@@ -451,7 +451,7 @@ abline(0,1)
 PPLO <- GM3
 save(DDo, DD, D, SM0, GM1, GM2, PPLO, file="PPLOS.RData")
 
-pplo.sigma <- sqrt(mean((C3o - Z$flowtime)^2))
+pplo.sigma <- sqrt(mean((predict(PPLO) - Z$flowtime)^2))
 PGAM <- gamIntervals(predict(GM3, se.fit=TRUE), gam=GM3, interval="prediction", sigma=pplo.sigma)
 # In an uncensored data world, the following will be a 1:1 relation (see gamIntervals), but we won't fully
 # see that when there is the censoring. But the abline will plot through the middle of the data cloud.
@@ -462,10 +462,14 @@ PGAM <- gamIntervals(predict(GM3, se.fit=TRUE), gam=GM3, interval="prediction", 
 PPLOdf <- data.frame(comid=Z$comid, site_no=Z$site_no, huc12=Z$huc12,
                      decade=Z$decade,
                      dec_long_va=Z$dec_long_va, dec_lat_va=Z$dec_lat_va,
-                     in_model_pplo=TRUE, pplo=Z$pplo,
+                     in_model_pplo=TRUE, pplo=Z$pplo, flowtime=log10(Z$n - Z$nzero),
                      est_lwr_pplo=(3653-10^PGAM$upr)/3653,
                      est_pplo    =(3653-10^PGAM$fit)/3653,
-                     est_upr_pplo=(3653-10^PGAM$lwr)/3653, stringsAsFactors=FALSE)
+                     est_upr_pplo=(3653-10^PGAM$lwr)/3653,
+                     est_lwr_flowtime=PGAM$lwr,
+                     est_flowtime=PGAM$fit,
+                     est_upr_flowtime=PGAM$upr,
+                     stringsAsFactors=FALSE)
 PPLOdf$est_lwr_pplo[PPLOdf$est_lwr_pplo < 0] <- 0
 PPLOdf$est_pplo[    PPLOdf$est_pplo     < 0] <- 0
 PPLOdf$est_upr_pplo[PPLOdf$est_upr_pplo < 0] <- 0
@@ -486,7 +490,10 @@ for(site in sites_to_fill) {
                       dec_lat_va=DDo$dec_lat_va[DDo$site_no == site & DDo$decade == decade],
                       in_model_pplo=FALSE,
                       pplo=DDo$pplo[DDo$site_no == site & DDo$decade == decade],
+                      flowtime=log10(DDo$n[    DDo$site_no == site & DDo$decade == decade] -
+                                     DDo$nzero[DDo$site_no == site & DDo$decade == decade]),
                       est_lwr_pplo=NA, est_pplo=NA, est_upr_pplo=NA,
+                      est_lwr_flowtime=NA, est_flowtime=NA, est_upr_flowtime=NA,
                       rse_pplo=NA, se.fit_pplo=NA, stringsAsFactors=FALSE)
     PPLOdf <- rbind(PPLOdf, tmp)
   }
@@ -498,15 +505,19 @@ PPLOdf <- PPLOdf[order(PPLOdf$site_no, PPLOdf$decade),]
 for(site in sites_to_fill) {
   tmp <- DDo[DDo$site_no == site,]
   jnk <- predict(PPLO, newdata=tmp, se.fit=TRUE)
-  pgk <- gamIntervals(jnk, gam=GM2, interval="prediction", sigma=pplo.sigma)
+  pgk <- gamIntervals(jnk, gam=GM3, interval="prediction", sigma=pplo.sigma)
   df <- data.frame(comid=tmp$comid, site_no=tmp$site_no, huc12=tmp$huc12,
                    decade=tmp$decade,
                    dec_long_va=tmp$dec_long_va, dec_lat_va=tmp$dec_lat_va,
                    in_model_pplo=0,
-                   pplo=tmp$pplo,
+                   pplo=tmp$pplo, flowtime=log10(tmp$n - tmp$nzero),
                    est_lwr_pplo=(3653-10^pgk$upr)/3653,
                    est_pplo    =(3653-10^pgk$fit)/3653,
-                   est_upr_pplo=(3653-10^pgk$lwr)/3653, stringsAsFactors=FALSE)
+                   est_upr_pplo=(3653-10^pgk$lwr)/3653,
+                   est_lwr_flowtime=pgk$lwr,
+                   est_flowtime=pgk$fit,
+                   est_upr_flowtime=pgk$upr,
+                   stringsAsFactors=FALSE)
   df$est_lwr_pplo[df$est_lwr_pplo < 0] <- 0
   df$est_pplo[    df$est_pplo     < 0] <- 0
   df$est_upr_pplo[df$est_upr_pplo < 0] <- 0
@@ -516,6 +527,13 @@ for(site in sites_to_fill) {
 }
 PPLOdf$in_model_pplo[PPLOdf$in_model_pplo == 1] <- "yes"
 PPLOdf$in_model_pplo[PPLOdf$in_model_pplo == 0] <- "no"
+summary(PPLOdf$pplo <= PPLOdf$est_upr_pplo*0.62) # in bulk the limits just are wrong for the
+# pplo but that is looking at them as if they were noncensored that is compounded by the
+# conversion of flowtime to a pplo (probability). If we have 2804 rows, and if we continue
+# to expect the upper limit to be a 0.025 probability exceeding, then we expect 70 cases
+# as predictions outside. So this is a rough fix. Will need to evaluate this in cross-validation.
+#$PPLOdf$est_upr_pplo <- 0.62*PPLOdf$est_upr_pplo
+# All of the est_lwr_pplo are zero anyway so know simple way seen how to fix them.
 
 sum(abs(PPLOdf$est_pplo - PPLOdf$pplo) <= 0   )/length(DDo$site_no)
 sum(abs(PPLOdf$est_pplo - PPLOdf$pplo) <= 0.02)/length(DDo$site_no)
@@ -589,7 +607,7 @@ sigma <- PGAM$residual.scale[1]
 L1df <- data.frame(comid=Z$comid, site_no=Z$site_no, huc12=Z$huc12,
                      decade=Z$decade,
                      dec_long_va=Z$dec_long_va, dec_lat_va=Z$dec_lat_va,
-                     in_model_L1=TRUE, duan_smearing=L1$duan_smearing, L1=Z$L1,
+                     in_model_L1=TRUE, bias_corr=L1$duan_smearing, L1=Z$L1,
                      est_lwr_L1=10^PGAM$lwr,
                      est_L1    =10^PGAM$fit,
                      est_upr_L1=10^PGAM$upr, stringsAsFactors=FALSE)
@@ -608,7 +626,7 @@ for(site in sites_to_fill) {
                       decade=decade,
                       dec_long_va=DDo$dec_long_va[DDo$site_no == site & DDo$decade == decade],
                       dec_lat_va=DDo$dec_lat_va[DDo$site_no == site & DDo$decade == decade],
-                      in_model_L1=FALSE, duan_smearing=L1$duan_smearing,
+                      in_model_L1=FALSE, bias_corr=L1$duan_smearing,
                       L1=DDo$L1[DDo$site_no == site & DDo$decade == decade],
                       est_lwr_L1=NA, est_L1=NA, est_upr_L1=NA,
                       rse_L1=NA, se.fit_L1=NA, stringsAsFactors=FALSE)
@@ -626,7 +644,7 @@ for(site in sites_to_fill) {
   df <- data.frame(comid=tmp$comid, site_no=tmp$site_no, huc12=tmp$huc12,
                    decade=tmp$decade,
                    dec_long_va=tmp$dec_long_va, dec_lat_va=tmp$dec_lat_va,
-                   in_model_L1=0, duan_smearing=L1$duan_smearing,
+                   in_model_L1=0, bias_corr=L1$duan_smearing,
                    L1=tmp$L1,
                    est_lwr_L1=10^pgk$lwr,
                    est_L1    =10^pgk$fit,
@@ -1537,7 +1555,7 @@ abline(0,1)
 
 plot(log10(L1df$L1), log10(L1df$est_L1),
      xlab="Observed value", ylab="Fitted value")
-mtext(paste0("L1: NSE=",round(NSE(L1df$duan_smearing*L1df$est_L1, L1df$L1), digits=2)))
+mtext(paste0("L1: NSE=",round(NSE(L1df$bias_corr*L1df$est_L1, L1df$L1), digits=2)))
 abline(0,1)
 
 plot(T2df$T2, T2df$est_T2,
@@ -1598,49 +1616,12 @@ abline(0,1)
 #"F50df"   "F90df"   "F95df"   "F98df"   "F99df"   "F99p9df" "L1df"    "PPLOdf"
 #"T2df"    "T3df"    "T4df"    "T5df"    "T6df"
 
-cvL1 <- function(parent=L1df) {
-  coverages <- NULL
-  rse <- rsecv <- biascv <- 0; i <- 0
-  for(site in unique(D$site_no)) { i <- i + 1
-    Z <- D[D$site_no != site,]; x <- Z$x; y <- Z$y
-    z <- log10(Z$L1) # LOOK HERE
-    model   <- gam(z~basin_area +
-               s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
-               developed+
-               mixed_forest+shrubland+
-               decade-1+
-               s(x, y), knots=knots, data=Z, #, bs="so", xt=list(bnd=bnd)
-               family="gaussian")
-    rse[i] <- sqrt(summary(model)$scale)
-    tmp <- D[D$site_no == site,]; val <- log10(tmp$L1) # LOOK HERE
-    pgk <- predict(model, newdata=tmp, se.fit=TRUE)
-    res <- (val - pgk$fit); biascv[i] <- mean(res)
-    res <- sum(res^2); rsecv[i] <- sqrt(mean(res))
-    message(site, ", Bias=",biascv[i],", RSE=",rse[i],", RSEcv=",rsecv[i])
-    covers <- parent$est_lwr_L1[parent$site_no == site] <= 10^val &
-              parent$est_upr_L1[parent$site_no == site] >= 10^val # LOOK HERE
-    if(is.null(coverages)) {
-      coverages <- covers
-    } else {
-      s <- (length(coverages)+1); ss <- s:(s+length(val)-1)
-      #print(c(length(ss),length(covers),length(val)))
-      coverages[ss] <- covers
-    }
-    #print(parent$est_lwr_L1[parent$site_no == site])
-    #print(10^val)
-    #print(parent$est_upr_L1[parent$site_no == site])
-    #print(covers)
-  }
-  print(summary(biascv));   print(summary(abs(biascv)))
-  print(summary(rse))
-  print(summary(rsecv))
-  return(coverages)
-}
 
-cvPPLO <- function(parent=PPLOdf, sigma=pplo.sigma) {
-  coverages <- NULL
+cvPPLOgo <- function(parent=PPLOdf, sigma=pplo.sigma, sites_to_fill=sites_to_fill) {
+  sites <- decades <- values <- ests <- estlwrs <- estuprs <- NULL
+  estft <- estlwrft <- estuprft <- NULL
   rse <- rsecv <- biascv <- 0; i <- 0
-  for(site in unique(D$site_no)) { i <- i + 1
+  for(site in unique(D$site_no)[1:4]) { i <- i + 1
     Z <- D[D$site_no != site,]; x <- Z$x; y <- Z$y
     Z$left.threshold <-  log10(rep(0, length(Z$nzero)))
     Z$right.threshold <- log10(Z$n)
@@ -1653,30 +1634,139 @@ cvPPLO <- function(parent=PPLOdf, sigma=pplo.sigma) {
            family=tobit1(left.threshold=  Z$left.threshold,
                          right.threshold=Z$right.threshold), data=Z)
     rse[i] <- sigma
+    new.sigma <- sqrt(mean((predict(model)-Z$flowtime)^2))
     tmp <- D[D$site_no == site,]; val <- tmp$pplo # LOOK HERE
     pgk <- predict(model, newdata=tmp, se.fit=TRUE)
-    res <- (val - (3653-10^pgk$fit)/3653); biascv[i] <- mean(res)
-    res <- sum(res^2); rsecv[i] <- sqrt(mean(res))
+    pgk <- gamIntervals(pgk, gam=model, interval="prediction", sigma=new.sigma)
+    pp  <- (3653-10^pgk$fit)/3653; pp[ pp  < 0] <- 0
+    ppl <- (3653-10^pgk$lwr)/3653; ppl[ppl < 0] <- 0
+    ppu <- (3653-10^pgk$upr)/3653; ppu[ppu < 0] <- 0
+    ft  <- pgk$fit; lft <- pgk$lwr; uft <- pgk$upr
+    res <- val - pp; biascv[i] <- mean(res)
+    res <- sum(res^2); rsecv[i] <- new.sigma
     message(site, ", Bias=",biascv[i],", RSE=",rse[i],", RSEcv=",rsecv[i])
-    covers <- parent$est_lwr_pplo[parent$site_no == site] <= val &
-              parent$est_upr_pplo[parent$site_no == site] >= val # LOOK HERE
-    if(is.null(coverages)) {
-      coverages <- covers
+    if(is.null(values)) {
+      sites <- tmp$site_no
+      decades <- tmp$decade
+      values <- val
+      ests <- pp
+      estlwrs <- ppu # swap is correct
+      estuprs <- ppl # swap is correct
+      estft <- ft; estlwrft <- lft; estuprft <- uft
     } else {
-      s <- (length(coverages)+1); ss <- s:(s+length(val)-1)
-      #print(c(length(ss),length(covers),length(val)))
-      coverages[ss] <- covers
+      s <- (length(values)+1); ss <- s:(s+length(val)-1)
+      sites[ss] <- tmp$site_no
+      decades[ss] <- tmp$decade
+      values[ss] <- val
+      ests[ss] <- pp
+      estlwrs[ss] <- ppu # swap is correct
+      estuprs[ss] <- ppl # swap is correct
+      estft[ss] <- ft; estlwrft[ss] <- lft; estuprft[ss] <- uft
     }
     #print(parent$est_lwr_pplo[parent$site_no == site])
     #print(val)
     #print(parent$est_upr_pplo[parent$site_no == site])
-    #print(covers)
   }
   print(summary(biascv));   print(summary(abs(biascv)))
   print(summary(rse))
   print(summary(rsecv))
-  return(coverages)
+  zz <- data.frame(site_no_bak=sites, decade_bak=decades, orgfit=values,
+             loo_est_lwr_pplo=estlwrs, loo_est_pplo=ests, loo_est_upr_pplo=estuprs,
+             loo_est_lwr_flowtime=estlwrft, loo_est_flowtime=estft, loo_est_upr_flowtime=estuprft,
+             stringsAsFactors=FALSE)
+  return(zz)
 }
 
+cvL1go <- function(parent=L1df) {
+  sites <- decades <- values <- ests <- estlwrs <- estuprs <- NULL
+  duans <- NULL
+  rse <- rsecv <- biascv <- 0; i <- 0
+  for(site in unique(D$site_no)) { i <- i + 1
+    Z <- D[D$site_no != site,]; x <- Z$x; y <- Z$y
+    z <- log10(Z$L1) # LOOK HERE
+    model   <- gam(z~basin_area +
+               s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
+               developed+
+               mixed_forest+shrubland+
+               decade-1+
+               s(x, y), knots=knots, data=Z, #, bs="so", xt=list(bnd=bnd)
+               family="gaussian")
+    duan <- duan_smearing_estimator(model); #print(duan)
+    rse[i] <- sqrt(summary(model)$scale)
+    tmp <- D[D$site_no == site,]; val <- log10(tmp$L1) # LOOK HERE
+    pgk <- predict(model, newdata=tmp, se.fit=TRUE)
+    pgk <- gamIntervals(pgk, gam=model, interval="prediction")
+    res <- (val - pgk$fit); biascv[i] <- mean(res)
+    res <- sum(res^2); rsecv[i] <- sqrt(mean(res))
+    message(site, ", Bias=",biascv[i],", RSE=",rse[i],", RSEcv=",rsecv[i])
+    if(is.null(values)) {
+      sites <- tmp$site_no
+      decades <- tmp$decade
+      duans <- rep(duan, length(tmp$site_no))
+      values <- val
+      ests <- pgk$fit
+      estlwrs <- pgk$lwr
+      estuprs <- pgk$upr
+    } else {
+      s <- (length(values)+1); ss <- s:(s+length(val)-1)
+      sites[ss] <- tmp$site_no
+      decades[ss] <- tmp$decade
+      duans[ss] <- rep(duan, length(val))
+      values[ss] <- val
+      ests[ss] <- pgk$fit
+      estlwrs[ss] <- pgk$lwr
+      estuprs[ss] <- pgk$upr
+    }
+    #print(parent$est_lwr_L1[parent$site_no == site])
+    #print(10^val)
+    #print(parent$est_upr_L1[parent$site_no == site])
+  }
+  print(summary(biascv));   print(summary(abs(biascv)))
+  print(summary(rse))
+  print(summary(rsecv))
+  zz <- data.frame(site_no_bak=sites, decade_bak=decades, loo_bias_corr=duans, orgfit=values,
+             loo_est_lwr_L1=10^estlwrs, loo_est_L1=10^ests, loo_est_upr_L1=10^estuprs,
+             stringsAsFactors = FALSE)
+  return(zz)
+}
+
+cvL1 <- cvL1go()
+#cvPPLO <- cvPPLOgo()
+
+  for(site in sites_to_fill) {
+     tmp <- DDo[DDo$site_no == site,]
+     df <- data.frame(site_no_bak=tmp$site_no, decade_bak=tmp$decade,
+                      loo_bias_corr=NA, orgfit=tmp$L1,
+                      loo_est_lwr_L1=NA, loo_est_L1=NA, loo_est_upr_L1=NA,
+                      stringsAsFactors=FALSE)
+     cvL1 <- rbind(cvL1, df)
+  }
+  cvL1 <- cvL1[order(cvL1$site_no_bak, cvL1$decade_bak),]
+  cvL1$key <-  paste(cvL1$site_no_bak, cvL1$decade_bak, sep=":")
 
 
+L1df$key <- paste(L1df$site_no, L1df$decade, sep=":")
+L1df <- merge(L1df, cvL1, add=TRUE)
+L1df$key         <- NULL
+L1df$site_no_bak <- NULL
+L1df$decade_bak  <- NULL
+L1df$orgfit      <- NULL
+
+  for(site in sites_to_fill) {
+     tmp <- DDo[DDo$site_no == site,]
+     df <- data.frame(site_no_bak=tmp$site_no, decade_bak=tmp$decade,
+                      orgfit=tmp$pplo,
+                      loo_est_lwr_pplo=NA, loo_est_pplo=NA, loo_est_upr_pplo=NA,
+                      loo_est_lwr_flowtime=NA, loo_est_flowtime=NA, loo_est_upr_flowtime=NA,
+                      stringsAsFactors=FALSE)
+     cvPPLO <- rbind(cvPPLO, df)
+  }
+  cvPPLO <- cvPPLO[order(cvPPLO$site_no_bak, cvPPLO$decade_bak),]
+  cvPPLO$key <-  paste(cvPPLO$site_no_bak, cvPPLO$decade_bak, sep=":")
+
+PPLOdf$key <- paste(PPLOdf$site_no, PPLOdf$decade, sep=":")
+PPLOdf <- merge(PPLOdf, cvPPLO, add=TRUE)
+PPLOdf$key         <- NULL
+PPLOdf$site_no_bak <- NULL
+PPLOdf$decade_bak  <- NULL
+PPLOdf$orgfit      <- NULL
