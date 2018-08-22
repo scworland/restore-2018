@@ -1746,11 +1746,11 @@ cvPPLO <- cvPPLOgo()
 
 
 L1df$key <- paste(L1df$site_no, L1df$decade, sep=":")
-L1df <- merge(L1df, cvL1, add=TRUE)
-L1df$key         <- NULL
-L1df$site_no_bak <- NULL
-L1df$decade_bak  <- NULL
-L1df$orgfit      <- NULL
+L1df_loo <- merge(L1df, cvL1, add=TRUE)
+L1df_loo$key         <- NULL
+L1df_loo$site_no_bak <- NULL
+L1df_loo$decade_bak  <- NULL
+L1df_loo$orgfit      <- NULL
 
   for(site in sites_to_fill) {
      tmp <- DDo[DDo$site_no == site,]
@@ -1765,8 +1765,13 @@ L1df$orgfit      <- NULL
   cvPPLO$key <-  paste(cvPPLO$site_no_bak, cvPPLO$decade_bak, sep=":")
 
 PPLOdf$key <- paste(PPLOdf$site_no, PPLOdf$decade, sep=":")
-PPLOdf <- merge(PPLOdf, cvPPLO, add=TRUE)
-PPLOdf$key         <- NULL
-PPLOdf$site_no_bak <- NULL
-PPLOdf$decade_bak  <- NULL
-PPLOdf$orgfit      <- NULL
+PPLOdf_loo <- merge(PPLOdf, cvPPLO, add=TRUE)
+PPLOdf_loo$key         <- NULL
+PPLOdf_loo$site_no_bak <- NULL
+PPLOdf_loo$decade_bak  <- NULL
+PPLOdf_loo$orgfit      <- NULL
+
+
+TrueMean <- 0*PPLOdf_loo$loo_est_pplo + (1-PPLOdf_loo$loo_est_pplo)*L1df_loo$loo_est_L1
+TrueMean[L1df_loo$site_no == "08167000"]
+
