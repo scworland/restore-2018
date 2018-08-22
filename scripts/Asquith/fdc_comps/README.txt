@@ -150,3 +150,9 @@ head(fdc[,1:10]) # inspect the results as shown below for the first ten columns.
 # The results show the decadal fraction of zeroflow as 0.013 for the 1960
 # decade and the minimum daily-mean streamflow as 12 cubic feet per second
 # for 2000 decade.
+
+# Unit conversion to SI units for the flow values could be of interest.
+units <- 0.3048^3 # for a cubic feet to cubic meters conversion
+for(i in c(6:36,43)) fdc[,i] <- fdc[,i]*units
+# The conversion shows that cubic meters per second can readily be made,
+# and the results match the values in this data release.
