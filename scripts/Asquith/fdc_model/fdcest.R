@@ -387,20 +387,20 @@ abline(0,1)
 # appear needed to get the GAM to converge. So the model does not quite match
 # that from survreg().
 
-GM1 <- gam(flowtime~basin_area+
+GM1 <- gam(flowtime~s(basin_area)+
                     s(ppt_mean, k=5)+s(temp_mean, k=4)+s(dni_ann, k=7)+
                     developed+s(grassland)+
                     bedperm+decade-1,
            family=tobit1(left.threshold=  Z$left.threshold,
                          right.threshold=Z$right.threshold), data=Z); summary(GM1)
-GM2 <- gam(flowtime~basin_area+
+GM2 <- gam(flowtime~s(basin_area)+
                     s(ppt_mean, k=5)+s(temp_mean, k=4)+s(dni_ann, k=7)+
                     developed+s(grassland)+
                     bedperm+decade-1+
         s(x,y, bs="so", xt=list(bnd=bnd)), knots=knots,
            family=tobit1(left.threshold=  Z$left.threshold,
                          right.threshold=Z$right.threshold), data=Z); summary(GM2)
-GM3 <- gam(flowtime~basin_area+
+GM3 <- gam(flowtime~s(basin_area)+
                     s(ppt_mean, k=5)+s(temp_mean, k=4)+s(dni_ann, k=7)+
                     developed+s(grassland)+
                     bedperm+decade-1+
@@ -581,7 +581,7 @@ mtext("Predictions cenGAM of PPLO (C3)")
 Z <- D
 x <- Z$x; y <- Z$y
 z <- log10(Z$L1)
-L1   <- gam(z~basin_area +
+L1   <- gam(z~s(basin_area) +
               s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
               developed+
               mixed_forest+shrubland+
@@ -659,7 +659,7 @@ write_feather(L1df, "all_gage_est_L1.feather")
 
 
 z <- D$L2/D$L1 # --------------------------- Coefficient of L-variation
-T2   <- gam(z~basin_area +
+T2   <- gam(z~s(basin_area) +
               s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
               developed+
               mixed_forest+shrubland+
@@ -738,7 +738,7 @@ write_feather(T2df, "all_gage_est_T2.feather")
 
 
 z <- D$T3      # --------------------------- L-skew
-T3   <- gam(z~basin_area +
+T3   <- gam(z~s(basin_area) +
               s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
               developed+
               mixed_forest+shrubland+
@@ -817,7 +817,7 @@ write_feather(T3df, "all_gage_est_T3.feather")
 
 
 z <- D$T4      # --------------------------- L-kurtosis
-T4   <- gam(z~basin_area +
+T4   <- gam(z~s(basin_area) +
               s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
               developed+
               mixed_forest+shrubland+
@@ -895,7 +895,7 @@ write_feather(T4df, "all_gage_est_T4.feather")
 
 
 z <- D$T5      # --------------------------- Fifth L-moment ratio
-T5   <- gam(z~basin_area +
+T5   <- gam(z~s(basin_area) +
               s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
               developed+
               mixed_forest+shrubland+
@@ -974,7 +974,7 @@ write_feather(T5df, "all_gage_est_T5.feather")
 
 
 z <- D$T6      # --------------------------- Sixth L-moment ratio
-T6   <- gam(z~basin_area +
+T6   <- gam(z~s(basin_area) +
               s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
               developed+
               mixed_forest+shrubland+
@@ -1053,7 +1053,7 @@ write_feather(T6df, "all_gage_est_T6.feather")
 
 
 z <- log10(D$f50+1)      # ---------------------------
-F50   <- gam(z~basin_area +
+F50   <- gam(z~s(basin_area) +
                s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
                developed+
                mixed_forest+shrubland+
@@ -1135,7 +1135,7 @@ write_feather(F50df, "all_gage_est_f50.feather")
 
 #sink("right_tail_flowing_fdc.txt")
 z <- log10(D$f90+1)      # ---------------------------
-F90   <- gam(z~basin_area  + s(flood_storage, k=7) +
+F90   <- gam(z~s(basin_area)  + s(flood_storage, k=7) +
               s(ppt_mean, k=5) + s(dni_ann, k=7)+
               developed+
               mixed_forest+shrubland+
@@ -1218,7 +1218,7 @@ write_feather(F90df, "all_gage_est_f90.feather")
 
 
 z <- log10(D$f95+1)      # ---------------------------
-F95   <- gam(z~basin_area + s(flood_storage, k=7) +
+F95   <- gam(z~s(basin_area) + s(flood_storage, k=7) +
                s(ppt_mean, k=5) + s(dni_ann, k=7)+
                developed+
                mixed_forest+shrubland+
@@ -1301,7 +1301,7 @@ write_feather(F95df, "all_gage_est_f95.feather")
 
 
 z <- log10(D$f98+1)      # ---------------------------
-F98   <- gam(z~basin_area + s(flood_storage, k=7) +
+F98   <- gam(z~s(basin_area) + s(flood_storage, k=7) +
                s(ppt_mean, k=5) + s(dni_ann, k=7)+
                developed+
                mixed_forest+shrubland+
@@ -1382,7 +1382,7 @@ write_feather(F98df, "all_gage_est_f98.feather")
 
 
 z <- log10(D$f99+1)      # ---------------------------
-F99   <- gam(z~basin_area + s(flood_storage, k=7) +
+F99   <- gam(z~s(basin_area) + s(flood_storage, k=7) +
                s(ppt_mean, k=5) + s(dni_ann, k=7)+
                developed+
                mixed_forest+shrubland+
@@ -1463,7 +1463,7 @@ write_feather(F99df, "all_gage_est_f99.feather")
 
 
 z <- log10(D$f99.9+1)      # ---------------------------
-F99p9   <- gam(z~basin_area + s(flood_storage, k=7) +
+F99p9   <- gam(z~s(basin_area) + s(flood_storage, k=7) +
                s(ppt_mean, k=5) + s(dni_ann, k=7)+
                developed+
                mixed_forest+shrubland+
@@ -1626,7 +1626,7 @@ cvPPLOgo <- function(parent=PPLOdf, sigma=pplo.sigma, sites_to_fill=sites_to_fil
     Z$left.threshold <-  log10(rep(0, length(Z$nzero)))
     Z$right.threshold <- log10(Z$n)
     Z$flowtime <- log10(Z$n - Z$nzero)
-    model <- gam(flowtime~basin_area+
+    model <- gam(flowtime~s(basin_area)+
                     s(ppt_mean, k=5)+s(temp_mean, k=4)+s(dni_ann, k=7)+
                     developed+s(grassland)+
                     bedperm+decade-1+
@@ -1684,7 +1684,7 @@ cvL1go <- function(parent=L1df) {
   for(site in unique(D$site_no)) { i <- i + 1
     Z <- D[D$site_no != site,]; x <- Z$x; y <- Z$y
     z <- log10(Z$L1) # LOOK HERE
-    model   <- gam(z~basin_area +
+    model   <- gam(z~s(basin_area) +
                s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
                developed+
                mixed_forest+shrubland+
@@ -1730,8 +1730,8 @@ cvL1go <- function(parent=L1df) {
   return(zz)
 }
 
-cvL1 <- cvL1go()
-cvPPLO <- cvPPLOgo()
+cvL1 <- cvL1o <- cvL1go()
+cvPPLO <- cvPPLOo <- cvPPLOgo()
 
   for(site in sites_to_fill) {
      tmp <- DDo[DDo$site_no == site,]
@@ -1747,7 +1747,7 @@ cvPPLO <- cvPPLOgo()
 
 L1df$key <- paste(L1df$site_no, L1df$decade, sep=":")
 L1df_loo <- merge(L1df, cvL1, add=TRUE)
-L1df_loo$key         <- NULL
+L1df_loo$key <- L1df$key <- NULL
 L1df_loo$site_no_bak <- NULL
 L1df_loo$decade_bak  <- NULL
 L1df_loo$orgfit      <- NULL
@@ -1766,12 +1766,43 @@ L1df_loo$orgfit      <- NULL
 
 PPLOdf$key <- paste(PPLOdf$site_no, PPLOdf$decade, sep=":")
 PPLOdf_loo <- merge(PPLOdf, cvPPLO, add=TRUE)
-PPLOdf_loo$key         <- NULL
+PPLOdf_loo$key <- PPLOdf$key <- NULL
 PPLOdf_loo$site_no_bak <- NULL
 PPLOdf_loo$decade_bak  <- NULL
 PPLOdf_loo$orgfit      <- NULL
 
 
-TrueMean <- 0*PPLOdf_loo$loo_est_pplo + (1-PPLOdf_loo$loo_est_pplo)*L1df_loo$loo_est_L1
-TrueMean[L1df_loo$site_no == "08167000"]
+write_feather(PPLOdf_loo, "all_gage_looest_pplo.feather")
 
+write_feather(L1df_loo, "all_gage_looest_L1.feather")
+
+
+#TrueMean <- 0*PPLOdf_loo$loo_est_pplo + (1-PPLOdf_loo$loo_est_pplo)*L1df_loo$loo_est_L1
+EstMeanFlow_loo <- (1-PPLOdf_loo$loo_est_pplo)*L1df_loo$loo_est_L1
+EstMeanFlow <- (1-PPLOdf_loo$est_pplo)*L1df_loo$est_L1
+EstMeanFlow_loo[L1df_loo$site_no == "08167000"]
+EstMeanFlow[L1df_loo$site_no == "08167000"]
+plot(EstMeanFlow, EstMeanFlow_loo, log='xy', pch=16, col=rgb(1,0,0,.3), lwd=0.5, cex=1,
+     xlab="Estimated Decadal Mean Flow", ylab="LOO Estimated Decadle Mean Flow")
+abline(0,1)
+
+TrueMean <- (1-PPLOdf_loo$pplo)*L1df_loo$L1
+
+median(abs(log10(EstMeanFlow_loo) - log10(EstMeanFlow)), na.rm=TRUE)
+
+median(abs(log10(EstMeanFlow)     - log10(TrueMean)), na.rm=TRUE)
+median(abs(log10(EstMeanFlow_loo) - log10(TrueMean)), na.rm=TRUE)
+
+
+TrueMean[L1df$site_no == "08167000"]*(1/0.3048^3)
+EstMeanFlow[L1df$site_no == "08167000"]*(1/0.3048^3)
+EstMeanFlow_loo[L1df$site_no == "08167000"]*(1/0.3048^3)
+
+plot(TrueMean, EstMeanFlow_loo, log="xy", pch=16, col=rgb(1,0,0,.3), lwd=0.5, cex=1,
+     xlab="True Decadal Mean Flow", ylab="LOO Estimated Decadle Mean Flow")
+abline(0,1)
+
+plot(TrueMean, EstMeanFlow_loo, log="xy", pch=16, lwd=0.5, cex=1,
+     col=rgb(1-as.numeric(PPLOdf$pplo == 0),0,as.numeric(PPLOdf$pplo == 0),.3),
+     xlab="True Decadal Mean Flow", ylab="LOO Estimated Decadle Mean Flow")
+abline(0,1)
