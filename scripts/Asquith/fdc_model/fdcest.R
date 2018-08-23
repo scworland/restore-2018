@@ -194,6 +194,8 @@ DD$temp_mean   <- log10(DD$temp_mean)
 DD$basin_area  <- log10(DD$basin_area)
 DD$basin_slope <- log10(DD$basin_slope/100)
 
+# Transformation and Retransformation Functions for the Sin Transformation of
+# Percentile data
 dotransin <- function(p) 2*asin(sqrt(p/100))
 retransin <- function(p)    sin(p/2)^2*100
 
@@ -249,7 +251,10 @@ text(0,5, paste(sites_of_area_bust, collapse=", "), cex=0.6, pos=4)
 #points(DD$CDA[DD$site_no == "08167000"],
 #       DD$basin_area[DD$site_no == "08167000"], pch=16, col=4)
 
-
+DD$site_no[DD$nid_storage < D$norm_storage]
+#[1] "02295420" "02296750"
+DD$decade[DD$nid_storage < D$norm_storage]
+#[1] 2000 2000
 
 
 D <- DD;
@@ -259,7 +264,7 @@ D <- D[D$ed_rch_zone != "1",]
 duan_smearing_estimator <- function(model) { sum(10^residuals(model))/length(residuals(model)) }
 
 save(bnd, D, DD, DDo, knots, bnd,
-     DD_sites_of_area_bust, duan_smearing_estimator, file="DEMO.RData")
+     DD_sites_of_area_bust, duan_smearing_estimator, file="FDCEST.RData")
 
 #  [1] "site_no"             "comid"               "huc12"               "decade"              "dec_long_va"
 #  [6] "dec_lat_va"          "n"                   "nzero"               "pplo"                "min"
@@ -463,7 +468,7 @@ abline(0,1)
 PPLO <- GM3
 save(DDo, DD, D, SM0, GM1, GM2, PPLO, file="PPLOS.RData")
 
-pplo.sigma <- sqrt(mean((predict(PPLO) - Z$flowtime)^2))
+pplo.sigma <- PPLO$pplo.sigma <- sqrt(mean((predict(PPLO) - Z$flowtime)^2))
 PGAM <- gamIntervals(predict(GM3, se.fit=TRUE), gam=GM3, interval="prediction", sigma=pplo.sigma)
 # In an uncensored data world, the following will be a 1:1 relation (see gamIntervals), but we won't fully
 # see that when there is the censoring. But the abline will plot through the middle of the data cloud.
@@ -615,7 +620,6 @@ PGAM <- gamIntervals(predict(L1, se.fit=TRUE), gam=L1, interval="prediction")
 #plot(L1$hat, (PGAM$se.fit/PGAM$residual.scale)^2)
 #abline(0,1)
 sigma <- PGAM$residual.scale[1]
-# Terms invert in upper/lower meaning and hence the flipping during data.frame construction.
 L1df <- data.frame(comid=Z$comid, site_no=Z$site_no, huc12=Z$huc12,
                      decade=Z$decade,
                      dec_long_va=Z$dec_long_va, dec_lat_va=Z$dec_lat_va,
@@ -1790,8 +1794,8 @@ write_feather(L1df_loo, "all_gage_looest_L1.feather")
 
 
 #TrueMean <- 0*PPLOdf_loo$loo_est_pplo + (1-PPLOdf_loo$loo_est_pplo)*L1df_loo$loo_est_L1
-EstMeanFlow_loo <- (1-PPLOdf_loo$loo_est_pplo)*L1df_loo$loo_est_L1
-EstMeanFlow <- (1-PPLOdf_loo$est_pplo)*L1df_loo$est_L1
+EstMeanFlow_loo <- (1-PPLOdf_loo$loo_est_pplo)*L1df_loo$loo_est_L1*L1df_loo$loo_bias_corr
+EstMeanFlow <- (1-PPLOdf_loo$est_pplo)*L1df_loo$est_L1*L1df_loo$bias_corr
 EstMeanFlow_loo[L1df_loo$site_no == "08167000"]
 EstMeanFlow[L1df_loo$site_no == "08167000"]
 plot(EstMeanFlow, EstMeanFlow_loo, log='xy', pch=16, col=rgb(1,0,0,.3), lwd=0.5, cex=1,
