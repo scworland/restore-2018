@@ -251,9 +251,9 @@ text(0,5, paste(sites_of_area_bust, collapse=", "), cex=0.6, pos=4)
 #points(DD$CDA[DD$site_no == "08167000"],
 #       DD$basin_area[DD$site_no == "08167000"], pch=16, col=4)
 
-DD$site_no[DD$nid_storage < D$norm_storage]
+DD$site_no[DD$nid_storage < DD$norm_storage]
 #[1] "02295420" "02296750"
-DD$decade[DD$nid_storage < D$norm_storage]
+DD$decade[DD$nid_storage < DD$norm_storage]
 #[1] 2000 2000
 
 
