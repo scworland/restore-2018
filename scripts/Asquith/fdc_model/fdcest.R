@@ -99,7 +99,7 @@ CDA <- sitefile$contrib_drain_area_va
 CDA[is.na(CDA)] <- sitefile$drain_area_va[is.na(CDA)]
 CDA <- pmin(sitefile$drain_area_va, sitefile$contrib_drain_area_va, na.rm=TRUE)
 sitefile$contrib_drain_area_va <- CDA <- CDA*2.589988 # move to km2
-write.table(sitefile, file="sitefile.txt", quote=FALSE, row.names=FALSE, sep="\t")
+#write.table(sitefile, file="sitefile.txt", quote=FALSE, row.names=FALSE, sep="\t")
 
 LATLONG <- paste0("+proj=longlat +ellps=GRS80 ",
                   "+datum=NAD83 +no_defs +towgs84=0,0,0")
