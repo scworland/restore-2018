@@ -5,6 +5,7 @@ library(GISTools)
 library(RColorBrewer)
 library(lmomco)
 source("a_basemap_funcs.R")
+source("../fdc_model/gamIntervals.R")
 
 load("../fdc_model/FDCEST.RData")
 load("../fdc_model/Models.RData")
@@ -363,12 +364,12 @@ for(comid in unique(H12T5df$comid)) {
       c(NA,diff(H12T5df$est_T5[H12T5df$comid == comid]))
 }
 
-write_feather(H12PPLOdf, "all_gam_huc12_pplo.feather")
-write_feather(H12L1df,   "all_gam_huc12_L1.feather"  )
-write_feather(H12T2df,   "all_gam_huc12_T2.feather"  )
-write_feather(H12T3df,   "all_gam_huc12_T3.feather"  )
-write_feather(H12T4df,   "all_gam_huc12_T4.feather"  )
-write_feather(H12T5df,   "all_gam_huc12_T5.feather"  )
+write_feather(slot(H12PPLOdf, "data"), "all_gam_huc12_pplo.feather")
+write_feather(slot(H12L1df,   "data"),   "all_gam_huc12_L1.feather")
+write_feather(slot(H12T2df,   "data"),   "all_gam_huc12_T2.feather")
+write_feather(slot(H12T3df,   "data"),   "all_gam_huc12_T3.feather")
+write_feather(slot(H12T4df,   "data"),   "all_gam_huc12_T4.feather")
+write_feather(slot(H12T5df,   "data"),   "all_gam_huc12_T5.feather")
 
 
 
@@ -494,3 +495,22 @@ pdf("T5sefit.pdf", useDingbats=FALSE, width=11, height=10)
 dev.off()
 
 
+quantile(H12L1df$delta_est_L1, probs=(1:9)/10, na.rm=TRUE)
+
+L1delCuts <- function(x, n=9, ...) {
+  labs <- 1:n
+  cuts <- c(-1, -.5, -.2, -0.05, 0, 0.05, 0.2, 0.5, 1)
+  cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
+}
+
+pdf("L1del.pdf", useDingbats=FALSE, width=11, height=10)
+  for(d in sort(unique(D$decade))) {
+    if(d == "1950") next
+    map_base(xlim=usr[1:2], ylim=usr[3:4])
+    choropleth_decade(D, x="L1", cuts=L1delCuts)
+    shades <- choropleth_cov(H12L1df, decade=d, x="delta_est_L1", cuts=L1delCuts)
+    legend_est(gage="L1 of streamflow", title=paste0(d," decade\n","Change in L1 of streamflow"),
+               note=TRUE, shades=shades)
+    map_annotation()
+  }
+dev.off()
