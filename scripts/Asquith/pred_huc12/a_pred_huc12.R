@@ -4,6 +4,7 @@ library(sp)
 library(GISTools)
 library(RColorBrewer)
 library(lmomco)
+source("a_basemap_funcs.R")
 
 load("../fdc_model/FDCEST.RData")
 load("../fdc_model/Models.RData")
@@ -46,8 +47,9 @@ spCOV <- SpatialPointsDataFrame(cbind(COV$lon,COV$lat), data=COV,
                                 proj4string=LATLONG)
 spCOV <- spTransform(spCOV, ALBEA)
 XY <- coordinates(spCOV)
-spCOV$x <- spCOV$east <- XY[,1]/1000; spCOV$y <- spCOV$north <- XY[,2]/1000; rm(XY)
+spCOV$x <- spCOV$east <- XY[,1]/1000; spCOV$y <- spCOV$north <- XY[,2]/1000
 
+rm(COV, XY)
 #SO <- over(spCOV, spDNI_1998to2009)
 
 length(spCOV$nid_storage[ spCOV$basin_area == 0])
@@ -131,114 +133,6 @@ spCOV$woody_wetland       <-  dotransin(spCOV$woody_wetland)
 spCOV$bfi                 <-  dotransin(spCOV$bfi)
 
 
-map_annotation <- function() {
-  ss <- list(x=-90000, y=320000)
-  SpatialPolygonsRescale(layout.scale.bar(height=.07), offset=ss, scale=200*1000,
-                         fill=c("transparent", "black"), plot.grid=FALSE, lwd=0.4)
-  ss <- list(x=-90000, y=303000)
-  SpatialPolygonsRescale(layout.scale.bar(height=.08), offset=ss, scale=100*1609.344,
-                         fill=c("transparent", "black"), plot.grid=FALSE, lwd=0.4)
-  xx <- -122000
-  sl <- list(x=xx, y=350000)
-  sr <- list(x=xx+200*1000, y=350000)
-  text(sl, "0",xx, cex=0.6, pos=4); text(sr, "200 kilometers", cex=0.5, pos=4)
-  sl <- list(x=xx, y=283000)
-  sr <- list(x=xx+100*1609.344, y=283000)
-  text(sl, "0", cex=0.6, pos=4); text(sr, "100 miles", cex=0.5, pos=4)
-
-  txt <- paste0("Albers Equal Area Projection\n",
-                "North American Datum of 1983\n",
-                "Base modified from U.S. Geological Survey digital data, 1:24,000")
-  text(-420000, 1590000, txt, pos=4, cex=0.45)
-  plot(GulfStates_modified, add=TRUE, lwd=.4, lty=2)
-  STATES <- c("Texas", "Oklahoma", "Missouri", "Arkansas", "Louisiana", "Mississippi",
-              "Tennessee", "Kentucky", "Alabama", "Georgia", "Florida")
-  STATES <- data.frame(easting=c(-440000, -202900.4,  178000,  178000,  279961.5,
-                                 430000,  710000,  710000,  710000,
-                                 1100000, 1270000),
-                       northing=c(955139.0, 1400000, 1558716.4, 1400000,  795368.5,
-                                  1170000, 1450000, 1600000, 1325000,
-                                  1170000, 800000),
-                       state=STATES)
-  text(STATES$easting, STATES$northing, STATES$state, pos=4, cex=0.7, col=grey(0.3))
-  plot(GL, lwd=0.4, col=grey(0.22), add=TRUE)
-}
-
-map_base <- function(xlim=NA, ylim=NA) {
-  par(lend=1, ljoin=1)
-  plot(spCOV, pch=NA, xlim=usr[1:2], ylim=usr[3:4])
-  plot(GulfStates_modified, add=TRUE, lty=0, col=grey(0.95))
-  polygon(bnd[[1]]$x*1000,bnd[[1]]$y*1000, col=grey(1), lwd=.7)
-}
-
-map_sebase <- function() {
-  k <- 0; ks <- c(0.6,0.8,1.0,1.2,1.4,1.6)
-  for(d in sort(unique(D$decade))) {
-    k <- k + 1
-    plot(D[D$decade == d,], pch=1, lwd=0.7, cex=ks[k], col=grey(0.72), add=TRUE)
-  }
-}
-
-choropleth_decade <-
-  function(data, cuts, x=NA, rev=FALSE, trans=function(t) {t}) {
-    env <- as.environment(as.list(slot(data, "data")))
-    if(x == "T2") {
-      y <- get("L2", envir=env)
-      x <- get("L1", envir=env)
-      x <- y/x
-    } else {
-      x <- get(x, envir=env)
-    }
-    decade <- get("decade", envir=env)
-    cols <- add.alpha(brewer.pal(10,"Spectral"),.7)
-    if(rev) cols <- rev(cols)
-    k <- 0; ks <- c(0.6,0.8,1.0,1.2,1.4,1.6)
-    for(d in sort(unique(decade))) {
-      k <- k + 1
-      tmp <- trans(x[decade == d])
-      shades <- auto.shading(tmp, cutter=cuts, n=9, cols=cols)
-      choropleth(data[data$decade == d,], tmp, pch=1, lwd=0.7, cex=ks[k], shading=shades, add=TRUE)
-    }
-  }
-
-choropleth_cov <-
-  function(data, cuts, x=NA, decade="2000", rev=FALSE, trans=function(t) {t}) {
-    data <- data[data$decade == decade,]
-    env <- as.environment(as.list(slot(data, "data")))
-    x <- get(x,   envir=env)
-    cols <- add.alpha(brewer.pal(10,"Spectral"),.7)
-    if(rev) cols <- rev(cols)
-    tmp <- trans(x)
-    shades <- auto.shading(tmp, cutter=cuts, n=9, cols=cols)
-    choropleth(data, tmp, pch=16, cex=0.4, shading=shades, add=TRUE)
-    return(shades)
-  }
-
-legend_est <- function(gage="", title="", note=TRUE, shades=NA, itgage=TRUE, ...) {
-  tx1 <- paste0("U.S. Geological Survey streamflow-gaging station:\n",
-                "Symbol colored* by observed decadal ",gage)
-  tx2 <- paste0("'COMID' location in the National Hydrography Dataset\n",
-                "version 2: Symbol colored by estimated decadal\n",gage)
-  if(itgage) {
-    legend(-80000, 595000, c(tx1, tx2), bty="n", cex=0.7, pt.cex=c(0.8,0.6),
-           lwd=c(0.7,1), lty=c(0,0), pch=c(1,16), col=c("#3288BDE6","#D53E4FE6"), ...)
-  } else {
-    legend(-80000, 520000, c(tx2), bty="n", cex=0.7, pt.cex=c(0.6),
-           lwd=c(1), lty=c(0), pch=c(16), col=c("#D53E4FE6"), ...)
-  }
-  choro.legend(850000, 690000, shades, cex=0.7, bty="n", box.col=grey(1), bg=grey(1),
-               fmt="%g", xjust=0, title=title)
-  if(note) {
-    text(270000, 320000,
-         "* Note that symbol size represents decade\n (1950 [smallest circle] through 2000 [largest circle]).",
-         cex=.6, pos=4)
-  }
-}
-
-setxt1 <- "standard error of fit"
-setxt2 <- "Standard error of fit"
-
-
 
 EPo <- predict(PPLO, newdata=spCOV, se.fit=TRUE); length(EPo$fit)
 EPo <- gamIntervals(EPo, gam=PPLO, interval="prediction", sigma=PPLO$pplo.sigma[1])
@@ -264,8 +158,8 @@ H12PPLOdf <- SpatialPointsDataFrame(cbind(H12PPLOdf$dec_long_va,H12PPLOdf$dec_la
 H12PPLOdf <- spTransform(H12PPLOdf, ALBEA)
 
 
-quantile(H12PPLOdf$est_pplo, probs=(1:9)/10, na.rm=TRUE)
-quantile(H12PPLOdf$se.fit_pplo,    probs=(1:9)/10, na.rm=TRUE)
+quantile(H12PPLOdf$est_pplo,    probs=(1:9)/10, na.rm=TRUE)
+quantile(H12PPLOdf$se.fit_pplo, probs=(1:9)/10, na.rm=TRUE)
 
 pploCuts <- function(x, n=9, ...) {
    labs <- 1:n
@@ -295,9 +189,8 @@ H12L1df <- SpatialPointsDataFrame(cbind(H12L1df$dec_long_va,H12L1df$dec_lat_va),
 H12L1df <- spTransform(H12L1df, ALBEA)
 
 
-
 quantile(log10(H12L1df$est_L1), probs=(1:9)/10, na.rm=TRUE)
-quantile(H12L1df$se.fit_L1,    probs=(1:9)/10, na.rm=TRUE)
+quantile(H12L1df$se.fit_L1,     probs=(1:9)/10, na.rm=TRUE)
 
 L1Cuts <- function(x, n=9, ...) {
   labs <- 1:n
@@ -328,8 +221,8 @@ H12T2df <- SpatialPointsDataFrame(cbind(H12T2df$dec_long_va,H12T2df$dec_lat_va),
 H12T2df <- spTransform(H12T2df, ALBEA)
 
 
-quantile(H12T2df$est_T2, probs=(1:9)/10, na.rm=TRUE)
-quantile(H12T2df$se.fit_T2,    probs=(1:9)/10, na.rm=TRUE)
+quantile(H12T2df$est_T2,    probs=(1:9)/10, na.rm=TRUE)
+quantile(H12T2df$se.fit_T2, probs=(1:9)/10, na.rm=TRUE)
 
 T2Cuts <- function(x, n=9, ...) {
   labs <- 1:n
@@ -359,8 +252,8 @@ H12T3df <- SpatialPointsDataFrame(cbind(H12T3df$dec_long_va,H12T3df$dec_lat_va),
 H12T3df <- spTransform(H12T3df, ALBEA)
 
 
-quantile(H12T3df$est_T3, probs=(1:9)/10, na.rm=TRUE)
-quantile(H12T3df$se.fit_T3,    probs=(1:9)/10, na.rm=TRUE)
+quantile(H12T3df$est_T3,    probs=(1:9)/10, na.rm=TRUE)
+quantile(H12T3df$se.fit_T3, probs=(1:9)/10, na.rm=TRUE)
 
 T3Cuts <- function(x, n=9, ...) {
   labs <- 1:n
@@ -389,8 +282,8 @@ H12T4df <- SpatialPointsDataFrame(cbind(H12T4df$dec_long_va,H12T4df$dec_lat_va),
                                     data=H12T4df, proj4string=LATLONG)
 H12T4df <- spTransform(H12T4df, ALBEA)
 
-quantile(H12T4df$est_T4, probs=(1:9)/10, na.rm=TRUE)
-quantile(H12T4df$se.fit_T4,    probs=(1:9)/10, na.rm=TRUE)
+quantile(H12T4df$est_T4,    probs=(1:9)/10, na.rm=TRUE)
+quantile(H12T4df$se.fit_T4, probs=(1:9)/10, na.rm=TRUE)
 
 T4Cuts <- function(x, n=9, ...) {
   labs <- 1:n
@@ -419,8 +312,8 @@ H12T5df <- SpatialPointsDataFrame(cbind(H12T5df$dec_long_va,H12T5df$dec_lat_va),
                                     data=H12T5df, proj4string=LATLONG)
 H12T5df <- spTransform(H12T5df, ALBEA)
 
-quantile(H12T5df$est_T5, probs=(1:9)/10, na.rm=TRUE)
-quantile(H12T5df$se.fit_T5,    probs=(1:9)/10, na.rm=TRUE)
+quantile(H12T5df$est_T5,    probs=(1:9)/10, na.rm=TRUE)
+quantile(H12T5df$se.fit_T5, probs=(1:9)/10, na.rm=TRUE)
 
 
 T5Cuts <- function(x, n=9, ...) {
@@ -435,6 +328,47 @@ T5CutsSE <- function(x, n=9, ...) {
             0.0133, 0.0140, 0.0151, 0.0172)
   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
+
+
+#-----------------------------------------------------------------------
+
+H12PPLOdf$delta_est_pplo <- NA
+for(comid in unique(H12PPLOdf$comid)) {
+  H12PPLOdf$delta_est_pplo[        H12PPLOdf$comid == comid] <-
+      c(NA,diff(H12PPLOdf$est_pplo[H12PPLOdf$comid == comid]))
+}
+H12L1df$delta_est_L1 <- NA
+for(comid in unique(H12L1df$comid)) {
+   H12L1df$delta_est_L1[       H12L1df$comid == comid] <-
+      c(NA,diff(H12L1df$est_L1[H12L1df$comid == comid]))
+}
+H12T2df$delta_est_T2 <- NA
+for(comid in unique(H12T2df$comid)) {
+   H12T2df$delta_est_T2[       H12T2df$comid == comid] <-
+      c(NA,diff(H12T2df$est_T2[H12T2df$comid == comid]))
+}
+H12T3df$delta_est_T3 <- NA
+for(comid in unique(H12T3df$comid)) {
+   H12T3df$delta_est_T3[       H12T3df$comid == comid] <-
+      c(NA,diff(H12T3df$est_T3[H12T3df$comid == comid]))
+}
+H12T4df$delta_est_T4 <- NA
+for(comid in unique(H12T4df$comid)) {
+   H12T4df$delta_est_T4[       H12T4df$comid == comid] <-
+      c(NA,diff(H12T4df$est_T4[H12T4df$comid == comid]))
+}
+H12T5df$delta_est_T5 <- NA
+for(comid in unique(H12T5df$comid)) {
+   H12T5df$delta_est_T5[       H12T5df$comid == comid] <-
+      c(NA,diff(H12T5df$est_T5[H12T5df$comid == comid]))
+}
+
+write_feather(H12PPLOdf, "all_gam_huc12_pplo.feather")
+write_feather(H12L1df,   "all_gam_huc12_L1.feather"  )
+write_feather(H12T2df,   "all_gam_huc12_T2.feather"  )
+write_feather(H12T3df,   "all_gam_huc12_T3.feather"  )
+write_feather(H12T4df,   "all_gam_huc12_T4.feather"  )
+write_feather(H12T5df,   "all_gam_huc12_T5.feather"  )
 
 
 
@@ -558,6 +492,5 @@ pdf("T5sefit.pdf", useDingbats=FALSE, width=11, height=10)
     map_annotation()
   }
 dev.off()
-
 
 
