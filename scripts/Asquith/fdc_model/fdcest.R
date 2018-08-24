@@ -466,7 +466,7 @@ points(Z$pplo, C3pplo, col=3)
 abline(0,1)
 
 PPLO <- GM3
-save(DDo, DD, D, SM0, GM1, GM2, PPLO, file="PPLOS.RData")
+save(DDo, DD, D, SM0, GM1, GM2, GM3, PPLO, file="PPLOS.RData")
 
 pplo.sigma <- PPLO$pplo.sigma <- sqrt(mean((predict(PPLO) - Z$flowtime)^2))
 PGAM <- gamIntervals(predict(GM3, se.fit=TRUE), gam=GM3, interval="prediction", sigma=pplo.sigma)
