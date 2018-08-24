@@ -440,9 +440,11 @@ T5CutsSE <- function(x, n=9, ...) {
 
 #-----------------------------------------------------------------------
 pdf("PPLOfit_junk.pdf", useDingbats=FALSE, width=11, height=10)
-  plot(spRESTORE_MGCV_BND)
-  usr <- par()$usr
+  plot(spRESTORE_MGCV_BND)  # by creation of the PDF, we can get a handle on a global
+  usr <- par()$usr # setting of the plotting limits by preserving the usr.
 dev.off()
+unlink("PPLOfit_junk.pdf")  # just quietly throw the file away
+
 pdf("PPLOfit.pdf", useDingbats=FALSE, width=11, height=10)
   for(d in sort(unique(D$decade))) {
     map_base(xlim=usr[1:2], ylim=usr[3:4])
