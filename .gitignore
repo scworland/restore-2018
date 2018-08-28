@@ -24,3 +24,7 @@ scripts/Asquith/fdc_model/T4.pdf
 scripts/Asquith/fdc_model/T5.pdf
 scripts/Asquith/fdc_model/T6.pdf
 scripts/Asquith/fdc_model/ZERO.pdf
+scripts/Asquith/fdc_model/true_mean_comparison.pdf
+scripts/Asquith/fdc_model/test_survreg_gam.pdf
+scripts/Asquith/fdc_model/more_drainagearea_comparison.pdf
+scripts/Asquith/fdc_model/diagnostic_on_area.pdf
