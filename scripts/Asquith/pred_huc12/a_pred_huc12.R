@@ -58,7 +58,7 @@ length(spCOV$norm_storage[spCOV$basin_area == 0])
 
 
 length(spCOV$flood_storage[spCOV$flood_storage > 1]) # [1] 35
-boxplot(spCOV$flood_storage)
+#boxplot(spCOV$flood_storage)
 #spCOV <- spCOV[spCOV$flood_storage <= 1,] # This is about 1 meter of watershed depth equivalent
 # which is close to the maximum observed in the streamgage network itself. But if the GAM
 # models PPLO-->T6 don't use flood_storage, just don't delete those.
@@ -170,7 +170,7 @@ pploCuts <- function(x, n=9, ...) {
 
 pploCutsSE <- function(x, n=9, ...) {
    labs <- 1:n
-   cuts <- c(0.0152, 0.0167, 0.0189, 0.0213, 0.0236, 0.0253, 0.0274, 0.0301, 0.0354)
+   cuts <- c(0.0162, 0.0177, 0.0200, 0.0228, 0.0254, 0.0276, 0.0302, 0.0340, 0.0422)
    cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
@@ -195,13 +195,13 @@ quantile(H12L1df$se.fit_L1,     probs=(1:9)/10, na.rm=TRUE)
 
 L1Cuts <- function(x, n=9, ...) {
   labs <- 1:n
-  cuts <- c(-0.383, -0.104, 0.067, 0.219, 0.375, 0.546, 0.758, 1.071, 1.575)
+  cuts <- c(-0.4, -0.1, 0.08, 0.22, 0.37, 0.55, 0.76, 1.07, 1.58)
   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
 L1CutsSE <- function(x, n=9, ...) {
   labs <- 1:n
-  cuts <- c(0.0157, 0.0165, 0.0171, 0.0177, 0.0183, 0.019, 0.020, 0.0214, 0.0243)
+  cuts <- c(0.0157, 0.0165, 0.0172, 0.0178, 0.0185, 0.0193, 0.0203, 0.02149, 0.0250)
   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
@@ -215,7 +215,7 @@ H12T2df <- data.frame(comid=spCOV$comid, huc12=spCOV$huc12,
                      est_lwr_T2=ET2$lwr,
                      est_T2    =ET2$fit,
                      est_upr_T2=ET2$upr, stringsAsFactors=FALSE)
-H12T2df$rse_T2 <- sigma
+H12T2df$rse_T2 <- ET2$residual.scale[1]
 H12T2df$se.fit_T2 <- ET2$se.fit
 H12T2df <- SpatialPointsDataFrame(cbind(H12T2df$dec_long_va,H12T2df$dec_lat_va),
                                     data=H12T2df, proj4string=LATLONG)
@@ -227,13 +227,13 @@ quantile(H12T2df$se.fit_T2, probs=(1:9)/10, na.rm=TRUE)
 
 T2Cuts <- function(x, n=9, ...) {
   labs <- 1:n
-  cuts <- c(0.55, 0.60, 0.64, 0.67, 0.70, 0.73, 0.76, 0.80, 0.86)
+  cuts <- c(0.54, 0.60, 0.63, 0.67, 0.70, 0.73, 0.77, 0.81, 0.86)
   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
 T2CutsSE <- function(x, n=9, ...) {
   labs <- 1:n
-  cuts <- c(0.0106, 0.0111, 0.0115, 0.0119, 0.0123, 0.0127, 0.0134, 0.0144, 0.0163)
+  cuts <- c(0.0106, 0.0111, 0.0115, 0.0120, 0.0125, 0.0130, 0.0138, 0.0150, 0.0170)
   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
@@ -246,7 +246,7 @@ H12T3df <- data.frame(comid=spCOV$comid, huc12=spCOV$huc12,
                      est_lwr_T3=ET3$lwr,
                      est_T3    =ET3$fit,
                      est_upr_T3=ET3$upr, stringsAsFactors=FALSE)
-H12T3df$rse_T3 <- sigma
+H12T3df$rse_T3 <- ET3$residual.scale[1]
 H12T3df$se.fit_T3 <- ET3$se.fit
 H12T3df <- SpatialPointsDataFrame(cbind(H12T3df$dec_long_va,H12T3df$dec_lat_va),
                                     data=H12T3df, proj4string=LATLONG)
@@ -258,13 +258,13 @@ quantile(H12T3df$se.fit_T3, probs=(1:9)/10, na.rm=TRUE)
 
 T3Cuts <- function(x, n=9, ...) {
   labs <- 1:n
-  cuts <- c(0.53, 0.57, 0.60, 0.63, 0.66, 0.68, 0.71, 0.76, 0.83)
+  cuts <- c(0.53, 0.57, 0.60, 0.63, 0.66, 0.68, 0.71, 0.77, 0.84)
   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
 T3CutsSE <- function(x, n=9, ...) {
   labs <- 1:n
-  cuts <- c(0.0104, 0.0109, 0.0113, 0.0117, 0.0121, 0.0126, 0.0132, 0.0142, 0.0161)
+  cuts <- c(0.0100, 0.0103, 0.0107, 0.0110, 0.0115, 0.0120, 0.0127, 0.0138, 0.0158)
   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
@@ -277,7 +277,7 @@ H12T4df <- data.frame(comid=spCOV$comid, huc12=spCOV$huc12,
                      est_lwr_T4=ET4$lwr,
                      est_T4    =ET4$fit,
                      est_upr_T4=ET4$upr, stringsAsFactors=FALSE)
-H12T4df$rse_T4 <- sigma
+H12T4df$rse_T4 <- ET4$residual.scale[1]
 H12T4df$se.fit_T4 <- ET4$se.fit
 H12T4df <- SpatialPointsDataFrame(cbind(H12T4df$dec_long_va,H12T4df$dec_lat_va),
                                     data=H12T4df, proj4string=LATLONG)
@@ -288,13 +288,13 @@ quantile(H12T4df$se.fit_T4, probs=(1:9)/10, na.rm=TRUE)
 
 T4Cuts <- function(x, n=9, ...) {
   labs <- 1:n
-  cuts <- c(0.34, 0.40, 0.43, 0.46, 0.47, 0.50, 0.54, 0.60, 0.71)
+  cuts <- c(0.33, 0.39, 0.42, 0.45, 0.47, 0.50, 0.53, 0.62, 0.72)
   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
 T4CutsSE <- function(x, n=9, ...) {
   labs <- 1:n
-  cuts <- c(0.0113, 0.0118, 0.0122, 0.0125, 0.0130, 0.0135, 0.0142, 0.0154, 0.0175)
+  cuts <- c(0.0105, 0.0110, 0.0115, 0.0119, 0.0123, 0.0129, 0.0137, 0.0149, 0.0171)
   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
@@ -307,7 +307,7 @@ H12T5df <- data.frame(comid=spCOV$comid, huc12=spCOV$huc12,
                      est_lwr_T5=ET5$lwr,
                      est_T5    =ET5$fit,
                      est_upr_T5=ET5$upr, stringsAsFactors=FALSE)
-H12T5df$rse_T5 <- sigma
+H12T5df$rse_T5 <- ET5$residual.scale[1]
 H12T5df$se.fit_T5 <- ET5$se.fit
 H12T5df <- SpatialPointsDataFrame(cbind(H12T5df$dec_long_va,H12T5df$dec_lat_va),
                                     data=H12T5df, proj4string=LATLONG)
@@ -319,14 +319,14 @@ quantile(H12T5df$se.fit_T5, probs=(1:9)/10, na.rm=TRUE)
 
 T5Cuts <- function(x, n=9, ...) {
   labs <- 1:n
-  cuts <- c(0.23, 0.29, 0.32, 0.35, 0.37, 0.39, 0.42, 0.48, 0.60)
+  cuts <- c(0.22, 0.28, 0.32, 0.34, 0.36, 0.39, 0.42, 0.50, 0.61)
   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
 T5CutsSE <- function(x, n=9, ...) {
   labs <- 1:n
-  cuts <- c(0.0111, 0.0116, 0.0120, 0.0124, 0.0128,
-            0.0133, 0.0140, 0.0151, 0.0172)
+  cuts <- c(0.0102, 0.0107, 0.0111, 0.0115, 0.0119,
+            0.0125, 0.0132, 0.0144, 0.0164)
   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
@@ -400,15 +400,17 @@ pdf("PPLOsefit.pdf", useDingbats=FALSE, width=11, height=10)
 dev.off()
 #-----------------------------------------------------------------------
 pdf("L1fit.pdf", useDingbats=FALSE, width=11, height=10)
+  H12L1df$est_L1_log10 <- log10(H12L1df$est_L1)
   for(d in sort(unique(D$decade))) {
     map_base(xlim=usr[1:2], ylim=usr[3:4])
     choropleth_decade(D, x="L1", cuts=L1Cuts, trans=log10)
-    shades <- choropleth_cov(H12L1df, decade=d, x="est_L1", cuts=L1Cuts)
+    shades <- choropleth_cov(H12L1df, decade=d, x="est_L1_log10", cuts=L1Cuts)
     legend_est(gage="mean streamflow", title=paste0(d," decade\n","mean streamflow, in log10(cms)"),
                note=TRUE, shades=shades)
     map_annotation()
   }
-dev.off()
+  H12L1df$est_L1_log10 <- NULL
+dev.off();
 pdf("L1sefit.pdf", useDingbats=FALSE, width=11, height=10)
   for(d in sort(unique(D$decade))) {
     map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase()
@@ -509,7 +511,7 @@ pdf("L1del.pdf", useDingbats=FALSE, width=11, height=10)
     map_base(xlim=usr[1:2], ylim=usr[3:4])
     choropleth_decade(D, x="L1", cuts=L1delCuts)
     shades <- choropleth_cov(H12L1df, decade=d, x="delta_est_L1", cuts=L1delCuts)
-    legend_est(gage="L1 of streamflow", title=paste0(d," decade\n","Change in L1 of streamflow"),
+    legend_est(gage="L1 change of streamflow", title=paste0(d," decade\n","Change in L1 of streamflow"),
                note=TRUE, shades=shades)
     map_annotation()
   }
