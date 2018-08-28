@@ -9,6 +9,7 @@ library(Lmoments)
 library(survival)
 library(cenGAM)
 library(hydroGOF)
+
 source("gamIntervals.R")
 
 
@@ -186,25 +187,40 @@ DD$bfi                 <-  dotransin(DD$bfi)
 
 DDo <- DD
 
-
-plot(DD$CDA, DD$basin_area, lwd=0.5,
-     xlab="log10(NWIS CDA)", ylab="log10(NHDplus basin area")
+pdf("first_diagnostic_on_area.pdf", useDingbats=FALSE, width=7.5, height=6.5)
+par(mgp=c(3,0.5,0)) # going to tick to the inside, change some parameters
+plot(10^DDo$CDA, 10^DDo$basin_area, lwd=0.5, xaxt="n", yaxt="n", log="xy",
+     xlab="", ylab="", xlim=c(1,300000), ylim=c(1,300000))
+add.log.axis(side=2,      tcl=0.8*abs(par()$tcl), two.sided=TRUE)
+add.log.axis(logs=c(1),   tcl=-0.5*abs(par()$tcl), side=2, two.sided=TRUE)
+add.log.axis(logs=c(1),   tcl=+1.3*abs(par()$tcl), side=2, two.sided=TRUE)
+add.log.axis(side=1,      tcl=0.8*abs(par()$tcl), two.sided=TRUE)
+add.log.axis(logs=c(1),   tcl=-0.5*abs(par()$tcl), side=1, two.sided=TRUE)
+add.log.axis(logs=c(1),   tcl=+1.3*abs(par()$tcl), side=1, two.sided=TRUE)
+add.log.axis(logs=c(1, 2, 3, 4, 6), side=2, make.labs=TRUE, las=1,
+             label="National Hydrography Dataset Basin Area, in km^2")
+add.log.axis(logs=c(1, 2, 3, 4, 6), side=1, make.labs=TRUE, las=1,
+             label="USGS National Water Information System Contributing Drainage Area, in km^2")
 abline(0,1)
 abline(1/3,1,lty=2); abline(-1/3,1,lty=2)
 abline(1/2,1,lty=2); abline(-1/2,1,lty=3)
 mtext("Diagnostic check on watershed areas")
-jnk <- abs(DD$basin_area - DD$CDA)
+jnk <- abs(DDo$basin_area - DDo$CDA)
 summary(jnk[jnk > 1/2])
-sites_of_area_bust <- unique(DD$site_no[jnk > 1/2])
-DD_sites_of_area_bust <- DD[DD$site_no == sites_of_area_bust[1], ]
+sites_of_area_bust <- unique(DDo$site_no[jnk > 1/2])
+DD_sites_of_area_bust <- DDo[DDo$site_no == sites_of_area_bust[1], ]
 for(site in sites_of_area_bust[2:length(sites_of_area_bust)]) {
-  DD_sites_of_area_bust <- rbind(DD_sites_of_area_bust,DD[DD$site_no == site, ] )
+  DD_sites_of_area_bust <- rbind(DD_sites_of_area_bust,DDo[DDo$site_no == site, ] )
 }
+DD <- DDo
 for(site in sites_of_area_bust) {
-  points(DD$CDA[DD$site_no == site], DD$basin_area[DD$site_no == site], pch=16, col=2)
+  points(10^DDo$CDA[DDo$site_no == site], 10^DDo$basin_area[DDo$site_no == site], pch=16, col=2)
   DD <- DD[DD$site_no != site,]
 }
 text(0,5, paste(sites_of_area_bust, collapse=", "), cex=0.6, pos=4)
+par(mgp=c(3,1,0)) # restore defaults
+dev.off()
+
 #points(DD$CDA[DD$site_no == "08167000"],
 #       DD$basin_area[DD$site_no == "08167000"], pch=16, col=4)
 
@@ -213,6 +229,36 @@ DD$site_no[DD$nid_storage < DD$norm_storage]
 DD$decade[DD$nid_storage < DD$norm_storage]
 #[1] 2000 2000
 
+
+ks <- data.frame(decade=DD$decade, cex=NA)
+k <- 0; kss <- c(0.6,0.8,1.0,1.2,1.4,1.6)
+for(d in sort(unique(ks$decade))) {
+   k <- k + 1
+   ks$cex[ks$decade == d] <- kss[k]
+}
+pdf("second_diagnostic_on_area.pdf", useDingbats=FALSE, width=7.5, height=6.5)
+par(mgp=c(3,0.5,0)) # going to tick to the inside, change some parameters
+plot(10^DD$CDA, 10^DD$basin_area, log="xy", pch=1, lwd=1,
+     xaxt="n", yaxt="n", cex=ks$cex, xlim=c(1,300000), ylim=c(1,300000),
+     col=rgb(1-as.numeric(DD$pplo == 0),0,as.numeric(DD$pplo == 0),.5),
+     xlab="", ylab="")
+abline(0,1)
+add.log.axis(side=2,      tcl=0.8*abs(par()$tcl), two.sided=TRUE)
+add.log.axis(logs=c(1),   tcl=-0.5*abs(par()$tcl), side=2, two.sided=TRUE)
+add.log.axis(logs=c(1),   tcl=+1.3*abs(par()$tcl), side=2, two.sided=TRUE)
+add.log.axis(side=1,      tcl=0.8*abs(par()$tcl), two.sided=TRUE)
+add.log.axis(logs=c(1),   tcl=-0.5*abs(par()$tcl), side=1, two.sided=TRUE)
+add.log.axis(logs=c(1),   tcl=+1.3*abs(par()$tcl), side=1, two.sided=TRUE)
+add.log.axis(logs=c(1, 2, 3, 4, 6), side=2, make.labs=TRUE, las=1,
+             label="National Hydrography Dataset Basin Area, in km^2")
+add.log.axis(logs=c(1, 2, 3, 4, 6), side=1, make.labs=TRUE, las=1,
+             label="USGS National Water Information System Contributing Drainage Area, in km^2")
+
+legend(1,200000, c("Watershed for which no zero-flow days were observed (size is decade)",
+                   "Watershed for which some zero-flow days were observed (size is decade)"), bty="n",
+          col=c(4,2), pch=c(1,1), cex = 0.8)
+par(mgp=c(3,1,0)) # restore defaults
+dev.off()
 
 D <- DD;
 
@@ -351,27 +397,27 @@ abline(0,1)
 
 GM1 <- gam(flowtime~s(basin_area)+
                     s(ppt_mean, k=5)+s(temp_mean, k=4)+s(dni_ann, k=7)+
-                    developed+s(grassland)+
+                    developed+grassland+
                     bedperm+decade-1,
            family=tobit1(left.threshold=  Z$left.threshold,
                          right.threshold=Z$right.threshold), data=Z); summary(GM1)
 GM2 <- gam(flowtime~s(basin_area)+
                     s(ppt_mean, k=5)+s(temp_mean, k=4)+s(dni_ann, k=7)+
-                    developed+s(grassland)+
+                    developed+grassland+
                     bedperm+decade-1+
         s(x,y, bs="so", xt=list(bnd=bnd)), knots=knots,
            family=tobit1(left.threshold=  Z$left.threshold,
                          right.threshold=Z$right.threshold), data=Z); summary(GM2)
 GM3 <- gam(flowtime~s(basin_area, k=5)+
                     s(ppt_mean, k=5)+s(temp_mean, k=4)+s(dni_ann, k=7)+
-                    developed+s(grassland)+
+                    developed+grassland+
                     bedperm+decade-1+
         s(x,y), knots=knots,
            family=tobit1(left.threshold=  Z$left.threshold,
                          right.threshold=Z$right.threshold), data=Z); summary(GM3)
 GM4 <- gam(flowtime~s(basin_area, k=5)+
-                    s(ppt_mean, k=5)+s(temp_mean, k=4)+s(dni_ann, k=7) + s(dni_mar, k=7)+
-                    developed+s(grassland)+
+                    s(ppt_mean, k=5)+s(temp_mean, k=4)+s(dni_ann, k=7)+s(dni_mar, k=7)+
+                    developed+grassland+
                     bedperm+decade-1+
         s(x,y), knots=knots,
            family=tobit1(left.threshold=  Z$left.threshold,
@@ -421,11 +467,11 @@ points(Z$pplo, C2pplo, col=4)
 points(Z$pplo, C3pplo, col=3)
 abline(0,1)
 
-PPLO <- GM3
-save(DDo, DD, D, SM0, GM1, GM2, GM3, PPLO, file="PPLOS.RData")
+PPLO <- GM4
+save(DDo, DD, D, SM0, GM1, GM2, GM3, GM4, PPLO, file="PPLOS.RData")
 
 pplo.sigma <- PPLO$pplo.sigma <- sqrt(mean((predict(PPLO) - Z$flowtime)^2))
-PGAM <- gamIntervals(predict(GM3, se.fit=TRUE), gam=GM3, interval="prediction", sigma=pplo.sigma)
+PGAM <- gamIntervals(predict(PPLO, se.fit=TRUE), gam=PPLO, interval="prediction", sigma=pplo.sigma)
 # In an uncensored data world, the following will be a 1:1 relation (see gamIntervals), but we won't fully
 # see that when there is the censoring. But the abline will plot through the middle of the data cloud.
 #plot(PPLO$hat, (PGAM$se.fit/PGAM$residual.scale)^2)
@@ -478,7 +524,7 @@ PPLOdf <- PPLOdf[order(PPLOdf$site_no, PPLOdf$decade),]
 for(site in sites_to_fill) {
   tmp <- DDo[DDo$site_no == site,]
   jnk <- predict(PPLO, newdata=tmp, se.fit=TRUE)
-  pgk <- gamIntervals(jnk, gam=GM3, interval="prediction", sigma=pplo.sigma)
+  pgk <- gamIntervals(jnk, gam=PPLO, interval="prediction", sigma=pplo.sigma)
   df <- data.frame(comid=tmp$comid, site_no=tmp$site_no, huc12=tmp$huc12,
                    decade=tmp$decade,
                    dec_long_va=tmp$dec_long_va, dec_lat_va=tmp$dec_lat_va,
@@ -554,16 +600,15 @@ mtext("Predictions cenGAM of PPLO (C3)")
 Z <- D
 x <- Z$x; y <- Z$y
 z <- log10(Z$L1)
-L1   <- gam(z~s(basin_area) +
-              s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
+L1   <- gam(z~s(basin_area) + s(basin_slope, k=5)+
+              s(ppt_mean, k=5)+ s(dni_ann, k=7)+
               developed+
-              mixed_forest+shrubland+
               decade-1+
               s(x, y), knots=knots, data=Z, # , bs="so", xt=list(bnd=bnd)
               family="gaussian")
 L1$duan_smearing <- duan_smearing_estimator(L1)
 pdf("L1.pdf", useDingbats=FALSE)
-  plot(z, fitted.values(L1))
+  plot(z, fitted.values(L1), col=3)
   abline(0,1)
   plot(L1, scheme=2, residuals=TRUE)
   points(Z$x, Z$y, pch=4, lwd=.5, cex=0.9, col=8)
@@ -629,12 +674,11 @@ for(site in sites_to_fill) {
 #write_feather(L1df, "all_gage_est_L1.feather")
 
 
-
 z <- D$L2/D$L1 # --------------------------- Coefficient of L-variation
-T2   <- gam(z~s(basin_area) +
+T2   <- gam(z~s(basin_area) + s(basin_slope, k=5)+
               s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
               developed+
-              mixed_forest+shrubland+
+              s(flood_storage, k=5)+
               decade-1+
               s(x, y), knots=knots, data=D, # , bs="so", xt=list(bnd=bnd)
               family="gaussian")
@@ -642,6 +686,7 @@ pdf("T2.pdf", useDingbats=FALSE)
   plot(z, fitted.values(T2))
   abline(0,1)
   plot(T2, scheme=2, residuals=TRUE)
+
   points(D$x, D$y, pch=4, lwd=.5, cex=0.9, col=8)
   points(knots$x, knots$y, pch=16, cex=1.1, col=4)
   text(100, 500, "Tau2")
@@ -710,10 +755,9 @@ for(site in sites_to_fill) {
 
 
 z <- D$T3      # --------------------------- L-skew
-T3   <- gam(z~s(basin_area) +
+T3   <- gam(z~s(basin_area)+ s(basin_slope, k=5)+
               s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
-              developed+
-              mixed_forest+shrubland+
+              s(flood_storage, k=5)+
               decade-1+
               s(x, y), knots=knots, data=D, #, bs="so", xt=list(bnd=bnd)
               family="gaussian")
@@ -789,10 +833,9 @@ for(site in sites_to_fill) {
 
 
 z <- D$T4      # --------------------------- L-kurtosis
-T4   <- gam(z~s(basin_area) +
+T4   <- gam(z~s(basin_area) +s(basin_slope, k=5)+
               s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
-              developed+
-              mixed_forest+shrubland+
+              s(flood_storage, k=5)+
               decade-1+
               s(x, y), knots=knots, data=D, # , bs="so", xt=list(bnd=bnd)
               family="gaussian")
@@ -867,10 +910,9 @@ for(site in sites_to_fill) {
 
 
 z <- D$T5      # --------------------------- Fifth L-moment ratio
-T5   <- gam(z~s(basin_area) +
-              s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
-              developed+
-              mixed_forest+shrubland+
+T5   <- gam(z~s(basin_area) +s(basin_slope, k=5)+
+              s(temp_mean, k=4) + s(dni_ann, k=7)+
+              s(flood_storage, k=5)+
               decade-1+
               s(x, y), knots=knots, data=D, #, bs="so", xt=list(bnd=bnd)
               family="gaussian")
@@ -949,7 +991,7 @@ z <- D$T6      # --------------------------- Sixth L-moment ratio
 T6   <- gam(z~s(basin_area) +
               s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
               developed+
-              mixed_forest+shrubland+
+              mixed_forest+shrubland+s(flood_storage)+
               decade-1+
               s(x, y), knots=knots, data=D, #, bs="so", xt=list(bnd=bnd)
               family="gaussian")
@@ -1060,495 +1102,3 @@ plot(T6df$T6, T6df$est_T6,
 mtext(paste0("T6: NSE=",round(NSE(T6df$est_T6, T6df$T6), digits=2)))
 abline(0,1)
 
-
-
-cvPPLOgo <- function(parent=PPLOdf, sigma=pplo.sigma, sites_to_fill=sites_to_fill) {
-  sites <- decades <- values <- ests <- estlwrs <- estuprs <- NULL
-  estft <- estlwrft <- estuprft <- NULL
-  rse <- rsecv <- biascv <- 0; i <- 0
-  for(site in unique(D$site_no)) { i <- i + 1
-    Z <- D[D$site_no != site,]; x <- Z$x; y <- Z$y
-    Z$left.threshold <-  log10(rep(0, length(Z$nzero)))
-    Z$right.threshold <- log10(Z$n)
-    Z$flowtime <- log10(Z$n - Z$nzero)
-    model <- gam(flowtime~s(basin_area)+
-                    s(ppt_mean, k=5)+s(temp_mean, k=4)+s(dni_ann, k=7)+
-                    developed+s(grassland)+
-                    bedperm+decade-1+
-        s(x,y), knots=knots,
-           family=tobit1(left.threshold=  Z$left.threshold,
-                         right.threshold=Z$right.threshold), data=Z)
-    rse[i] <- sigma
-    new.sigma <- sqrt(mean((predict(model)-Z$flowtime)^2))
-    tmp <- D[D$site_no == site,]; val <- tmp$pplo # LOOK HERE
-    pgk <- predict(model, newdata=tmp, se.fit=TRUE)
-    pgk <- gamIntervals(pgk, gam=model, interval="prediction", sigma=new.sigma)
-    pp  <- (3653-10^pgk$fit)/3653; pp[ pp  < 0] <- 0
-    ppl <- (3653-10^pgk$lwr)/3653; ppl[ppl < 0] <- 0
-    ppu <- (3653-10^pgk$upr)/3653; ppu[ppu < 0] <- 0
-    ft  <- pgk$fit; lft <- pgk$lwr; uft <- pgk$upr
-    res <- val - pp; biascv[i] <- mean(res)
-    res <- sum(res^2); rsecv[i] <- new.sigma
-    message(site, ", Bias=",biascv[i],", RSE=",rse[i],", RSEcv=",rsecv[i])
-    if(is.null(values)) {
-      sites <- tmp$site_no
-      decades <- tmp$decade
-      values <- val
-      ests <- pp
-      estlwrs <- ppu # swap is correct
-      estuprs <- ppl # swap is correct
-      estft <- ft; estlwrft <- lft; estuprft <- uft
-    } else {
-      s <- (length(values)+1); ss <- s:(s+length(val)-1)
-      sites[ss] <- tmp$site_no
-      decades[ss] <- tmp$decade
-      values[ss] <- val
-      ests[ss] <- pp
-      estlwrs[ss] <- ppu # swap is correct
-      estuprs[ss] <- ppl # swap is correct
-      estft[ss] <- ft; estlwrft[ss] <- lft; estuprft[ss] <- uft
-    }
-    #print(parent$est_lwr_pplo[parent$site_no == site])
-    #print(val)
-    #print(parent$est_upr_pplo[parent$site_no == site])
-  }
-  print(summary(biascv));   print(summary(abs(biascv)))
-  print(summary(rse))
-  print(summary(rsecv))
-  zz <- data.frame(site_no_bak=sites, decade_bak=decades, orgfit=values,
-             loo_est_lwr_pplo=estlwrs, loo_est_pplo=ests, loo_est_upr_pplo=estuprs,
-             loo_est_lwr_flowtime=estlwrft, loo_est_flowtime=estft, loo_est_upr_flowtime=estuprft,
-             stringsAsFactors=FALSE)
-  return(zz)
-}
-
-cvL1go <- function(parent=L1df) {
-  sites <- decades <- values <- ests <- estlwrs <- estuprs <- NULL
-  duans <- NULL
-  rse <- rsecv <- biascv <- 0; i <- 0
-  for(site in unique(D$site_no)) { i <- i + 1
-    Z <- D[D$site_no != site,]; x <- Z$x; y <- Z$y
-    z <- log10(Z$L1) # LOOK HERE
-    model   <- gam(z~s(basin_area) +
-               s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
-               developed+
-               mixed_forest+shrubland+
-               decade-1+
-               s(x, y), knots=knots, data=Z, #, bs="so", xt=list(bnd=bnd)
-               family="gaussian")
-    duan <- duan_smearing_estimator(model); #print(duan)
-    rse[i] <- sqrt(summary(model)$scale)
-    tmp <- D[D$site_no == site,]; val <- log10(tmp$L1) # LOOK HERE
-    pgk <- predict(model, newdata=tmp, se.fit=TRUE)
-    pgk <- gamIntervals(pgk, gam=model, interval="prediction")
-    res <- (val - pgk$fit); biascv[i] <- mean(res)
-    res <- sum(res^2); rsecv[i] <- sqrt(mean(res))
-    message(site, ", Bias=",biascv[i],", RSE=",rse[i],", RSEcv=",rsecv[i])
-    if(is.null(values)) {
-      sites <- tmp$site_no
-      decades <- tmp$decade
-      duans <- rep(duan, length(tmp$site_no))
-      values <- val
-      ests <- pgk$fit
-      estlwrs <- pgk$lwr
-      estuprs <- pgk$upr
-    } else {
-      s <- (length(values)+1); ss <- s:(s+length(val)-1)
-      sites[ss] <- tmp$site_no
-      decades[ss] <- tmp$decade
-      duans[ss] <- rep(duan, length(val))
-      values[ss] <- val
-      ests[ss] <- pgk$fit
-      estlwrs[ss] <- pgk$lwr
-      estuprs[ss] <- pgk$upr
-    }
-    #print(parent$est_lwr_L1[parent$site_no == site])
-    #print(10^val)
-    #print(parent$est_upr_L1[parent$site_no == site])
-  }
-  print(summary(biascv));   print(summary(abs(biascv)))
-  print(summary(rse))
-  print(summary(rsecv))
-  zz <- data.frame(site_no_bak=sites, decade_bak=decades, loo_bias_corr=duans, orgfit=values,
-             loo_est_lwr_L1=10^estlwrs, loo_est_L1=10^ests, loo_est_upr_L1=10^estuprs,
-             stringsAsFactors = FALSE)
-  return(zz)
-}
-
-cvL1 <- cvL1o <- cvL1go()
-cvPPLO <- cvPPLOo <- cvPPLOgo()
-
-  for(site in sites_to_fill) {
-     tmp <- DDo[DDo$site_no == site,]
-     df <- data.frame(site_no_bak=tmp$site_no, decade_bak=tmp$decade,
-                      loo_bias_corr=NA, orgfit=tmp$L1,
-                      loo_est_lwr_L1=NA, loo_est_L1=NA, loo_est_upr_L1=NA,
-                      stringsAsFactors=FALSE)
-     cvL1 <- rbind(cvL1, df)
-  }
-  cvL1 <- cvL1[order(cvL1$site_no_bak, cvL1$decade_bak),]
-  cvL1$key <-  paste(cvL1$site_no_bak, cvL1$decade_bak, sep=":")
-
-
-L1df$key <- paste(L1df$site_no, L1df$decade, sep=":")
-L1df_loo <- merge(L1df, cvL1, add=TRUE)
-L1df_loo$key <- L1df$key <- NULL
-L1df_loo$site_no_bak <- NULL
-L1df_loo$decade_bak  <- NULL
-L1df_loo$orgfit      <- NULL
-
-  for(site in sites_to_fill) {
-     tmp <- DDo[DDo$site_no == site,]
-     df <- data.frame(site_no_bak=tmp$site_no, decade_bak=tmp$decade,
-                      orgfit=tmp$pplo,
-                      loo_est_lwr_pplo=NA, loo_est_pplo=NA, loo_est_upr_pplo=NA,
-                      loo_est_lwr_flowtime=NA, loo_est_flowtime=NA, loo_est_upr_flowtime=NA,
-                      stringsAsFactors=FALSE)
-     cvPPLO <- rbind(cvPPLO, df)
-  }
-  cvPPLO <- cvPPLO[order(cvPPLO$site_no_bak, cvPPLO$decade_bak),]
-  cvPPLO$key <-  paste(cvPPLO$site_no_bak, cvPPLO$decade_bak, sep=":")
-
-PPLOdf$key <- paste(PPLOdf$site_no, PPLOdf$decade, sep=":")
-PPLOdf_loo <- merge(PPLOdf, cvPPLO, add=TRUE)
-PPLOdf_loo$key <- PPLOdf$key <- NULL
-PPLOdf_loo$site_no_bak <- NULL
-PPLOdf_loo$decade_bak  <- NULL
-PPLOdf_loo$orgfit      <- NULL
-
-
-write_feather(PPLOdf_loo, "all_gage_looest_pplo.feather")
-
-write_feather(L1df_loo, "all_gage_looest_L1.feather")
-
-
-#TrueMean <- 0*PPLOdf_loo$loo_est_pplo + (1-PPLOdf_loo$loo_est_pplo)*L1df_loo$loo_est_L1
-EstMeanFlow_loo <- (1-PPLOdf_loo$loo_est_pplo)*L1df_loo$loo_est_L1*L1df_loo$loo_bias_corr
-EstMeanFlow <- (1-PPLOdf_loo$est_pplo)*L1df_loo$est_L1*L1df_loo$bias_corr
-EstMeanFlow_loo[L1df_loo$site_no == "08167000"]
-EstMeanFlow[L1df_loo$site_no == "08167000"]
-plot(EstMeanFlow, EstMeanFlow_loo, log='xy', pch=16, col=rgb(1,0,0,.3), lwd=0.5, cex=1,
-     xlab="Estimated Decadal Mean Flow", ylab="LOO Estimated Decadle Mean Flow")
-abline(0,1)
-
-TrueMean <- (1-PPLOdf_loo$pplo)*L1df_loo$L1
-
-median(abs(log10(EstMeanFlow_loo) - log10(EstMeanFlow)), na.rm=TRUE)
-
-median(abs(log10(EstMeanFlow)     - log10(TrueMean)), na.rm=TRUE)
-median(abs(log10(EstMeanFlow_loo) - log10(TrueMean)), na.rm=TRUE)
-
-
-TrueMean[L1df$site_no == "08167000"]*(1/0.3048^3)
-EstMeanFlow[L1df$site_no == "08167000"]*(1/0.3048^3)
-EstMeanFlow_loo[L1df$site_no == "08167000"]*(1/0.3048^3)
-
-plot(TrueMean, EstMeanFlow_loo, log="xy", pch=16, col=rgb(1,0,0,.3), lwd=0.5, cex=1,
-     xlab="True Decadal Mean Flow", ylab="LOO Estimated Decadle Mean Flow")
-abline(0,1)
-
-plot(TrueMean, EstMeanFlow_loo, log="xy", pch=16, lwd=0.5, cex=1,
-     col=rgb(1-as.numeric(PPLOdf$pplo == 0),0,as.numeric(PPLOdf$pplo == 0),.3),
-     xlab="True Decadal Mean Flow", ylab="LOO Estimated Decadle Mean Flow")
-abline(0,1)
-
-
-
-cvT2go <- function(parent=T2df) {
-  sites <- decades <- values <- ests <- estlwrs <- estuprs <- NULL
-  rse <- rsecv <- biascv <- 0; i <- 0
-  for(site in unique(D$site_no)) { i <- i + 1
-    Z <- D[D$site_no != site,]; x <- Z$x; y <- Z$y
-    z <- Z$L2/Z$L1 # LOOK HERE
-    model   <- gam(z~s(basin_area) +
-               s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
-               developed+
-               mixed_forest+shrubland+
-               decade-1+
-               s(x, y), knots=knots, data=Z, #, bs="so", xt=list(bnd=bnd)
-               family="gaussian")
-    duan <- duan_smearing_estimator(model); #print(duan)
-    rse[i] <- sqrt(summary(model)$scale)
-    tmp <- D[D$site_no == site,]; val <- tmp$L2/tmp$L1 # LOOK HERE
-    pgk <- predict(model, newdata=tmp, se.fit=TRUE)
-    pgk <- gamIntervals(pgk, gam=model, interval="prediction")
-    res <- (val - pgk$fit); biascv[i] <- mean(res)
-    res <- sum(res^2); rsecv[i] <- sqrt(mean(res))
-    message(site, ", Bias=",biascv[i],", RSE=",rse[i],", RSEcv=",rsecv[i])
-    if(is.null(values)) {
-      sites <- tmp$site_no
-      decades <- tmp$decade
-      values <- val
-      ests <- pgk$fit
-      estlwrs <- pgk$lwr
-      estuprs <- pgk$upr
-    } else {
-      s <- (length(values)+1); ss <- s:(s+length(val)-1)
-      sites[ss] <- tmp$site_no
-      decades[ss] <- tmp$decade
-      values[ss] <- val
-      ests[ss] <- pgk$fit
-      estlwrs[ss] <- pgk$lwr
-      estuprs[ss] <- pgk$upr
-    }
-    #print(parent$est_lwr_L1[parent$site_no == site])
-    #print(10^val)
-    #print(parent$est_upr_L1[parent$site_no == site])
-  }
-  print(summary(biascv));   print(summary(abs(biascv)))
-  print(summary(rse))
-  print(summary(rsecv))
-  zz <- data.frame(site_no_bak=sites, decade_bak=decades, orgfit=values,
-             loo_est_lwr_T2=estlwrs, loo_est_T2=ests, loo_est_upr_T2=estuprs,
-             stringsAsFactors = FALSE)
-  return(zz)
-}
-
-cvT2 <- cvT2o <- cvT2go()
-
-  for(site in sites_to_fill) {
-     tmp <- DDo[DDo$site_no == site,]
-     df <- data.frame(site_no_bak=tmp$site_no, decade_bak=tmp$decade,
-                      orgfit=tmp$L2/tmp$L1,
-                      loo_est_lwr_T2=NA, loo_est_T2=NA, loo_est_upr_T2=NA,
-                      stringsAsFactors=FALSE)
-     cvT2 <- rbind(cvT2, df)
-  }
-  cvT2 <- cvT2[order(cvT2$site_no_bak, cvT2$decade_bak),]
-  cvT2$key <-  paste(cvT2$site_no_bak, cvT2$decade_bak, sep=":")
-
-
-T2df$key <- paste(T2df$site_no, T2df$decade, sep=":")
-T2df_loo <- merge(T2df, cvT2, add=TRUE)
-T2df_loo$key <- T2df$key <- NULL
-T2df_loo$site_no_bak <- NULL
-T2df_loo$decade_bak  <- NULL
-T2df_loo$orgfit      <- NULL
-
-write_feather(T2df_loo, "all_gage_looest_T2.feather")
-
-
-
-
-cvT3go <- function(parent=T3df) {
-  sites <- decades <- values <- ests <- estlwrs <- estuprs <- NULL
-  rse <- rsecv <- biascv <- 0; i <- 0
-  for(site in unique(D$site_no)) { i <- i + 1
-    Z <- D[D$site_no != site,]; x <- Z$x; y <- Z$y
-    z <- Z$T3 # LOOK HERE
-    model   <- gam(z~s(basin_area) +
-               s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
-               developed+
-               mixed_forest+shrubland+
-               decade-1+
-               s(x, y), knots=knots, data=Z, #, bs="so", xt=list(bnd=bnd)
-               family="gaussian")
-    duan <- duan_smearing_estimator(model); #print(duan)
-    rse[i] <- sqrt(summary(model)$scale)
-    tmp <- D[D$site_no == site,]; val <- tmp$T3 # LOOK HERE
-    pgk <- predict(model, newdata=tmp, se.fit=TRUE)
-    pgk <- gamIntervals(pgk, gam=model, interval="prediction")
-    res <- (val - pgk$fit); biascv[i] <- mean(res)
-    res <- sum(res^2); rsecv[i] <- sqrt(mean(res))
-    message(site, ", Bias=",biascv[i],", RSE=",rse[i],", RSEcv=",rsecv[i])
-    if(is.null(values)) {
-      sites <- tmp$site_no
-      decades <- tmp$decade
-      values <- val
-      ests <- pgk$fit
-      estlwrs <- pgk$lwr
-      estuprs <- pgk$upr
-    } else {
-      s <- (length(values)+1); ss <- s:(s+length(val)-1)
-      sites[ss] <- tmp$site_no
-      decades[ss] <- tmp$decade
-      values[ss] <- val
-      ests[ss] <- pgk$fit
-      estlwrs[ss] <- pgk$lwr
-      estuprs[ss] <- pgk$upr
-    }
-    #print(parent$est_lwr_L1[parent$site_no == site])
-    #print(10^val)
-    #print(parent$est_upr_L1[parent$site_no == site])
-  }
-  print(summary(biascv));   print(summary(abs(biascv)))
-  print(summary(rse))
-  print(summary(rsecv))
-  zz <- data.frame(site_no_bak=sites, decade_bak=decades, orgfit=values,
-             loo_est_lwr_T3=estlwrs, loo_est_T3=ests, loo_est_upr_T3=estuprs,
-             stringsAsFactors = FALSE)
-  return(zz)
-}
-
-cvT3 <- cvT3o <- cvT3go()
-
-  for(site in sites_to_fill) {
-     tmp <- DDo[DDo$site_no == site,]
-     df <- data.frame(site_no_bak=tmp$site_no, decade_bak=tmp$decade,
-                      orgfit=tmp$T3,
-                      loo_est_lwr_T3=NA, loo_est_T3=NA, loo_est_upr_T3=NA,
-                      stringsAsFactors=FALSE)
-     cvT3 <- rbind(cvT3, df)
-  }
-  cvT3 <- cvT3[order(cvT3$site_no_bak, cvT3$decade_bak),]
-  cvT3$key <-  paste(cvT3$site_no_bak, cvT3$decade_bak, sep=":")
-
-
-T3df$key <- paste(T3df$site_no, T3df$decade, sep=":")
-T3df_loo <- merge(T3df, cvT3, add=TRUE)
-T3df_loo$key <- T3df$key <- NULL
-T3df_loo$site_no_bak <- NULL
-T3df_loo$decade_bak  <- NULL
-T3df_loo$orgfit      <- NULL
-
-write_feather(T3df_loo, "all_gage_looest_T3.feather")
-
-
-
-
-cvT4go <- function(parent=T4df) {
-  sites <- decades <- values <- ests <- estlwrs <- estuprs <- NULL
-  rse <- rsecv <- biascv <- 0; i <- 0
-  for(site in unique(D$site_no)) { i <- i + 1
-    Z <- D[D$site_no != site,]; x <- Z$x; y <- Z$y
-    z <- Z$T4 # LOOK HERE
-    model   <- gam(z~s(basin_area) +
-               s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
-               developed+
-               mixed_forest+shrubland+
-               decade-1+
-               s(x, y), knots=knots, data=Z, #, bs="so", xt=list(bnd=bnd)
-               family="gaussian")
-    duan <- duan_smearing_estimator(model); #print(duan)
-    rse[i] <- sqrt(summary(model)$scale)
-    tmp <- D[D$site_no == site,]; val <- tmp$T4 # LOOK HERE
-    pgk <- predict(model, newdata=tmp, se.fit=TRUE)
-    pgk <- gamIntervals(pgk, gam=model, interval="prediction")
-    res <- (val - pgk$fit); biascv[i] <- mean(res)
-    res <- sum(res^2); rsecv[i] <- sqrt(mean(res))
-    message(site, ", Bias=",biascv[i],", RSE=",rse[i],", RSEcv=",rsecv[i])
-    if(is.null(values)) {
-      sites <- tmp$site_no
-      decades <- tmp$decade
-      values <- val
-      ests <- pgk$fit
-      estlwrs <- pgk$lwr
-      estuprs <- pgk$upr
-    } else {
-      s <- (length(values)+1); ss <- s:(s+length(val)-1)
-      sites[ss] <- tmp$site_no
-      decades[ss] <- tmp$decade
-      values[ss] <- val
-      ests[ss] <- pgk$fit
-      estlwrs[ss] <- pgk$lwr
-      estuprs[ss] <- pgk$upr
-    }
-    #print(parent$est_lwr_L1[parent$site_no == site])
-    #print(10^val)
-    #print(parent$est_upr_L1[parent$site_no == site])
-  }
-  print(summary(biascv));   print(summary(abs(biascv)))
-  print(summary(rse))
-  print(summary(rsecv))
-  zz <- data.frame(site_no_bak=sites, decade_bak=decades, orgfit=values,
-             loo_est_lwr_T4=estlwrs, loo_est_T4=ests, loo_est_upr_T4=estuprs,
-             stringsAsFactors = FALSE)
-  return(zz)
-}
-
-cvT4 <- cvT4o <- cvT4go()
-
-  for(site in sites_to_fill) {
-     tmp <- DDo[DDo$site_no == site,]
-     df <- data.frame(site_no_bak=tmp$site_no, decade_bak=tmp$decade,
-                      orgfit=tmp$T4,
-                      loo_est_lwr_T4=NA, loo_est_T4=NA, loo_est_upr_T4=NA,
-                      stringsAsFactors=FALSE)
-     cvT4 <- rbind(cvT4, df)
-  }
-  cvT4 <- cvT4[order(cvT4$site_no_bak, cvT4$decade_bak),]
-  cvT4$key <-  paste(cvT4$site_no_bak, cvT4$decade_bak, sep=":")
-
-
-T4df$key <- paste(T4df$site_no, T4df$decade, sep=":")
-T4df_loo <- merge(T4df, cvT4, add=TRUE)
-T4df_loo$key <- T4df$key <- NULL
-T4df_loo$site_no_bak <- NULL
-T4df_loo$decade_bak  <- NULL
-T4df_loo$orgfit      <- NULL
-
-write_feather(T4df_loo, "all_gage_looest_T4.feather")
-
-
-cvT5go <- function(parent=T5df) {
-  sites <- decades <- values <- ests <- estlwrs <- estuprs <- NULL
-  rse <- rsecv <- biascv <- 0; i <- 0
-  for(site in unique(D$site_no)) { i <- i + 1
-    Z <- D[D$site_no != site,]; x <- Z$x; y <- Z$y
-    z <- Z$T5 # LOOK HERE
-    model   <- gam(z~s(basin_area) +
-               s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
-               developed+
-               mixed_forest+shrubland+
-               decade-1+
-               s(x, y), knots=knots, data=Z, #, bs="so", xt=list(bnd=bnd)
-               family="gaussian")
-    duan <- duan_smearing_estimator(model); #print(duan)
-    rse[i] <- sqrt(summary(model)$scale)
-    tmp <- D[D$site_no == site,]; val <- tmp$T5 # LOOK HERE
-    pgk <- predict(model, newdata=tmp, se.fit=TRUE)
-    pgk <- gamIntervals(pgk, gam=model, interval="prediction")
-    res <- (val - pgk$fit); biascv[i] <- mean(res)
-    res <- sum(res^2); rsecv[i] <- sqrt(mean(res))
-    message(site, ", Bias=",biascv[i],", RSE=",rse[i],", RSEcv=",rsecv[i])
-    if(is.null(values)) {
-      sites <- tmp$site_no
-      decades <- tmp$decade
-      values <- val
-      ests <- pgk$fit
-      estlwrs <- pgk$lwr
-      estuprs <- pgk$upr
-    } else {
-      s <- (length(values)+1); ss <- s:(s+length(val)-1)
-      sites[ss] <- tmp$site_no
-      decades[ss] <- tmp$decade
-      values[ss] <- val
-      ests[ss] <- pgk$fit
-      estlwrs[ss] <- pgk$lwr
-      estuprs[ss] <- pgk$upr
-    }
-    #print(parent$est_lwr_L1[parent$site_no == site])
-    #print(10^val)
-    #print(parent$est_upr_L1[parent$site_no == site])
-  }
-  print(summary(biascv));   print(summary(abs(biascv)))
-  print(summary(rse))
-  print(summary(rsecv))
-  zz <- data.frame(site_no_bak=sites, decade_bak=decades, orgfit=values,
-             loo_est_lwr_T5=estlwrs, loo_est_T5=ests, loo_est_upr_T5=estuprs,
-             stringsAsFactors = FALSE)
-  return(zz)
-}
-
-cvT5 <- cvT5o <- cvT5go()
-
-  for(site in sites_to_fill) {
-     tmp <- DDo[DDo$site_no == site,]
-     df <- data.frame(site_no_bak=tmp$site_no, decade_bak=tmp$decade,
-                      orgfit=tmp$T5,
-                      loo_est_lwr_T5=NA, loo_est_T5=NA, loo_est_upr_T5=NA,
-                      stringsAsFactors=FALSE)
-     cvT5 <- rbind(cvT5, df)
-  }
-  cvT5 <- cvT5[order(cvT5$site_no_bak, cvT5$decade_bak),]
-  cvT5$key <-  paste(cvT5$site_no_bak, cvT5$decade_bak, sep=":")
-
-
-T5df$key <- paste(T5df$site_no, T5df$decade, sep=":")
-T5df_loo <- merge(T5df, cvT5, add=TRUE)
-T5df_loo$key <- T5df$key <- NULL
-T5df_loo$site_no_bak <- NULL
-T5df_loo$decade_bak  <- NULL
-T5df_loo$orgfit      <- NULL
-
-write_feather(T5df_loo, "all_gage_looest_T5.feather")
