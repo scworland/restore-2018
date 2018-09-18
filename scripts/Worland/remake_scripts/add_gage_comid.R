@@ -1,5 +1,5 @@
 
-add_gage_comid <- function(site_list,gage_locs,updated_locs,restore_hucs){
+add_gage_comid <- function(site_list,gage_locs,updated_locs,wbd_huc12){
   
   # subset columns and make df
   gage_locs <- gage_locs %>% 
@@ -23,8 +23,8 @@ add_gage_comid <- function(site_list,gage_locs,updated_locs,restore_hucs){
   gage_list_comid <- readNWISdata(sites=sites_comids$site_no, service="site") %>%
     select(site_no,lon=dec_long_va,lat=dec_lat_va) %>%
     left_join(sites_comids, by="site_no") %>%
-    st_as_sf(coords=c("lon","lat"), crs=st_crs(restore_hucs), remove=F) %>%
-    st_intersection(restore_hucs) %>%
+    st_as_sf(coords=c("lon","lat"), crs=st_crs(wbd_huc12), remove=F) %>%
+    st_intersection(wbd_huc12) %>% 
     select(site_no,comid,huc12=HUC_12,lon,lat) %>%
     distinct(site_no,.keep_all=T) %>%
     st_set_geometry(NULL)

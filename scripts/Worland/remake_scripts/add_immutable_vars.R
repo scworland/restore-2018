@@ -21,7 +21,7 @@ sw_add_immutable_vars <- function(item_list,sites,huc12s){
     immutable_chars[[i]] <- sw_sb_extract(items[i],type=sb_type[i],group=group[i],sites=sites,huc12s=huc12s)
     immutable_gages[[i]] <- immutable_chars[[i]]$gages
     immutable_hucs[[i]] <- immutable_chars[[i]]$hucs
-    print(paste0("completed ",item_list$description[i]," = ",i, "/13"))
+    print(paste0("completed ",item_list$description[i]," = ",i, "/",length(items)))
   }
   
   
@@ -31,7 +31,7 @@ sw_add_immutable_vars <- function(item_list,sites,huc12s){
     rename(comid=COMID) %>%
     left_join(sites, by="comid") %>%
     distinct(site_no, .keep_all = T) %>%
-    select(-matches("cat|tot|nodata|acc_s|x1")) %>%
+    select(-matches("cat|tot|nodata|acc_s1|x1")) %>%
     select(comid, site_no, everything())
   
   
@@ -41,7 +41,7 @@ sw_add_immutable_vars <- function(item_list,sites,huc12s){
     rename(comid=COMID) %>%
     left_join(huc12s, by="comid") %>%
     distinct(huc12, .keep_all = T) %>%
-    select(-matches("cat|tot|nodata|acc_s|x1")) %>%
+    select(-matches("cat|tot|nodata|acc_s1|x1")) %>%
     select(comid, huc12, everything())
   
   

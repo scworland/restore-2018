@@ -40,17 +40,22 @@ sw_combine_gage <- function(sites,immutable_vars,dams,housing_density,climate,lu
            # assign 1990 flood storage to 2000 due to error
            flood_storage = ifelse(site_no == "02295420" & decade == "2000",0.12216912,flood_storage),
            acc_basin_slope = ifelse(acc_basin_slope==0,0.02,acc_basin_slope),
+           soller.1 = ifelse(site_no=="02359315",soller,soller.1),
+           aquifers.1 = ifelse(site_no=="02359315",aquifers,aquifers.1),
+           physio.1 = ifelse(site_no=="02359315",physio,physio.1),
            aquifers = ifelse(aquifers == "cat_aq_nodata","nodata",aquifers),
            soller = ifelse(soller == "cat_soller_nodata","nodata",soller),
            aquifers.1 = ifelse(aquifers.1 == "cat_aq_nodata","nodata",aquifers.1),
            soller.1 = ifelse(soller.1 == "cat_soller_nodata","nodata",soller.1),
            ed_rch_zone = ifelse(comid %in% edwards_comids, "1", "0")) %>%
     select(-acc_elev_max,-acc_elev_min,-runoff_mean,-runoff_sd,-acc_hdens,
-           -perennial_ice_snow,-area_sqkm) %>%
-    rename(cat_soller=soller.1,cat_physio=physio.1,cat_aquifers=aquifers.1,cat_ecol3=ecol3.1) %>%
-    drop_na()
+           -perennial_ice_snow,-acc_stream_slope) %>%
+    rename(dec_lat_va=lat,dec_long_va=lon,cat_soller=soller.1,cat_physio=physio.1,
+           cat_aquifers=aquifers.1,cat_ecol3=ecol3.1,length_km=acc_stream_length) %>%
+    drop_na() %>%
+    set_names(gsub(x = names(.), pattern = "acc_", replacement = ""))
   
-    names(all_gage_covariates) <- gsub(x = names(all_gage_covariates), pattern = "acc_", replacement = "") 
+    #names(all_gage_covariates) <- gsub(x = names(all_gage_covariates), pattern = "acc_", replacement = "") 
   
   return(all_gage_covariates)
 }
@@ -92,16 +97,19 @@ sw_combine_huc12 <- function(huc12s,immutable_vars,dams,housing_density,climate,
            soller.1 = ifelse(soller.1 == "cat_soller_nodata","nodata",soller.1),
            ed_rch_zone = ifelse(comid %in% edwards_comids, "1", "0")) %>%
     select(-acc_elev_max,-acc_elev_min,-runoff_mean,-runoff_sd,-acc_hdens,
-           -perennial_ice_snow,-area_sqkm) %>%
-    rename(cat_soller=soller.1,cat_physio=physio.1,cat_aquifers=aquifers.1,cat_ecol3=ecol3.1) %>%
-    drop_na() # %>%
+           -perennial_ice_snow,-acc_stream_slope) %>%
+    rename(dec_lat_va=lat,dec_long_va=lon,cat_soller=soller.1,cat_physio=physio.1,
+           cat_aquifers=aquifers.1,cat_ecol3=ecol3.1,length_km=acc_stream_length) %>%
+    drop_na() %>%
+    set_names(gsub(x = names(.), pattern = "acc_", replacement = "")) %>%
+    filter_all(all_vars(!grepl("nodata",.)))
     #mutate_at(vars(),funs(sub('.*\\_', '', .)))
   
-  names(all_huc12_covariates) <- gsub(x = names(all_huc12_covariates), pattern = "acc_", replacement = "")
+  # names(all_huc12_covariates) <- gsub(x = names(all_huc12_covariates), pattern = "acc_", replacement = "")
   
   # check that values in huc12 covars is within range of gage covars
   covar_check <- sw_within_range(gage_covariates,all_huc12_covariates) %>%
-    filter(!variable %in% c("comid","huc12","lon","lat","length_km")) %>%
+    filter(!variable %in% c("comid","huc12","dec_long_va","dec_lat_va","length_km")) %>%
     distinct(index)
 
   all_huc12_covariates <- all_huc12_covariates[-covar_check$index,]
@@ -116,7 +124,7 @@ sw_gage_all <- function(sites,gage_covariates,fdc_data){
   
   all_gage_data <- fdc_data %>%
     left_join(gage_covariates, by = c("site_no","decade")) %>%
-    select(comid,site_no,huc12,decade,lon,lat,everything()) %>%
+    select(comid,site_no,huc12,decade,dec_long_va,dec_lat_va,everything()) %>%
     arrange(site_no,decade) %>%
     mutate(decade = as.character(decade)) %>%
     filter(decade != 2010) %>%

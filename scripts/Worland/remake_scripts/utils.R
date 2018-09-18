@@ -86,6 +86,16 @@ sw_sb_extract <- function(item,type="ACC",path="data/basinchars/nhd_sb",group=0,
     files <- item_list_files(item) 
   }
   
+  # specific flag for sinuousity 
+  if(any(grepl("sinuousity",tolower(fnames)))){
+    files <- rbind(files,item_list_files(item)[grepl("sinuousity",tolower(fnames)),])
+  } 
+  
+  # specific flag for stream density 
+  if(any(grepl("density",tolower(fnames)))){
+    files <- rbind(files,item_list_files(item)[grepl("density",tolower(fnames)),])
+  } 
+  
   files <- filter(files,!grepl("xml",fname))
   
   gages <- select(sites,comid)
@@ -221,6 +231,21 @@ sw_geo_dist <- function(site_data,index_sites,lon,lat,distance=200){
   return(neighbors)
 }
 
+# find nearest neighbor
+sw_geo_nn <- function(site,coords,id){
+  
+  library(geosphere)
+  
+  dmat <- distm(coords,site,fun = distHaversine)
+  dmat <- dmat[dmat!=0]
+  
+  neighbors <- data.frame(site=site_data$comid,
+                          neighbor=index_sites[which(dmat <= distance)],
+                          stringsAsFactors = F)
+  
+  
+  return(neighbors)
+}
 
 # sample groups. Stole directly from kendonB (https://github.com/tidyverse/dplyr/issues/361)
 sample_n_groups = function(tbl, size, replace = FALSE, weight = NULL) {

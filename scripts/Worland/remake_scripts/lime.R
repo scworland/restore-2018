@@ -605,7 +605,7 @@ sw_lime <- function(gage_all) {
   for (j in 1:ncol(Y)) {
   #for (j in 1:3) {
     
-    print(paste0("Calculating LIME for quantile #",j," out of ", ncol(Y)))
+    print(paste0("Calculating LIME for quantile number",j," out of ", ncol(Y)))
     
     # predict_model.keras.engine.training.Model <- function(x, newdata, type='raw', n=j, ...) {
     #   if (!requireNamespace('keras', quietly = TRUE)) {

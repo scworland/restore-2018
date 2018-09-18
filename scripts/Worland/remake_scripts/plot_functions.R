@@ -12,17 +12,22 @@ sw_plot_site_map <- function(simple_boundary,clean_sites,huc12s) {
   
   states <- subset(map_data("state"),region %in% regions)
   
+  cols <- c("gages"="dodgerblue", "pour_points"="grey50")
+  
   ggplot() +
     geom_polygon(data=states, aes(x=long, y=lat, group=group),fill="grey85",
                  linetype="dotted",color="grey20",size=0.3) +
     geom_sf(data=boundary,fill="white",alpha=0.7,color="grey15") +
     coord_sf(crs = st_crs(boundary), datum = NA) +
-    #geom_point(data=hucpp, aes(lon,lat),shape=1,size=0.1) +
-    geom_point(data=clean_sites, aes(lon,lat),shape=4, size=1) +
+    geom_point(data=hucpp, aes(lon,lat,color="pour_points"),shape=1,size=0.1) +
+    geom_point(data=clean_sites, aes(lon,lat,color="gages"),shape=1, size=1.5) +
+    scale_colour_manual(name="",values=cols) +
+    #geom_point(data=hold, aes(dec_long_va,dec_lat_va), shape=21, size=2, fill="orange",color="red",alpha=0.6) +
     north(states, symbol = 3, scale = 0.10, location="topleft") +
     scalebar(states, dist = 250, dd2km = TRUE, model = 'WGS84', 
              st.size = 3, location="bottomleft") +
-    theme_void() 
+    theme_void() +
+    theme(legend.position = c(0.72,0.25))
 }
 
 sw_plot_por <- function(dv_list) {
