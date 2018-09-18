@@ -44,7 +44,7 @@ length(COVo$comid)                           # [1] 55128
 SO <- read_feather("../../../data/huc12/all_huc12_solar.feather")
 COV <- cbind(COV, SO)
 
-spCOV <- SpatialPointsDataFrame(cbind(COV$lon,COV$lat), data=COV,
+spCOV <- SpatialPointsDataFrame(cbind(COV$dec_long_va,COV$dec_lat_va), data=COV,
                                 proj4string=LATLONG)
 spCOV <- spTransform(spCOV, ALBEA)
 XY <- coordinates(spCOV)
@@ -74,6 +74,11 @@ length(spCOV$comid[! is.finite(spCOV$temp_mean)])    # [1] 0
 length(spCOV$comid[! is.finite(spCOV$basin_area)])   # [1] 0
 length(spCOV$comid[! is.finite(spCOV$basin_slope)])  # [1] 0
 
+spCOV$comid.1 <- NULL
+spCOV$huc12.1 <- NULL
+spCOV$dec_long_va.1 <- NULL
+spCOV$dec_lat_va.1 <- NULL
+spCOV$decade.1 <- NULL
 
 spCOV$decade   <- as.factor(spCOV$decade)
 spCOV$bedperm  <- as.factor(spCOV$bedperm)
