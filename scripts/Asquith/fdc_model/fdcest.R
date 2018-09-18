@@ -544,8 +544,8 @@ for(site in sites_to_fill) {
   df$se.fit_pplo <- pgk$se.fit
   PPLOdf[PPLOdf$site_no == site,] <- df
 }
-PPLOdf$in_model_pplo[PPLOdf$in_model_pplo == 1] <- "yes"
-PPLOdf$in_model_pplo[PPLOdf$in_model_pplo == 0] <- "no"
+#PPLOdf$in_model_pplo[PPLOdf$in_model_pplo == 1] <- "yes"
+#PPLOdf$in_model_pplo[PPLOdf$in_model_pplo == 0] <- "no"
 summary(PPLOdf$pplo <= PPLOdf$est_upr_pplo*0.62) # in bulk the limits just are wrong for the
 # pplo but that is looking at them as if they were noncensored that is compounded by the
 # conversion of flowtime to a pplo (probability). If we have 2804 rows, and if we continue

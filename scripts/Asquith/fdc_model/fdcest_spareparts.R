@@ -43,13 +43,13 @@ XY <- coordinates(DD)
 DD$east <- XY[,1]/1000; DD$north <- XY[,2]/1000; rm(XY)
 
 SO <- over(DD, spDNI_1998to2009)
-DD$ANN_DNI <- SO$ANN_DNI
-DD$JAN <- SO$JAN; DD$FEB <- SO$FEB
-DD$MAR <- SO$MAR; DD$APR <- SO$APR
-DD$MAY <- SO$MAY; DD$JUN <- SO$JUN
-DD$JUL <- SO$JUL; DD$AUG <- SO$AUG
-DD$SEP <- SO$SEP; DD$OCT <- SO$OCT
-DD$NOV <- SO$NOV; DD$DEC <- SO$DEC
+DD$dni_ann <- SO$ANN_DNI
+DD$dni_jan  <- SO$JAN; DD$dni_feb <- SO$FEB
+DD$dni_mar  <- SO$MAR; DD$dni_apr <- SO$APR
+DD$dni_may <- SO$MAY; DD$dni_jun <- SO$JUN
+DD$dni_jul <- SO$JUL; DD$dni_aug <- SO$AUG
+DD$dni_sep <- SO$SEP; DD$dni_oct <- SO$OCT
+DD$dni_nov <- SO$NOV; DD$dni_dec <- SO$DEC
 rm(SO)
 
 DD$x <- DD$east; DD$y <- DD$north
