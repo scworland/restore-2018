@@ -15,7 +15,6 @@ C <- L1df[L1df$in_model_L1 == 1,]
 n <- length(C$site_no)
 m <-    sum(C$L1 < C$est_upr_L1     & C$L1 > C$est_lwr_L1)
 mloo <- sum(C$L1 < C$loo_est_upr_L1*bc & C$L1 > C$loo_est_lwr_L1*(1/bc))
-
 message("             L1: coverage probability=", sprintf("%.2f", round(100*m/n,    digits=2)), " and ",
                      "LOO coverage probability=", sprintf("%.2f", round(100*mloo/n, digits=2)))
 
