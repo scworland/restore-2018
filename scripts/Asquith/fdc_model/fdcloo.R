@@ -520,7 +520,7 @@ add.log.axis(side=1,      tcl=0.8*abs(par()$tcl), two.sided=TRUE)
 add.log.axis(logs=c(1),   tcl=-0.5*abs(par()$tcl), side=1, two.sided=TRUE)
 add.log.axis(logs=c(1),   tcl=+1.3*abs(par()$tcl), side=1, two.sided=TRUE)
 add.log.axis(logs=c(1, 2, 3, 4, 6), side=2, make.labs=TRUE, las=1,
-             label="GAM L1/PPLO LOO estimated decadle mean flow, in cms")
+             label="GAM L1/PPLO LOO estimated decadal mean flow, in cms")
 add.log.axis(logs=c(1, 2, 3, 4, 6), side=1, make.labs=TRUE, las=1,
              label="Observed decadal mean flow, in cms")
 
