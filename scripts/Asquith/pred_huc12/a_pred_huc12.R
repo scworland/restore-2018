@@ -4,13 +4,10 @@ library(sp)
 library(GISTools)
 library(RColorBrewer)
 library(lmomco)
-source("a_basemap_funcs.R")
 source("../fdc_model/gamIntervals.R")
 
-load("../fdc_model/FDCEST.RData")
 load("../fdc_model/Models.RData")
 load("../../../../GIS/GulfStates.RData") # GulfStates.RData
-#load(file.choose()) # spDNI_1998to2009.RData
 load("../../../../GIS/RESTORE_MGCV_BND.RData") # "RESTORE_MGCV_BND.RData"
 
 LATLONG <- paste0("+proj=longlat +ellps=GRS80 ",
@@ -49,36 +46,39 @@ spCOV <- SpatialPointsDataFrame(cbind(COV$dec_long_va,COV$dec_lat_va), data=COV,
 spCOV <- spTransform(spCOV, ALBEA)
 XY <- coordinates(spCOV)
 spCOV$x <- spCOV$east <- XY[,1]/1000; spCOV$y <- spCOV$north <- XY[,2]/1000
-
 rm(COV, XY)
-#SO <- over(spCOV, spDNI_1998to2009)
 
-length(spCOV$nid_storage[ spCOV$basin_area == 0])
-length(spCOV$norm_storage[spCOV$basin_area == 0])
+length(spCOV$nid_storage[ spCOV$basin_area == 0]) # [1] 0
+length(spCOV$norm_storage[spCOV$basin_area == 0]) # [1] 0
 
 
 length(spCOV$flood_storage[spCOV$flood_storage > 1]) # [1] 35
 #boxplot(spCOV$flood_storage)
+spCOV$flood_storage[spCOV$flood_storage > 1*0.3048] <- 1*0.3048 # truncate predictions in the extrapolation zone
 #spCOV <- spCOV[spCOV$flood_storage <= 1,] # This is about 1 meter of watershed depth equivalent
 # which is close to the maximum observed in the streamgage network itself. But if the GAM
 # models PPLO-->T6 don't use flood_storage, just don't delete those.
 
-length(spCOV$comid[spCOV$basin_area == 0])
+length(spCOV$comid[spCOV$basin_area == 0]) # [1] 0
 
-spCOV$ppt_mean        <- log10(spCOV$ppt_mean)
-spCOV$temp_mean       <- log10(spCOV$temp_mean)
-spCOV$basin_area  <- log10(spCOV$basin_area)
-spCOV$basin_slope <- log10(spCOV$basin_slope/100)
+spCOV$ppt_mean       <- log10(spCOV$ppt_mean)
+spCOV$temp_mean      <- log10(spCOV$temp_mean)
+spCOV$basin_area     <- log10(spCOV$basin_area)
+spCOV$basin_slope    <- log10(spCOV$basin_slope/100)
+# DD is the "data" and not the prediction points.
+flood_storage_offset <- 1E-6; # first even log10 cycle below min(DD$flood_storage[DD$flood_storage > 0])
+spCOV$flood_storage <- log10(spCOV$flood_storage + flood_storage_offset)
+
 length(spCOV$comid[! is.finite(spCOV$ppt_mean)])     # [1] 0
 length(spCOV$comid[! is.finite(spCOV$temp_mean)])    # [1] 0
 length(spCOV$comid[! is.finite(spCOV$basin_area)])   # [1] 0
 length(spCOV$comid[! is.finite(spCOV$basin_slope)])  # [1] 0
 
-spCOV$comid.1 <- NULL
-spCOV$huc12.1 <- NULL
+spCOV$comid.1       <- NULL
+spCOV$huc12.1       <- NULL
 spCOV$dec_long_va.1 <- NULL
-spCOV$dec_lat_va.1 <- NULL
-spCOV$decade.1 <- NULL
+spCOV$dec_lat_va.1  <- NULL
+spCOV$decade.1      <- NULL
 
 spCOV$decade   <- as.factor(spCOV$decade)
 spCOV$bedperm  <- as.factor(spCOV$bedperm)
@@ -103,7 +103,7 @@ spCOV$ecol3        <- as.factor(spCOV$ecol3);        levels(spCOV$ecol3)
 spCOV$hlr          <- as.factor(spCOV$hlr);          levels(spCOV$hlr)
 spCOV$statsgo      <- as.factor(spCOV$statsgo);      levels(spCOV$statsgo)
 spCOV$ed_rch_zone  <- as.factor(spCOV$ed_rch_zone);  levels(spCOV$ed_rch_zone)
-unique(spCOV$site_no[spCOV$ed_rch_zone == "1"])
+unique(spCOV$site_no[spCOV$ed_rch_zone == "1"]) # should be zero as we decide not to reintersect?
 
 summary(spCOV$cat_soller)
 summary(spCOV$soller)
@@ -376,148 +376,4 @@ write_feather(slot(H12T3df,   "data"),   "all_gam_huc12_T3.feather")
 write_feather(slot(H12T4df,   "data"),   "all_gam_huc12_T4.feather")
 write_feather(slot(H12T5df,   "data"),   "all_gam_huc12_T5.feather")
 
-
-
-#-----------------------------------------------------------------------
-pdf("PPLOfit_junk.pdf", useDingbats=FALSE, width=11, height=10)
-  plot(spRESTORE_MGCV_BND)  # by creation of the PDF, we can get a handle on a global
-  usr <- par()$usr # setting of the plotting limits by preserving the usr.
-dev.off()
-unlink("PPLOfit_junk.pdf")  # just quietly throw the file away
-
-pdf("PPLOfit.pdf", useDingbats=FALSE, width=11, height=10)
-  for(d in sort(unique(D$decade))) {
-    map_base(xlim=usr[1:2], ylim=usr[3:4])
-    choropleth_decade(D, x="pplo", cuts=pploCuts, rev=TRUE)
-    shades <- choropleth_cov(H12PPLOdf, decade=d, x="est_pplo", cuts=pploCuts, rev=TRUE)
-    legend_est(gage="no flow fraction", title=paste0(d," decade\n","no flow fraction"),
-               note=TRUE, shades=shades)
-    map_annotation()
-  }
-dev.off()
-pdf("PPLOsefit.pdf", useDingbats=FALSE, width=11, height=10)
-  for(d in sort(unique(D$decade))) {
-    map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase()
-    shades <- choropleth_cov(H12PPLOdf, decade=d, x="se.fit_pplo", cuts=pploCutsSE, rev=TRUE)
-    legend_est(gage=setxt1, title=paste0(d,"decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
-    map_annotation()
-  }
-dev.off()
-#-----------------------------------------------------------------------
-pdf("L1fit.pdf", useDingbats=FALSE, width=11, height=10)
-  H12L1df$est_L1_log10 <- log10(H12L1df$est_L1)
-  for(d in sort(unique(D$decade))) {
-    map_base(xlim=usr[1:2], ylim=usr[3:4])
-    choropleth_decade(D, x="L1", cuts=L1Cuts, trans=log10)
-    shades <- choropleth_cov(H12L1df, decade=d, x="est_L1_log10", cuts=L1Cuts)
-    legend_est(gage="mean streamflow", title=paste0(d," decade\n","mean streamflow, in log10(cms)"),
-               note=TRUE, shades=shades)
-    map_annotation()
-  }
-  H12L1df$est_L1_log10 <- NULL
-dev.off();
-pdf("L1sefit.pdf", useDingbats=FALSE, width=11, height=10)
-  for(d in sort(unique(D$decade))) {
-    map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase()
-    shades <- choropleth_cov(H12L1df, decade=d, x="se.fit_L1", cuts=L1CutsSE, rev=TRUE)
-    legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
-    map_annotation()
-  }
-dev.off()
-#-----------------------------------------------------------------------
-pdf("T2fit.pdf", useDingbats=FALSE, width=11, height=10)
-  for(d in sort(unique(D$decade))) {
-    map_base(xlim=usr[1:2], ylim=usr[3:4]);
-    choropleth_decade(D, x="T2", cuts=T2Cuts)
-    shades <- choropleth_cov(H12T2df, decade=d, x="est_T2", cuts=T2Cuts)
-    legend_est(gage="L-CV of streamflow", title=paste0(d," decade\n","L-CV of streamflow"),
-               note=TRUE, shades=shades)
-   map_annotation()
-  }
-dev.off()
-pdf("T2sefit.pdf", useDingbats=FALSE, width=11, height=10)
-  for(d in sort(unique(D$decade))) {
-    map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase()
-    shades <- choropleth_cov(H12T2df, decade=d, x="se.fit_T2", cuts=T2CutsSE, rev=TRUE)
-    legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
-    map_annotation()
-  }
-dev.off()
-#-----------------------------------------------------------------------
-pdf("T3fit.pdf", useDingbats=FALSE, width=11, height=10)
-  for(d in sort(unique(D$decade))) {
-    map_base(xlim=usr[1:2], ylim=usr[3:4])
-    choropleth_decade(D, x="T3", cuts=T3Cuts)
-    shades <- choropleth_cov(H12T3df, decade=d, x="est_T3", cuts=T3Cuts)
-    legend_est(gage="L-skew of streamflow", title=paste0(d," decade\n","L-skew of streamflow"),
-               note=TRUE, shades=shades)
-    map_annotation()
-  }
-dev.off()
-pdf("T3sefit.pdf", useDingbats=FALSE, width=11, height=10)
-  for(d in sort(unique(D$decade))) {
-    map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase()
-    shades <- choropleth_cov(H12T3df, decade=d, x="se.fit_T3", cuts=T3CutsSE, rev=TRUE)
-    legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
-    map_annotation()
-  }
-dev.off()
-#-----------------------------------------------------------------------
-pdf("T4fit.pdf", useDingbats=FALSE, width=11, height=10)
-  for(d in sort(unique(D$decade))) {
-    map_base(xlim=usr[1:2], ylim=usr[3:4])
-    choropleth_decade(D, x="T4", cuts=T4Cuts)
-    shades <- choropleth_cov(H12T4df, decade=d, x="est_T4", cuts=T4Cuts)
-    legend_est(gage="L-kurtosis of streamflow", title=paste0(d," decade\n","L-kurtosis of streamflow"),
-               note=TRUE, shades=shades)
-    map_annotation()
-  }
-dev.off()
-pdf("T4sefit.pdf", useDingbats=FALSE, width=11, height=10)
-  for(d in sort(unique(D$decade))) {
-    map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase()
-    shades <- choropleth_cov(H12T4df, decade=d, x="se.fit_T4", cuts=T4CutsSE, rev=TRUE)
-    legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
-    map_annotation()
-  }
-dev.off()
-#-----------------------------------------------------------------------
-pdf("T5fit.pdf", useDingbats=FALSE, width=11, height=10)
-  for(d in sort(unique(D$decade))) {
-    map_base(xlim=usr[1:2], ylim=usr[3:4])
-    choropleth_decade(D, x="T5", cuts=T5Cuts)
-    shades <- choropleth_cov(H12T5df, decade=d, x="est_T5", cuts=T5Cuts)
-    legend_est(gage="Tau5 of streamflow", title=paste0(d," decade\n","Tau5 of streamflow"),
-               note=TRUE, shades=shades)
-    map_annotation()
-  }
-dev.off()
-pdf("T5sefit.pdf", useDingbats=FALSE, width=11, height=10)
-  for(d in sort(unique(D$decade))) {
-    map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase()
-    shades <- choropleth_cov(H12T5df, decade=d, x="se.fit_T5", cuts=T5CutsSE, rev=TRUE)
-    legend_est(gage=setxt1, title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
-    map_annotation()
-  }
-dev.off()
-
-
-quantile(H12L1df$delta_est_L1, probs=(1:9)/10, na.rm=TRUE)
-
-L1delCuts <- function(x, n=9, ...) {
-  labs <- 1:n
-  cuts <- c(-1, -.5, -.2, -0.05, 0, 0.05, 0.2, 0.5, 1)
-  cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
-}
-
-pdf("L1del.pdf", useDingbats=FALSE, width=11, height=10)
-  for(d in sort(unique(D$decade))) {
-    if(d == "1950") next
-    map_base(xlim=usr[1:2], ylim=usr[3:4])
-    choropleth_decade(D, x="L1", cuts=L1delCuts)
-    shades <- choropleth_cov(H12L1df, decade=d, x="delta_est_L1", cuts=L1delCuts)
-    legend_est(gage="L1 change of streamflow", title=paste0(d," decade\n","Change in L1 of streamflow"),
-               note=TRUE, shades=shades)
-    map_annotation()
-  }
-dev.off()
+# source("a_plot_huc12.R")
