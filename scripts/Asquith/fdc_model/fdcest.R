@@ -147,10 +147,12 @@ summary(DD$ed_rch_zone)
 
 
 
-DD$ppt_mean    <- log10(DD$ppt_mean)
-DD$temp_mean   <- log10(DD$temp_mean)
-DD$basin_area  <- log10(DD$basin_area)
-DD$basin_slope <- log10(DD$basin_slope/100)
+DD$ppt_mean      <- log10(DD$ppt_mean)
+DD$temp_mean     <- log10(DD$temp_mean)
+DD$basin_area    <- log10(DD$basin_area)
+DD$basin_slope   <- log10(DD$basin_slope/100)
+flood_storage_offset <- 1E-6; # first even log10 cycle below min(DD$flood_storage[DD$flood_storage > 0])
+DD$flood_storage <- log10(DD$flood_storage + flood_storage_offset)
 
 # Transformation and Retransformation Functions for the Sin Transformation of
 # Percentile data
@@ -266,7 +268,7 @@ D <- D[D$ed_rch_zone != "1",]
 
 duan_smearing_estimator <- function(model) { sum(10^residuals(model))/length(residuals(model)) }
 
-save(bnd, D, DD, DDo, knots, bnd,
+save(bnd, D, DD, DDo, knots,
      DD_sites_of_area_bust, duan_smearing_estimator, file="FDCEST.RData")
 
 #  [1] "site_no"             "comid"               "huc12"               "decade"              "dec_long_va"
@@ -673,7 +675,6 @@ for(site in sites_to_fill) {
 
 #write_feather(L1df, "all_gage_est_L1.feather")
 
-
 z <- D$L2/D$L1 # --------------------------- Coefficient of L-variation
 T2   <- gam(z~s(basin_area) + s(basin_slope, k=5)+
               s(ppt_mean, k=5) + s(temp_mean, k=4) + s(dni_ann, k=7)+
@@ -1063,7 +1064,7 @@ for(site in sites_to_fill) {
 
 
 
-save(DDo, DD, D, PPLO, L1, T2, T3, T4, T5, T6, file="Models.RData")
+save(bnd, DDo, DD, D, PPLO, L1, T2, T3, T4, T5, T6, file="Models.RData")
 
 #source("fdcest_quantiles.R")
 
