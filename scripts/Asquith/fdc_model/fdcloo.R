@@ -523,10 +523,20 @@ add.log.axis(logs=c(1, 2, 3, 4, 6), side=2, make.labs=TRUE, las=1,
              label="GAM L1/PPLO LOO estimated decadal mean flow, in cms")
 add.log.axis(logs=c(1, 2, 3, 4, 6), side=1, make.labs=TRUE, las=1,
              label="Observed decadal mean flow, in cms")
+points(TrueMean[   L1df$site_no == "08167000"],
+       EstMeanFlow[L1df$site_no == "08167000"], col=rgb(0,1,0,.7), pch=16, cex=1.25)
+points(TrueMean[       L1df$site_no == "08167000"],
+       EstMeanFlow_loo[L1df$site_no == "08167000"], col=rgb(0,1,0,.7), pch=1, lwd=2, cex=2)
 
 legend(0.01,1000, c("Streamflow for which no zero-flow days were observed",
-                   "Streamflow for which some zero-flow days were observed"), bty="n",
-          col=c(4,2), pch=c(16,16), cex = 0.8)
+                   "Streamflow for which some zero-flow days were observed",
+                   "USGS streamgage 08167000 (GAM L1/PPLO estimated [non-LOO])",
+                   "USGS streamgage 08167000 (GAM L1/PPLO LOO estimated)"), bty="n",
+          col=c(4,2,3,3), pch=c(16,16,16,1), cex = 0.8, pt.cex=c(1,1,1.25,2))
+
 par(mgp=c(3,1,0)) # restore defaults
 dev.off()
+
+
+
 
