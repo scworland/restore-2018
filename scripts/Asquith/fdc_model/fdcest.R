@@ -223,7 +223,10 @@ text(0,5, paste(sites_of_area_bust, collapse=", "), cex=0.6, pos=4)
 par(mgp=c(3,1,0)) # restore defaults
 dev.off()
 
-#points(DD$CDA[DD$site_no == "08167000"],
+print(summary(DDo$CDA - DDo$basin_area))
+print(summary( DD$CDA -  DD$basin_area))
+
+#"points(DD$CDA[DD$site_no == "08167000"],
 #       DD$basin_area[DD$site_no == "08167000"], pch=16, col=4)
 
 DD$site_no[DD$nid_storage < DD$norm_storage]
@@ -252,7 +255,7 @@ add.log.axis(side=1,      tcl=0.8*abs(par()$tcl), two.sided=TRUE)
 add.log.axis(logs=c(1),   tcl=-0.5*abs(par()$tcl), side=1, two.sided=TRUE)
 add.log.axis(logs=c(1),   tcl=+1.3*abs(par()$tcl), side=1, two.sided=TRUE)
 add.log.axis(logs=c(1, 2, 3, 4, 6), side=2, make.labs=TRUE, las=1,
-             label="National Hydrography Dataset Basin Area, in km^2")
+             label="National Hydrography Dataset basin area, in km^2")
 add.log.axis(logs=c(1, 2, 3, 4, 6), side=1, make.labs=TRUE, las=1,
              label="USGS National Water Information System Contributing Drainage Area, in km^2")
 
