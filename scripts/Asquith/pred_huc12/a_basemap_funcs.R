@@ -55,8 +55,9 @@ map_base <- function(xlim=NA, ylim=NA) {
   par(lend=1, ljoin=1)
   plot(spCOV, pch=NA, xlim=usr[1:2], ylim=usr[3:4])
   plot(GulfStates_modified, add=TRUE, lty=0, col=grey(0.95))
-  polygon(bnd[[1]]$x*1000,bnd[[1]]$y*1000, col=grey(1), lwd=.7)
+  polygon(bnd[[1]]$x*1000,bnd[[1]]$y*1000, col=grey(1), lwd=1.7)
 }
+
 
 map_sebase <- function() {
   k <- 0; ks <- c(0.6,0.8,1.0,1.2,1.4,1.6)
@@ -101,33 +102,60 @@ choropleth_cov <-
     return(shades)
   }
 
-legend_est <- function(gage="", title="", note=TRUE, shades=NA, itgage=TRUE, more=NA, ...) {
-  sa  <- paste0("Boundary of study as defined by Crowley-Ornelas and others (2018a)")
+legend_est <- function(gage="", title="", note=TRUE, shades=NULL,
+                       itgage=TRUE, more=NA, sitemap=FALSE,
+                       triangle=FALSE, ...) {
+  if(sitemap) {
+     note <- FALSE; itgage <- FALSE
+  }
+  sa  <- paste0("Boundary of study area as defined by Crowley-Ornelas, Knight, and others (2018)")
   tx1 <- paste0("USGS streamgage and symbol* colored according to the legend to the right")
   tx2 <- paste0("Prediction location on NHD+ network colored according to the legend to the right")
 
   #tx2 <- paste0("'COMID' location in the National Hydrography Dataset\n",
   #              "version 2: Symbol colored by estimated decadal\n",gage)
+  #
   xx <- -80000
+
+  if(sitemap) {
+    abb <- paste0("Abbreviation: USGS, U.S. Geological Survey")
+    text(260000, 290000, abb, cex=0.6, pos=4)
+    if(triangle) {
+      txt <- paste0("USGS streamgage represented in Crowley-Ornelas, Asquith, Worland, and Knight (2018) ")
+    legend(xx, 530000, c(sa, "Edwards aquifer outcrop (Texas Commission on Environmental Quality, 2018)", txt,
+        "USGS streamgage with large Edwards aquifer recharge impacts on decadal no-flows and removed from modeling"), bty="n",
+           cex=0.7, pt.cex=c(NA,NA,0.8,0.8),
+           lwd=c(1.5,3,0.7,0.7), lty=c(1,1,0,0), pch=c(NA,NA,2,1), col=c(1,"#F99B00","#006F41","#8D4200"), ...)
+    } else {
+      txt <- paste0("USGS streamgage and symbol size represents one the six decades: 1950s (smallest circle) through 2000s (largest circle)")
+      legend(xx, 520000, c(sa, "Edwards aquifer outcrop (Texas Commission on Environmental Quality, 2018)", txt), bty="n",
+             cex=0.7, pt.cex=c(NA,NA,0.8),
+             lwd=c(1.5,3,0.7), lty=c(1,1,0), pch=c(NA,NA,1), col=c(1,"#F99B00","#006F41"), ...)
+    }
+    return()
+  }
+
   if(itgage) {
     legend(xx, 530000, c(sa, tx1, tx2), bty="n", cex=0.7, pt.cex=c(NA,0.8,0.6),
            lwd=c(0.7,0.7,1), lty=c(1,0,0), pch=c(NA,1,16), col=c(1,"#3288BDE6","#D53E4FE6"), ...)
   } else {
-    legend(xx, 520000, c(sa, paste0("USGS streamgage and symbol* size changes"), tx2), bty="n",
+    legend(xx, 520000, c(sa, paste0("USGS streamgage and symbol* size changes by decade represented"), tx2), bty="n",
            cex=0.7, pt.cex=c(NA,0.8,0.6),
            lwd=c(0.7,0.7,1), lty=c(1,0,0), pch=c(NA,1,16), col=c(1,grey(0.72),"#D53E4FE6"), ...)
   }
+  if(! is.null(shades)) {
   my.choro.legend(895000, 720000, shades, cex=0.7, bty="n", box.col=grey(1), bg=grey(1),
                fmt="%g", xjust=0, title=title)
+  }
   if(note) {
     text(260000, 380000,
          paste0("* Note that symbol size represents one the six decades:\n     ",
-                "1950s (smallest circle) through 2000s (largest circle)."),
+                "1950s (smallest circle) through 2000s (largest circle)"),
          cex=.6, pos=4)
     abb <- paste0("Abbreviations: ",
                   "USGS, U.S. Geological Survey",
                   "; NHD+, National Hydrolgraph Dataset plus version 2,\n     ",
-                  "locations specific to Crowley-Ornelas and others (2018c,d) ")
+                  "locations by Crowley-Ornelas and others (2018) ")
     if(! is.na(more)) {
       abb <- paste0(abb,more)
       text(260000, 290000, abb, cex=0.6, pos=4)
@@ -139,4 +167,29 @@ legend_est <- function(gage="", title="", note=TRUE, shades=NA, itgage=TRUE, mor
 
 setxt1 <- "standard error of fit"
 setxt2 <- "Standard error of fit"
+
+
+east_grids  <- seq(80,100,by=2)
+north_grids <- seq(26,38, by=2)
+
+gx <- gy <- vector(mode="numeric")
+for(i in 1:length(north_grids)) {
+   gy <- c(gy, rep(north_grids[i], length(east_grids)))
+   gx <- c(gx, east_grids)
+}
+GL <- SpatialPoints(cbind(-gx, gy), proj4string=LATLONG)
+GL <- spTransform(GL, ALBEA)
+XY <- coordinates(GL)
+x <- XY[,1]; y <- XY[,2]
+#ind <- mgcv::inSide(bnd,x,y)
+#XY <- XY[ind,]
+GL <- SpatialPointsDataFrame(cbind(-gx, gy), data=data.frame(onoff=rep(1,length(x))),
+                                    proj4string=LATLONG)
+GL <- spTransform(GL, ALBEA)
+ix <- 1:length(x)
+plot(GL, pch=1, col=2)
+text(XY[,1],XY[,2], ix)
+GL$onoff[c(1,3:9, 12, 14:20, 23, 34, 45)] <- 0
+#writeOGR(GL, "gridx2deg", "gridx2deg", driver="ESRI Shapefile")
+GL <- GL[-c(1,3:9, 12, 14:20, 23, 34, 45),]
 

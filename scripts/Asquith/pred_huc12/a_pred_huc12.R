@@ -16,25 +16,6 @@ LATLONG <- sp::CRS(LATLONG)
 ALBEA <- paste0("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 ",
                 "+datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0")
 ALBEA <- sp::CRS(ALBEA)
-east_grids  <- seq(80,100,by=2)
-north_grids <- seq(26,38, by=2)
-
-gx <- gy <- vector(mode="numeric")
-for(i in 1:length(north_grids)) {
-   gy <- c(gy, rep(north_grids[i], length(east_grids)))
-   gx <- c(gx, east_grids)
-}
-GL <- SpatialPoints(cbind(-gx, gy), proj4string=LATLONG)
-GL <- spTransform(GL, ALBEA)
-XY <- coordinates(GL)
-x <- XY[,1]; y <- XY[,2]
-#ind <- mgcv::inSide(bnd,x,y)
-#XY <- XY[ind,]
-GL <- SpatialPoints(cbind(x,y), proj4string=ALBEA)
-ix <- 1:length(x)
-plot(GL, pch=1, col=2)
-text(XY[,1],XY[,2], ix)
-GL <- GL[-c(1,3:9, 12, 14:20, 23, 34, 45)]
 
 COV <- COVo <- read_feather("../../../data/huc12/all_huc12_covariates.feather")
 length(COVo$comid)                           # [1] 55128
