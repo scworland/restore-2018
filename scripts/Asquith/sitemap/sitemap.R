@@ -56,7 +56,7 @@ pdf("SiteMapA.pdf", useDingbats=FALSE, width=11, height=10)
   tmp <- MM[MM$ed_rch_zone == 1,]
   for(site in unique(tmp$site_no)) {
      tmp2 <- tmp[tmp$site_no == site, ]; tmp2 <- tmp2[1,]
-     plot(tmp2, pch=1, lwd=0.7, cex=0.8, col="#8D4200", add=TRUE)
+     plot(tmp2, pch=2, lwd=0.7, cex=0.8, col="#8D4200", add=TRUE)
   }
   for(site in unique(MM$site_no[MM$ed_rch_zone != 1])) {
     tmp2 <- MM[MM$site_no == site, ]; tmp2 <- tmp2[1,]
@@ -76,11 +76,22 @@ pdf("SiteMapB.pdf", useDingbats=FALSE, width=11, height=10)
   #map_base_site_map();
   #plot(GulfStates_modified, add=TRUE, lwd=.4, lty=2, col=NA)
   k <- 0; ks <- c(0.6,0.8,1.0,1.2,1.4,1.6)
-  for(d in sort(unique(DD$decade))) {
-    k <- k + 1
-    plot(DD[DD$decade == d,], pch=1, lwd=0.7, cex=ks[k], col="#006F41", add=TRUE)
+  #for(d in sort(unique(DD$decade))) {
+  #  k <- k + 1
+  #  plot(DD[DD$decade == d,], pch=1, lwd=0.7, cex=ks[k], col="#006F41", add=TRUE)
+  #}
+  tmp <- DD[DD$ed_rch_zone != 1,]
+  for(d in sort(unique(tmp$decade))) { k <- k + 1
+    #tmp2 <- tmp[tmp$site_no == site, ]; tmp2 <- tmp2[1,]
+    plot(tmp[tmp$decade == d,], pch=1, lwd=0.7, cex=ks[k], col="#006F41", add=TRUE)
   }
-  map_annotation(); legend_est(sitemap=TRUE)
+  k <- 0; ks <- c(0.6,0.8,1.0,1.2,1.4,1.6)
+  tmp <- DD[DD$ed_rch_zone == 1,]
+  for(d in sort(unique(tmp$decade))) { k <- k + 1
+     #tmp2 <- tmp[tmp$site_no == site, ]; tmp2 <- tmp2[1,]
+     plot(tmp[tmp$decade == d,], pch=1, lwd=0.7, cex=ks[k], col="#8D4200", add=TRUE)
+  }
+  map_annotation(); legend_est(sitemap=TRUE, triangle=FALSE)
 dev.off()
 
 cropthem <- TRUE
