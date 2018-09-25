@@ -104,7 +104,7 @@ choropleth_cov <-
 
 legend_est <- function(gage="", title="", note=TRUE, shades=NULL,
                        itgage=TRUE, more=NA, sitemap=FALSE,
-                       triangle=FALSE, ...) {
+                       triangle=FALSE, noedwards=TRUE, ...) {
   if(sitemap) {
      note <- FALSE; itgage <- FALSE
   }
@@ -125,12 +125,24 @@ legend_est <- function(gage="", title="", note=TRUE, shades=NULL,
     legend(xx, 530000, c(sa, "Edwards aquifer outcrop (Texas Commission on Environmental Quality, 2018)", txt,
         "USGS streamgage with large Edwards aquifer recharge impacts on decadal no-flows and removed from modeling"), bty="n",
            cex=0.7, pt.cex=c(NA,NA,0.8,0.8),
-           lwd=c(1.5,3,0.7,0.7), lty=c(1,1,0,0), pch=c(NA,NA,2,1), col=c(1,"#F99B00","#006F41","#8D4200"), ...)
+           lwd=c(1.5,3,0.9,0.9), lty=c(1,1,0,0), pch=c(NA,NA,2,2), col=c(1,"#F99B00","#006F41","#8D4200"), ...)
     } else {
-      txt <- paste0("USGS streamgage and symbol size represents one the six decades: 1950s (smallest circle) through 2000s (largest circle)")
-      legend(xx, 520000, c(sa, "Edwards aquifer outcrop (Texas Commission on Environmental Quality, 2018)", txt), bty="n",
-             cex=0.7, pt.cex=c(NA,NA,0.8),
-             lwd=c(1.5,3,0.7), lty=c(1,1,0), pch=c(NA,NA,1), col=c(1,"#F99B00","#006F41"), ...)
+      if(noedwards) {
+           txt <- paste0("USGS streamgage* represented in Crowley-Ornelas, Asquith, Worland, and Knight (2018) and used in statistical model ")
+    legend(xx, 530000, c(sa, "Edwards aquifer outcrop (Texas Commission on Environmental Quality, 2018)", txt), bty="n",
+           cex=0.7, pt.cex=c(NA,NA,0.8),
+           lwd=c(1.5,3,0.9), lty=c(1,1,0), pch=c(NA,NA,1), col=c(1,"#F99B00","#006F41"), ...)
+      } else {
+           txt <- paste0("USGS streamgage* represented in Crowley-Ornelas, Asquith, Worland, and Knight (2018) ")
+    legend(xx, 530000, c(sa, "Edwards aquifer outcrop (Texas Commission on Environmental Quality, 2018)", txt,
+        "USGS streamgage with large Edwards aquifer recharge impacts on decadal no-flows and removed from modeling"), bty="n",
+           cex=0.7, pt.cex=c(NA,NA,0.8,0.8),
+           lwd=c(1.5,3,0.9,0.9), lty=c(1,1,0,0), pch=c(NA,NA,1,1), col=c(1,"#F99B00","#006F41","#8D4200"), ...)
+      }
+    text(260000, 350000,
+         paste0("* Note that symbol size represents one the six decades:\n     ",
+                "1950s (smallest circle) through 2000s (largest circle)"),
+         cex=.6, pos=4)
     }
     return()
   }
@@ -187,8 +199,8 @@ GL <- SpatialPointsDataFrame(cbind(-gx, gy), data=data.frame(onoff=rep(1,length(
                                     proj4string=LATLONG)
 GL <- spTransform(GL, ALBEA)
 ix <- 1:length(x)
-plot(GL, pch=1, col=2)
-text(XY[,1],XY[,2], ix)
+#plot(GL, pch=1, col=2)
+#text(XY[,1],XY[,2], ix)
 GL$onoff[c(1,3:9, 12, 14:20, 23, 34, 45)] <- 0
 #writeOGR(GL, "gridx2deg", "gridx2deg", driver="ESRI Shapefile")
 GL <- GL[-c(1,3:9, 12, 14:20, 23, 34, 45),]
