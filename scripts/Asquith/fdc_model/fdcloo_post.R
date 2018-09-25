@@ -31,7 +31,7 @@ ObsMean[looL1model$site_no == "08167000"]*(1/0.3048^3)
 EstMeanFlow[looL1model$site_no == "08167000"]*(1/0.3048^3)
 EstMeanFlow_loo[looL1model$site_no == "08167000"]*(1/0.3048^3)
 
-pdf("true_mean_comparison.pdf", useDingbats=FALSE, width=7.5, height=6.5)
+pdf("true_mean_comparison.pdf", useDingbats=FALSE, height=6, width=7.5)
 par(mgp=c(3,0.5,0)) # going to tick to the inside, change some parameters
 xlim <- add.log.axis(x=ObsMean); ylim <- add.log.axis(x=EstMeanFlow_loo)
 plot(ObsMean, EstMeanFlow_loo, log="xy", pch=16, lwd=0.5, cex=1,
