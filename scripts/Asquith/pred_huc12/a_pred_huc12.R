@@ -35,7 +35,7 @@ length(spCOV$norm_storage[spCOV$basin_area == 0]) # [1] 0
 
 length(spCOV$flood_storage[spCOV$flood_storage > 1]) # [1] 35
 #boxplot(spCOV$flood_storage)
-spCOV$flood_storage[spCOV$flood_storage > 1*0.3048] <- 1*0.3048 # truncate predictions in the extrapolation zone
+spCOV$flood_storage[spCOV$flood_storage > 1] <- 1 # truncate predictions in the extrapolation zone
 #spCOV <- spCOV[spCOV$flood_storage <= 1,] # This is about 1 meter of watershed depth equivalent
 # which is close to the maximum observed in the streamgage network itself. But if the GAM
 # models PPLO-->T6 don't use flood_storage, just don't delete those.
