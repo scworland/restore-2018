@@ -214,14 +214,20 @@ DD_sites_of_area_bust <- DDo[DDo$site_no == sites_of_area_bust[1], ]
 for(site in sites_of_area_bust[2:length(sites_of_area_bust)]) {
   DD_sites_of_area_bust <- rbind(DD_sites_of_area_bust,DDo[DDo$site_no == site, ] )
 }
-DD <- DDo
+DD <- DDo; bust <- 0; k <- 0
 for(site in sites_of_area_bust) {
+  k <- k + 1
   points(10^DDo$CDA[DDo$site_no == site], 10^DDo$basin_area[DDo$site_no == site], pch=16, col=2)
+  bust[k] <- abs(DD$basin_area[DD$site_no == site] - DD$CDA[DD$site_no == site])[1]
   DD <- DD[DD$site_no != site,]
 }
 text(0,5, paste(sites_of_area_bust, collapse=", "), cex=0.6, pos=4)
 par(mgp=c(3,1,0)) # restore defaults
 dev.off()
+
+
+message("Mean bust: ", round(mean(bust), digits=2))
+message("Max bust: ",  round(max( bust), digits=2))
 
 print(summary(DDo$CDA - DDo$basin_area))
 print(summary( DD$CDA -  DD$basin_area))
@@ -268,6 +274,13 @@ dev.off()
 D <- DD;
 
 D <- D[D$ed_rch_zone != "1",]
+
+D <- D[D$site_no != "02341500", ]
+# Streamgages 02341500 and 02341505 described in the previous section are
+# nearly duplicate records and share COMID 3434284 and HUC12 031300030104.
+# Only streamgage 02341505, having one extra decade, was retained for
+# construction of statistical models for this study.
+
 
 duan_smearing_estimator <- function(model) { sum(10^residuals(model))/length(residuals(model)) }
 
@@ -343,17 +356,17 @@ lines(c(3.3, 4), rep(log10(3653),2), lty=2, lwd=0.65, col=grey(0.5))
 
 abline(0,1, lwd=0.8)
 length(Z$n[Z$nzero == 0])
-#[1] 2007
+#[1] 2002
 length(Z$n[Z$nzero != 0])
 #[1] 739
 length(Pto[Pto < log10(3653)])
 #[1] 387
 length(Gto[Gto < log10(3653)])
 #[1] 414
-txt <- paste0("Number of streamgage:decade records with no zero-flow conditions: 2,011\n",
-              "Number of streamgage:decade records with zero-flow conditions: 738\n",
-              "Number of survival regression predicted with zero-flow conditions: 388\n",
-              "Number of GAM regression predicted with zero-flow conditions: 409\n")
+txt <- paste0("Number of streamgage:decade records with no zero-flow conditions: 2,002\n",
+              "Number of streamgage:decade records with zero-flow conditions: 739\n",
+              "Number of survival regression predicted with zero-flow conditions: 387\n",
+              "Number of GAM regression predicted with zero-flow conditions: 414\n")
 text(3.57, 3.4, txt, pos=4, cex=0.7)
 txt <- paste0("All three grey regions depict predictions of\n",
               "no zero-flow occurrences in at least a decade.\n",
@@ -598,6 +611,14 @@ points(D$east[C3 < log10(3653)], D$north[C3 < log10(3653)], pch=4, lwd=.5, cex=0
 points(D$east[C3 < log10(2000)], D$north[C3 < log10(2000)], pch=16, lwd=.5, cex=0.9, col=rgb(0.5,0,1,.5))
 mtext("Predictions cenGAM of PPLO (C3)")
 
+pdf("PPLO.pdf", useDingbats=FALSE)
+  plot(Z$flowtime, fitted.values(PPLO), col=3)
+  abline(0,1)
+  plot(PPLO, scheme=2, residuals=TRUE)
+  points(Z$x, Z$y, pch=4, lwd=.5, cex=0.9, col=8)
+  points(knots$x, knots$y, pch=16, cex=1.1, col=4)
+  text(100, 500, "PPLO")
+dev.off()
 
 ###### END PPLO
 
