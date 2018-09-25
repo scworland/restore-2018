@@ -56,11 +56,11 @@ pdf("SiteMapA.pdf", useDingbats=FALSE, width=11, height=10)
   tmp <- MM[MM$ed_rch_zone == 1,]
   for(site in unique(tmp$site_no)) {
      tmp2 <- tmp[tmp$site_no == site, ]; tmp2 <- tmp2[1,]
-     plot(tmp2, pch=2, lwd=0.7, cex=0.8, col="#8D4200", add=TRUE)
+     plot(tmp2, pch=2, lwd=0.9, cex=0.8, col="#8D4200", add=TRUE)
   }
   for(site in unique(MM$site_no[MM$ed_rch_zone != 1])) {
     tmp2 <- MM[MM$site_no == site, ]; tmp2 <- tmp2[1,]
-    plot(tmp2, pch=2, lwd=0.7, cex=0.8, col="#1E4D2B", add=TRUE)
+    plot(tmp2, pch=2, lwd=0.9, cex=0.8, col="#1E4D2B", add=TRUE)
   }
   map_annotation(); legend_est(sitemap=TRUE, triangle=TRUE)
 dev.off()
@@ -80,7 +80,7 @@ pdf("SiteMapB.pdf", useDingbats=FALSE, width=11, height=10)
   #  k <- k + 1
   #  plot(DD[DD$decade == d,], pch=1, lwd=0.7, cex=ks[k], col="#006F41", add=TRUE)
   #}
-  tmp <- DD[DD$ed_rch_zone != 1,]
+  tmp <- D[D$ed_rch_zone != 1,]
   for(d in sort(unique(tmp$decade))) { k <- k + 1
     #tmp2 <- tmp[tmp$site_no == site, ]; tmp2 <- tmp2[1,]
     plot(tmp[tmp$decade == d,], pch=1, lwd=0.7, cex=ks[k], col="#006F41", add=TRUE)
@@ -89,9 +89,15 @@ pdf("SiteMapB.pdf", useDingbats=FALSE, width=11, height=10)
   tmp <- DD[DD$ed_rch_zone == 1,]
   for(d in sort(unique(tmp$decade))) { k <- k + 1
      #tmp2 <- tmp[tmp$site_no == site, ]; tmp2 <- tmp2[1,]
-     plot(tmp[tmp$decade == d,], pch=1, lwd=0.7, cex=ks[k], col="#8D4200", add=TRUE)
+     #plot(tmp[tmp$decade == d,], pch=1, lwd=0.7, cex=ks[k], col="#8D4200", add=TRUE)
   }
-  map_annotation(); legend_est(sitemap=TRUE, triangle=FALSE)
+  map_annotation(); legend_est(sitemap=TRUE, triangle=FALSE, noedwards=TRUE)
+  xy <- coordinates(D[D$site_no == "08167000",1])
+  points(xy[,1], xy[,2], pch=0, col="#b51b96", cex=2)
+  arrows(x0=147500, y0=573000, xy[,1], xy[,2],
+         lwd=.5, length=0.15, angle=15, col="#b51b96")
+  text(147500, 573000, "Streamgage 08167000 used as an example in the text",
+                       cex=0.7, pos=4, col="#7a1265")
 dev.off()
 
 cropthem <- TRUE
@@ -103,5 +109,11 @@ crop_em <- function(spawn=FALSE) {
 }
 crop_em(spawn=cropthem)
 
+print(length(MM$site_no))
+print(length(unique(MM$site_no)))
+
+
+print(length(D$site_no))
+print(length(unique(D$site_no)))
 
 
