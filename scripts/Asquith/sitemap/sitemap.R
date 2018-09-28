@@ -10,7 +10,10 @@ load("../../../../GIS/RESTORE_MGCV_BND.RData") # spRESTORE_MGCV_BND.RData
 load("../../../../GIS/edwards_aquifer_outcrop.RData") # Edwards
 load("../fdc_model/FDCEST.RData") # to get bnd
 MM <- read_feather("../../../data/gage/all_gage_data.feather") # all_gage_data.feather
-
+MM$ed_rch_zone[MM$site_no == "08155300"] <- 0 # WHA 09/28/2018
+MM$ed_rch_zone[MM$site_no == "08155400"] <- 0 # WHA 09/28/2018
+MM$ed_rch_zone[MM$site_no == "08156800"] <- 0 # WHA 09/28/2018
+MM$ed_rch_zone[MM$site_no == "08181400"] <- 0 # WHA 09/28/2018
 
 LATLONG <- paste0("+init=epsg:4269 +proj=longlat +ellps=GRS80 ",
                   "+datum=NAD83 +no_defs +towgs84=0,0,0")
