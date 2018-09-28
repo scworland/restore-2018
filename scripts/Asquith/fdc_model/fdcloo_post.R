@@ -88,13 +88,21 @@ summary(looPPLOmodel$est_lwr_pplo > looPPLOmodel$flowtime |
         looPPLOmodel$est_upr_pplo < looPPLOmodel$flowtime )
 
 
+n <- length(looPPLOmodel$flowtime)
+o1 <- sum(looPPLOmodel$est_lwr_flowtime > looPPLOmodel$flowtime |
+          looPPLOmodel$est_upr_flowtime < looPPLOmodel$flowtime, na.rm=TRUE)
+o2 <- sum(looPPLOmodel$loo_est_lwr_flowtime > looPPLOmodel$flowtime |
+          looPPLOmodel$loo_est_upr_flowtime < looPPLOmodel$flowtime, na.rm=TRUE)
+cp1 <- round(1 - o1/n, 3); cp2 <- round(1 - o2/n, 3)
+message("95% coverage probability, PPLO: GAM=",cp1," and GAMloo=",cp2)
+
 
 n <- length(looL1model$L1)
 o1 <- sum(looL1model$est_lwr_L1 > looL1model$L1 |
           looL1model$est_upr_L1 < looL1model$L1, na.rm=TRUE)
 o2 <- sum(looL1model$loo_est_lwr_L1 > looL1model$L1 |
           looL1model$loo_est_upr_L1 < looL1model$L1, na.rm=TRUE)
-cp1 <- round(1 - o1/n, 3)*100; cp2 <- round(1 - o2/n, 3)*100
+cp1 <- round(1 - o1/n, 3); cp2 <- round(1 - o2/n, 3)
 message("95% coverage probability, L1: GAM=",cp1," and GAMloo=",cp2)
 
 n <- length(looT2model$T2)
@@ -102,7 +110,7 @@ o1 <- sum(looT2model$est_lwr_T2 > looT2model$T2 |
           looT2model$est_upr_T2 < looT2model$T2, na.rm=TRUE)
 o2 <- sum(looT2model$loo_est_lwr_T2 > looT2model$T2 |
           looT2model$loo_est_upr_T2 < looT2model$T2, na.rm=TRUE)
-cp1 <- round(1 - o1/n, 3)*100; cp2 <- round(1 - o2/n, 3)*100
+cp1 <- round(1 - o1/n, 3); cp2 <- round(1 - o2/n, 3)
 message("95% coverage probability, T2: GAM=",cp1," and GAMloo=",cp2)
 
 n <- length(looT3model$T3)
@@ -110,7 +118,7 @@ o1 <- sum(looT3model$est_lwr_T3 > looT3model$T3 |
           looT3model$est_upr_T3 < looT3model$T3, na.rm=TRUE)
 o2 <- sum(looT3model$loo_est_lwr_T3 > looT3model$T3 |
           looT3model$loo_est_upr_T3 < looT3model$T3, na.rm=TRUE)
-cp1 <- round(1 - o1/n, 3)*100; cp2 <- round(1 - o2/n, 3)*100
+cp1 <- round(1 - o1/n, 3); cp2 <- round(1 - o2/n, 3)
 message("95% coverage probability, T3: GAM=",cp1," and GAMloo=",cp2)
 
 n <- length(looT4model$T4)
@@ -118,7 +126,7 @@ o1 <- sum(looT4model$est_lwr_T4 > looT4model$T4 |
           looT4model$est_upr_T4 < looT4model$T4, na.rm=TRUE)
 o2 <- sum(looT4model$loo_est_lwr_T4 > looT4model$T4 |
           looT4model$loo_est_upr_T4 < looT4model$T4, na.rm=TRUE)
-cp1 <- round(1 - o1/n, 3)*100; cp2 <- round(1 - o2/n, 3)*100
+cp1 <- round(1 - o1/n, 3); cp2 <- round(1 - o2/n, 3)
 message("95% coverage probability, T4: GAM=",cp1," and GAMloo=",cp2)
 
 n <- length(looT5model$T5)
@@ -126,5 +134,58 @@ o1 <- sum(looT5model$est_lwr_T5 > looT5model$T5 |
           looT5model$est_upr_T5 < looT5model$T5, na.rm=TRUE)
 o2 <- sum(looT5model$loo_est_lwr_T5 > looT5model$T5 |
           looT5model$loo_est_upr_T5 < looT5model$T5, na.rm=TRUE)
-cp1 <- round(1 - o1/n, 3)*100; cp2 <- round(1 - o2/n, 3)*100
+cp1 <- round(1 - o1/n, 3); cp2 <- round(1 - o2/n, 3)
 message("95% coverage probability, T5: GAM=",cp1," and GAMloo=",cp2)
+
+tmp <- looPPLOmodel[complete.cases(looPPLOmodel),]
+n <- length(tmp$pplo)
+sum(tmp$pplo > 0)/n
+sum(tmp$est_pplo > 0)/n
+sum(tmp$loo_est_pplo > 0)/n
+(sum(tmp$pplo > 0 & tmp$est_pplo > 0) + sum(tmp$pplo == 0 & tmp$est_pplo == 0))/n
+(sum(tmp$pplo > 0 & tmp$loo_est_pplo > 0) + sum(tmp$pplo == 0 & tmp$loo_est_pplo == 0))/n
+
+mean(abs(tmp$est_pplo - tmp$pplo) <= 0   )
+mean(abs(tmp$est_pplo - tmp$pplo) <= 0.02)
+mean(abs(tmp$est_pplo - tmp$pplo) <= 0.05)
+mean(abs(tmp$est_pplo - tmp$pplo) <= 0.10)
+
+mean(abs(tmp$loo_est_pplo - tmp$pplo) <= 0   )
+mean(abs(tmp$loo_est_pplo - tmp$pplo) <= 0.02)
+mean(abs(tmp$loo_est_pplo - tmp$pplo) <= 0.05)
+mean(abs(tmp$loo_est_pplo - tmp$pplo) <= 0.10)
+
+
+message("PPLO RMSE: ",
+round(sqrt(mean((tmp$flowtime-tmp$est_flowtime)^2, na.rm=TRUE)), 3), " & ",
+round(sqrt(mean((tmp$flowtime-tmp$loo_est_flowtime)^2, na.rm=TRUE)), 3)
+)
+tmp <- looL1model[complete.cases(looL1model),]
+message("L1 RMSE: ",
+round(sqrt(mean((log10(tmp$L1)-log10(tmp$est_L1))^2, na.rm=TRUE)), 3), " & ",
+round(sqrt(mean((log10(tmp$L1)-log10(tmp$loo_est_L1))^2, na.rm=TRUE)), 3)
+)
+tmp <- looT2model[complete.cases(looT2model),]
+message("T2 RMSE: ",
+round(sqrt(mean((tmp$T2-tmp$est_T2)^2, na.rm=TRUE)), 3), " & ",
+round(sqrt(mean((tmp$T2-tmp$loo_est_T2)^2, na.rm=TRUE)), 3)
+)
+tmp <- looT3model[complete.cases(looT3model),]
+message("T3 RMSE: ",
+round(sqrt(mean((tmp$T3-tmp$est_T3)^2, na.rm=TRUE)), 3), " & ",
+round(sqrt(mean((tmp$T3-tmp$loo_est_T3)^2, na.rm=TRUE)), 3)
+)
+tmp <- looT4model[complete.cases(looT4model),]
+message("T4 RMSE: ",
+round(sqrt(mean((tmp$T4-tmp$est_T4)^2, na.rm=TRUE)), 3), " & ",
+round(sqrt(mean((tmp$T4-tmp$loo_est_T4)^2, na.rm=TRUE)), 3)
+)
+tmp <- looT5model[complete.cases(looT5model),]
+message("T5 RMSE: ",
+round(sqrt(mean((tmp$T5-tmp$est_T5)^2, na.rm=TRUE)), 3), " & ",
+round(sqrt(mean((tmp$T5-tmp$loo_est_T5)^2, na.rm=TRUE)), 3)
+)
+
+
+
+
