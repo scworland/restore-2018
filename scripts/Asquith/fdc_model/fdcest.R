@@ -173,19 +173,17 @@ DD$water               <-  dotransin(DD$water)
 DD$woody_wetland       <-  dotransin(DD$woody_wetland)
 DD$bfi                 <-  dotransin(DD$bfi)
 
-#DD$edwards_rechzone <- 0
-#DD$edwards_rechzone[DD$site_no == "08155300"] <- 1
-#DD$edwards_rechzone[DD$site_no == "08155400"] <- 1
-#DD$edwards_rechzone[DD$site_no == "08156800"] <- 1
-#DD$edwards_rechzone[DD$site_no == "08181400"] <- 1
-#DD$edwards_rechzone[DD$site_no == "08184000"] <- 1
-#DD$edwards_rechzone[DD$site_no == "08185000"] <- 1
-#DD$edwards_rechzone[DD$site_no == "08190500"] <- 1
-#DD$edwards_rechzone[DD$site_no == "08197500"] <- 1
-#DD$edwards_rechzone[DD$site_no == "08198500"] <- 1
-#DD$edwards_rechzone[DD$site_no == "08200700"] <- 1
-#DD$edwards_rechzone[DD$site_no == "08202700"] <- 1
-#DD$edwards_rechzone <- as.factor(DD$edwards_rechzone)
+DD$ed_rch_zone[DD$site_no == "08155300"] <- 0
+DD$ed_rch_zone[DD$site_no == "08155400"] <- 0
+DD$ed_rch_zone[DD$site_no == "08156800"] <- 0
+DD$ed_rch_zone[DD$site_no == "08181400"] <- 0
+#DD$ed_rch_zone[DD$site_no == "08184000"] <- 1
+#DD$ed_rch_zone[DD$site_no == "08185000"] <- 1
+#DD$ed_rch_zone[DD$site_no == "08190500"] <- 1
+#DD$ed_rch_zone[DD$site_no == "08197500"] <- 1
+#DD$ed_rch_zone[DD$site_no == "08198500"] <- 1
+#DD$ed_rch_zone[DD$site_no == "08200700"] <- 1
+#DD$ed_rch_zone[DD$site_no == "08202700"] <- 1
 
 DDo <- DD
 

@@ -8,29 +8,6 @@ looT4model   <- read_feather("../../../results/gage/gam/all_gage_looest_T4.feath
 looT5model   <- read_feather("../../../results/gage/gam/all_gage_looest_T5.feather"  )
 
 
-
-
-#ObsMean <- 0*looPPLOmodel$loo_est_pplo + (1-looPPLOmodel$loo_est_pplo)*looL1model$loo_est_L1
-EstMeanFlow_loo <- (1-looPPLOmodel$loo_est_pplo)*looL1model$loo_est_L1*looL1model$loo_bias_corr
-EstMeanFlow <- (1-looPPLOmodel$est_pplo)*looL1model$est_L1*looL1model$bias_corr
-EstMeanFlow_loo[looL1model$site_no == "08167000"]
-EstMeanFlow[looL1model$site_no == "08167000"]
-plot(EstMeanFlow, EstMeanFlow_loo, log='xy', pch=16, col=rgb(1,0,0,.3), lwd=0.5, cex=1,
-     xlab="Estimated Decadal Mean Flow", ylab="LOO Estimated Decadle Mean Flow")
-abline(0,1)
-
-ObsMean <- (1-looPPLOmodel$pplo)*looL1model$L1
-
-median(abs(log10(EstMeanFlow_loo) - log10(EstMeanFlow)), na.rm=TRUE)
-
-median(abs(log10(EstMeanFlow)     - log10(ObsMean)), na.rm=TRUE)
-median(abs(log10(EstMeanFlow_loo) - log10(ObsMean)), na.rm=TRUE)
-
-
-ObsMean[looL1model$site_no == "08167000"]*(1/0.3048^3)
-EstMeanFlow[looL1model$site_no == "08167000"]*(1/0.3048^3)
-EstMeanFlow_loo[looL1model$site_no == "08167000"]*(1/0.3048^3)
-
 pdf("true_mean_comparison.pdf", useDingbats=FALSE, height=6, width=7.5)
 par(mgp=c(3,0.5,0)) # going to tick to the inside, change some parameters
 xlim <- add.log.axis(x=ObsMean); ylim <- add.log.axis(x=EstMeanFlow_loo)
@@ -49,17 +26,55 @@ add.log.axis(logs=c(1, 2, 3, 4, 6), side=2, make.labs=TRUE, las=1,
 add.log.axis(logs=c(1, 2, 3, 4, 6), side=1, make.labs=TRUE, las=1,
              label="Observed decadal mean flow (zeros included), in cms")
 
-points(ObsMean[        looL1model$site_no == "08167000"],
-       EstMeanFlow[    looL1model$site_no == "08167000"], col=rgb(0,1,0,.8), pch=16, cex=1.25)
-points(ObsMean[        looL1model$site_no == "08167000"],
-       EstMeanFlow_loo[looL1model$site_no == "08167000"], col=rgb(0,1,0,.8), pch=1, lwd=2, cex=2)
+site <- "08167000"
+#for(site in unique(DDo$site_no[DDo$ed_rch_zone == 1])) {
+gcol <- 3
+#if(site == "08155300" | site == "08155400" | site == "08156800") gcol <- 0
+#site <- "08155300" # on the line, delist from Edwards?
+#site <- "08155400" # on the line, delist from Edwards?
+#site <- "08156800" # on the line, delist from Edwards?
+#site <- "08181400" # close to the line
+#site <- "08184000" # far from to the line
+#site <- "08185000" # far from to the line
+#site <- "08190500" # far from to the line
+#site <- "08197500" # far from to the line
+#site <- "08198500" # far from to the line
+#site <- "08200700" # far from to the line
+#site <- "08202700" # far from to the line
+#print(mean(DDo$pplo[DDo$site_no == site]))
 
+#ObsMean <- 0*looPPLOmodel$loo_est_pplo + (1-looPPLOmodel$loo_est_pplo)*looL1model$loo_est_L1
+EstMeanFlow_loo <- (1-looPPLOmodel$loo_est_pplo)*looL1model$loo_est_L1*looL1model$loo_bias_corr
+EstMeanFlow <- (1-looPPLOmodel$est_pplo)*looL1model$est_L1*looL1model$bias_corr
+EstMeanFlow_loo[looL1model$site_no == site]
+EstMeanFlow[looL1model$site_no == site]
+#plot(EstMeanFlow, EstMeanFlow_loo, log='xy', pch=16, col=rgb(1,0,0,.3), lwd=0.5, cex=1,
+#     xlab="Estimated Decadal Mean Flow", ylab="LOO Estimated Decadle Mean Flow")
+#abline(0,1)
+
+ObsMean <- (1-looPPLOmodel$pplo)*looL1model$L1
+
+median(abs(log10(EstMeanFlow_loo) - log10(EstMeanFlow)), na.rm=TRUE)
+
+median(abs(log10(EstMeanFlow)     - log10(ObsMean)), na.rm=TRUE)
+median(abs(log10(EstMeanFlow_loo) - log10(ObsMean)), na.rm=TRUE)
+
+
+ObsMean[looL1model$site_no == site]*(1/0.3048^3)
+EstMeanFlow[looL1model$site_no == site]*(1/0.3048^3)
+EstMeanFlow_loo[looL1model$site_no == site]*(1/0.3048^3)
+green <- GISTools::add.alpha(rgb(0.5,1,0.5), 0.8)
+points(ObsMean[        looL1model$site_no == site],
+       EstMeanFlow[    looL1model$site_no == site], col=green, pch=16, cex=1.25)
+points(ObsMean[        looL1model$site_no == site],
+       EstMeanFlow_loo[looL1model$site_no == site], col=green, pch=1, lwd=2, cex=2)
+#} # end for
 legend(0.011,800, c("Equal value line",
                     "GAM L1 LOO streamflow for which no no-flow days were observed",
                     "GAM L1 LOO streamflow for which some no-flow days were observed",
-                    "USGS streamgage 08167000 (GAM L1+PPLO estimated [non-LOO])",
-                    "USGS streamgage 08167000 (GAM L1+PPLO LOO estimated)"),
-          bty="n", lty=c(1,NA,NA,NA,NA), col=c(1,4,2,3,3), pch=c(NA,16,16,16,1),
+                    paste0("USGS streamgage ",site," (GAM L1+PPLO estimated [non-LOO])"),
+                    paste0("USGS streamgage ",site," (GAM L1+PPLO LOO estimated)")),
+          bty="n", lty=c(1,NA,NA,NA,NA), col=c(1,4,2,green,green), pch=c(NA,16,16,16,1),
           cex = 0.8, pt.cex=c(NA,1,1,1.25,2))
 txt <- paste0("Abbreviations: GAM, generalized additive model;\n",
               "   L1, nonzero-flow mean; PPLO, decadal percentage of no flow;\n",
