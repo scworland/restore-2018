@@ -214,20 +214,14 @@ DD_sites_of_area_bust <- DDo[DDo$site_no == sites_of_area_bust[1], ]
 for(site in sites_of_area_bust[2:length(sites_of_area_bust)]) {
   DD_sites_of_area_bust <- rbind(DD_sites_of_area_bust,DDo[DDo$site_no == site, ] )
 }
-DD <- DDo; bust <- 0; k <- 0
+DD <- DDo
 for(site in sites_of_area_bust) {
-  k <- k + 1
   points(10^DDo$CDA[DDo$site_no == site], 10^DDo$basin_area[DDo$site_no == site], pch=16, col=2)
-  bust[k] <- abs(DD$basin_area[DD$site_no == site] - DD$CDA[DD$site_no == site])[1]
   DD <- DD[DD$site_no != site,]
 }
 text(0,5, paste(sites_of_area_bust, collapse=", "), cex=0.6, pos=4)
 par(mgp=c(3,1,0)) # restore defaults
 dev.off()
-
-
-message("Mean bust: ", round(mean(bust), digits=2))
-message("Max bust: ",  round(max( bust), digits=2))
 
 print(summary(DDo$CDA - DDo$basin_area))
 print(summary( DD$CDA -  DD$basin_area))
@@ -356,17 +350,17 @@ lines(c(3.3, 4), rep(log10(3653),2), lty=2, lwd=0.65, col=grey(0.5))
 
 abline(0,1, lwd=0.8)
 length(Z$n[Z$nzero == 0])
-#[1] 2002
+#[1] 2007
 length(Z$n[Z$nzero != 0])
 #[1] 739
 length(Pto[Pto < log10(3653)])
 #[1] 387
 length(Gto[Gto < log10(3653)])
 #[1] 414
-txt <- paste0("Number of streamgage:decade records with no zero-flow conditions: 2,002\n",
-              "Number of streamgage:decade records with zero-flow conditions: 739\n",
-              "Number of survival regression predicted with zero-flow conditions: 387\n",
-              "Number of GAM regression predicted with zero-flow conditions: 414\n")
+txt <- paste0("Number of streamgage:decade records with no zero-flow conditions: 2,011\n",
+              "Number of streamgage:decade records with zero-flow conditions: 738\n",
+              "Number of survival regression predicted with zero-flow conditions: 388\n",
+              "Number of GAM regression predicted with zero-flow conditions: 409\n")
 text(3.57, 3.4, txt, pos=4, cex=0.7)
 txt <- paste0("All three grey regions depict predictions of\n",
               "no zero-flow occurrences in at least a decade.\n",
@@ -440,31 +434,45 @@ GM4 <- gam(flowtime~s(basin_area, k=5)+
         s(x,y), knots=knots,
            family=tobit1(left.threshold=  Z$left.threshold,
                          right.threshold=Z$right.threshold), data=Z); summary(GM4)
+# cat_soller: cat_soller_620 is only statistically significant and only in SE Texas area
+# soller acc_soller_610, acc_soller_331, acc_soller_620, acc_soller_910
+# ecol3: acc_ecol3_27 which is mainstem Red and North Trinity only
+# cat_ecol3: ecol3_66 which is up in a zone in northen Georgia
+# physioacc_physio_5: up in zone in northen Georgia includes and also north of ecol_66
+GM5 <- gam(flowtime~s(basin_area, k=5)+
+                    s(ppt_mean, k=5)+s(temp_mean, k=4)+s(dni_ann, k=7)+s(dni_mar, k=7)+
+                    developed+
+                    bedperm+decade-1+
+        s(x,y), knots=knots,
+           family=tobit1(left.threshold=  Z$left.threshold,
+                         right.threshold=Z$right.threshold), data=Z); summary(GM4)
 
 P <- Po <- predict(SM0); P[P > log10(3653)] <- log10(3653)
 C1 <- C1o <- predict(GM1); C1[C1 > log10(3653)] <- log10(3653)
 C2 <- C2o <- predict(GM2); C2[C2 > log10(3653)] <- log10(3653)
 C3 <- C3o <- predict(GM3); C3[C3 > log10(3653)] <- log10(3653)
 C4 <- C4o <- predict(GM4); C4[C4 > log10(3653)] <- log10(3653)
+C5 <- C5o <- predict(GM5); C5[C5 > log10(3653)] <- log10(3653)
 pa <- abs(P - Z$flowtime)
 ca <- abs(C1- Z$flowtime)
 cb <- abs(C2- Z$flowtime)
 cc <- abs(C3- Z$flowtime)
 cd <- abs(C4- Z$flowtime)
+ce <- abs(C5- Z$flowtime)
 summary(pa)
 summary(ca)
 summary(cb)
 summary(cc)
 summary(cd)
-
+summary(ce)
 
 plot(Z$flowtime, P, xlim=c(2.9,3.6), ylim=c(3,3.6), type="n")
 abline(0,1)
 points(Z$flowtime ,P, pch=16, col=rgb(0,0,1,.5), cex=0.5)
-points(Z$flowtime,C2, pch=16, col=rgb(1,0,0,.2), cex=0.5)
+points(Z$flowtime,C4, pch=16, col=rgb(1,0,0,.2), cex=0.5)
 for(i in 1:length(P)) {
-  if(abs(P[i]-C2[i]) < .02) next
-  try(arrows(Z$flowtime[i],P[i],Z$flowtime[i],C2[i],
+  if(abs(P[i]-C4[i]) < .02) next
+  try(arrows(Z$flowtime[i],P[i],Z$flowtime[i],C4[i],
              lwd=0.5, angle=20, length=.1, col=2), silent=TRUE)
 }
 
@@ -572,10 +580,12 @@ summary(PPLOdf$pplo <= PPLOdf$est_upr_pplo*0.62) # in bulk the limits just are w
 #$PPLOdf$est_upr_pplo <- 0.62*PPLOdf$est_upr_pplo
 # All of the est_lwr_pplo are zero anyway so know simple way seen how to fix them.
 
-sum(abs(PPLOdf$est_pplo - PPLOdf$pplo) <= 0   )/length(DDo$site_no)
-sum(abs(PPLOdf$est_pplo - PPLOdf$pplo) <= 0.02)/length(DDo$site_no)
-sum(abs(PPLOdf$est_pplo - PPLOdf$pplo) <= 0.05)/length(DDo$site_no)
-sum(abs(PPLOdf$est_pplo - PPLOdf$pplo) <= 0.10)/length(DDo$site_no)
+mean(abs(PPLOdf$est_pplo - PPLOdf$pplo) <= 0   )
+mean(abs(PPLOdf$est_pplo - PPLOdf$pplo) <= 0.02)
+mean(abs(PPLOdf$est_pplo - PPLOdf$pplo) <= 0.05)
+mean(abs(PPLOdf$est_pplo - PPLOdf$pplo) <= 0.10)
+
+
 
 #write_feather(PPLOdf, "all_gage_est_pplo.feather")
 
@@ -611,14 +621,6 @@ points(D$east[C3 < log10(3653)], D$north[C3 < log10(3653)], pch=4, lwd=.5, cex=0
 points(D$east[C3 < log10(2000)], D$north[C3 < log10(2000)], pch=16, lwd=.5, cex=0.9, col=rgb(0.5,0,1,.5))
 mtext("Predictions cenGAM of PPLO (C3)")
 
-pdf("PPLO.pdf", useDingbats=FALSE)
-  plot(Z$flowtime, fitted.values(PPLO), col=3)
-  abline(0,1)
-  plot(PPLO, scheme=2, residuals=TRUE)
-  points(Z$x, Z$y, pch=4, lwd=.5, cex=0.9, col=8)
-  points(knots$x, knots$y, pch=16, cex=1.1, col=4)
-  text(100, 500, "PPLO")
-dev.off()
 
 ###### END PPLO
 
@@ -1094,36 +1096,43 @@ save(bnd, DDo, DD, D, PPLO, L1, T2, T3, T4, T5, T6, file="Models.RData")
 
 plot(PPLOdf$pplo, PPLOdf$est_pplo,
      xlab="Observed value", ylab="Fitted value")
-mtext(paste0("PPLO: NSE=",round(NSE(PPLOdf$est_pplo, PPLOdf$pplo), digits=2)))
+mtext(paste0("PPLO: NSE=",round(NSE(PPLOdf$est_pplo, PPLOdf$pplo), digits=3)))
 abline(0,1)
 
 plot(log10(L1df$L1), log10(L1df$est_L1),
      xlab="Observed value", ylab="Fitted value")
-mtext(paste0("L1: NSE=",round(NSE(L1df$bias_corr*L1df$est_L1, L1df$L1), digits=2)))
+mtext(paste0("L1: NSE=",round(NSE(L1df$bias_corr*L1df$est_L1, L1df$L1), digits=3)))
 abline(0,1)
 
 plot(T2df$T2, T2df$est_T2,
      xlab="Observed value", ylab="Fitted value")
-mtext(paste0("T2: NSE=",round(NSE(T2df$est_T2, T2df$T2), digits=2)))
+mtext(paste0("T2: NSE=",round(NSE(T2df$est_T2, T2df$T2), digits=3)))
 abline(0,1)
 
 plot(T3df$T3, T3df$est_T3,
      xlab="Observed value", ylab="Fitted value")
-mtext(paste0("T3: NSE=",round(NSE(T3df$est_T3, T3df$T3), digits=2)))
+mtext(paste0("T3: NSE=",round(NSE(T3df$est_T3, T3df$T3), digits=3)))
 abline(0,1)
 
 plot(T4df$T4, T4df$est_T4,
      xlab="Observed value", ylab="Fitted value")
-mtext(paste0("T4: NSE=",round(NSE(T4df$est_T4, T4df$T4), digits=2)))
+mtext(paste0("T4: NSE=",round(NSE(T4df$est_T4, T4df$T4), digits=3)))
 abline(0,1)
 
 plot(T5df$T5, T5df$est_T5,
      xlab="Observed value", ylab="Fitted value")
-mtext(paste0("T5: NSE=",round(NSE(T5df$est_T5, T5df$T5), digits=2)))
+mtext(paste0("T5: NSE=",round(NSE(T5df$est_T5, T5df$T5), digits=3)))
 abline(0,1)
 
 plot(T6df$T6, T6df$est_T6,
      xlab="Observed value", ylab="Fitted value")
-mtext(paste0("T6: NSE=",round(NSE(T6df$est_T6, T6df$T6), digits=2)))
+mtext(paste0("T6: NSE=",round(NSE(T6df$est_T6, T6df$T6), digits=3)))
 abline(0,1)
 
+
+pdf("PPLOsmooths.pdf", useDingbats=FALSE)
+plot(PPLO, scheme=1, residuals=TRUE, cex=2)
+dev.off()
+pdf("PPLOspace.pdf", useDingbats=FALSE)
+plot(PPLO, scheme=3, residuals=TRUE, cex=2)
+dev.off()
