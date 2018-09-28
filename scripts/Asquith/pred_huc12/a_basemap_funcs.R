@@ -16,6 +16,45 @@ my.choro.legend <- function(px, py, sh, under="under", over="over", between="to"
         cex = cex)
 }
 
+my.choro.legend.cat <- function(px, py, sh,
+                                fmt="%g", cex=1, cat.levels=NULL, ...) {
+    x = sh$breaks
+    lx = length(x)
+    if (lx < 3)
+        stop("break vector too short")
+    res = cat.levels
+    maxwidth <- max(strwidth(res))
+    temp <- legend(x = px, y = py, legend = rep(" ", length(res)),
+        fill = sh$cols, text.width = maxwidth, cex = cex, ...)
+    offset <- 50000
+    text(temp$rect$left + temp$rect$w - offset, temp$text$y, res, pos = 2,
+        cex = cex)
+}
+
+
+my.choro.legend.pplo <- function(px, py, sh, under="under", over="over", between="to",
+                            fmt="%g", cex=1, ...) {
+    under <- "exactly" # WHA hack
+    #lx <- length(sh$breaks) # WHA hack
+    #sh$breaks <- sh$breaks[2:lx] # WHA hack
+    #sh$cols <- sh$cols[2:lx] # WHA hack
+    x = sh$breaks
+    lx = length(x)
+    if (lx < 3)
+        stop("break vector too short")
+    res = character(lx + 1)
+    res[1] = paste(under, sprintf(fmt, x[1]))
+    for (i in 1:(lx - 1)) res[i + 1] <- paste(paste0(sprintf(fmt, x[i]),"1"), # WHA hack
+        between, sprintf(fmt, x[i + 1]))
+    res[lx + 1] <- paste(over, paste0(sprintf(fmt, x[lx]),"1")) # WHA hack
+    res[2] <- paste("0 to",x[2]) # WHA hack
+    maxwidth <- max(strwidth(res))
+    temp <- legend(x = px, y = py, legend = rep(" ", length(res[2:(lx+1)])),
+        fill = sh$cols[2:(lx+1)], text.width = maxwidth, cex = cex, ...)
+    #print(temp)
+    text(temp$rect$left + temp$rect$w, temp$text$y, res[2:(lx+1)], pos = 2,
+        cex = cex)
+}
 
 
 map_annotation <- function() {
@@ -54,8 +93,8 @@ map_annotation <- function() {
 map_base <- function(xlim=NA, ylim=NA) {
   par(lend=1, ljoin=1)
   plot(spCOV, pch=NA, xlim=usr[1:2], ylim=usr[3:4])
-  plot(GulfStates_modified, add=TRUE, lty=0, col=grey(0.95))
-  polygon(bnd[[1]]$x*1000,bnd[[1]]$y*1000, col=grey(1), lwd=1.7)
+  plot(GulfStates_modified, add=TRUE, lty=0, col=grey(0.93))
+  polygon(bnd[[1]]$x*1000,bnd[[1]]$y*1000, col=grey(.99), lwd=1.7)
 }
 
 
@@ -89,6 +128,24 @@ choropleth_decade <-
     }
   }
 
+
+choropleth_decade_cat <-
+  function(data, cuts, n=NA, x=NA, rev=FALSE, trans=function(t) {t}) {
+    env <- as.environment(as.list(slot(data, "data")))
+    x <- get(x, envir=env)
+    decade <- get("decade", envir=env)
+    cols <- add.alpha(brewer.pal(n+1,"Dark2"),.7)
+    if(rev) cols <- rev(cols)
+    k <- 0; ks <- c(0.6,0.8,1.0,1.2,1.4,1.6)
+    for(d in sort(unique(decade))) {
+      k <- k + 1
+      tmp <- trans(x[decade == d])
+      shades <- auto.shading(tmp, cutter=cuts, n=n, cols=cols)
+      choropleth(data[data$decade == d,], tmp, pch=1, lwd=0.7, cex=ks[k], shading=shades, add=TRUE)
+    }
+  }
+
+
 choropleth_cov <-
   function(data, cuts, x=NA, decade="2000", rev=FALSE, trans=function(t) {t}) {
     data <- data[data$decade == decade,]
@@ -102,9 +159,23 @@ choropleth_cov <-
     return(shades)
   }
 
+choropleth_cat <-
+  function(data, cuts, n=NA, x=NA, decade="2000", rev=FALSE, trans=function(t) {t}) {
+    data <- data[data$decade == decade,]
+    env <- as.environment(as.list(slot(data, "data")))
+    x <- get(x,   envir=env)
+    cols <- add.alpha(brewer.pal(n+1,"Dark2"),.7)
+    if(rev) cols <- rev(cols)
+    tmp <- trans(x)
+    shades <- auto.shading(tmp, cutter=cuts, n=n+1, cols=cols)
+    choropleth(data, tmp, pch=16, cex=0.4, shading=shades, add=TRUE)
+    return(shades)
+  }
+
 legend_est <- function(gage="", title="", note=TRUE, shades=NULL,
                        itgage=TRUE, more=NA, sitemap=FALSE,
-                       triangle=FALSE, noedwards=TRUE, ...) {
+                       triangle=FALSE, noedwards=TRUE, pplo=FALSE,
+                       cat=FALSE, cat.levels=NULL, ...) {
   if(sitemap) {
      note <- FALSE; itgage <- FALSE
   }
@@ -156,8 +227,16 @@ legend_est <- function(gage="", title="", note=TRUE, shades=NULL,
            lwd=c(0.7,0.7,1), lty=c(1,0,0), pch=c(NA,1,16), col=c(1,grey(0.72),"#D53E4FE6"), ...)
   }
   if(! is.null(shades)) {
-  my.choro.legend(895000, 720000, shades, cex=0.7, bty="n", box.col=grey(1), bg=grey(1),
+   if(pplo) {
+      my.choro.legend.pplo(895000, 720000, shades, cex=0.7, bty="n", box.col=grey(1), bg=grey(1),
                fmt="%g", xjust=0, title=title)
+   } else if(cat) {
+      my.choro.legend.cat(950000, 720000, shades, cex=0.7, bty="n", box.col=grey(1), bg=grey(1),
+               fmt="%g", xjust=0, title=title, cat.levels=cat.levels)
+   } else {
+      my.choro.legend(895000, 720000, shades, cex=0.7, bty="n", box.col=grey(1), bg=grey(1),
+               fmt="%g", xjust=0, title=title)
+   }
   }
   if(note) {
     text(260000, 380000,
@@ -176,6 +255,10 @@ legend_est <- function(gage="", title="", note=TRUE, shades=NULL,
     }
   }
 }
+
+
+
+
 
 setxt1 <- "standard error of fit"
 setxt2 <- "Standard error of fit"

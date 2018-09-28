@@ -100,6 +100,14 @@ summary(spCOV$statsgo)
 summary(spCOV$ed_rch_zone)
 
 
+quantile(spCOV$grassland,    probs=(1:9)/10, na.rm=TRUE)
+
+grassCuts <- function(x, n=9, ...) {
+   labs <- 1:n
+   cuts <- c(1, 5, 10, 15, 25, 30, 35, 40, 45)/100
+   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
+}
+
 # Transformation and Retransformation Functions for the Sin Transformation of
 # Percentile data
 dotransin <- function(p) 2*asin(sqrt(p/100))
@@ -118,7 +126,6 @@ spCOV$shrubland           <-  dotransin(spCOV$shrubland)
 spCOV$water               <-  dotransin(spCOV$water)
 spCOV$woody_wetland       <-  dotransin(spCOV$woody_wetland)
 spCOV$bfi                 <-  dotransin(spCOV$bfi)
-
 
 
 EPo <- predict(PPLO, newdata=spCOV, se.fit=TRUE); length(EPo$fit)
