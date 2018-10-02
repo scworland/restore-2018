@@ -13,7 +13,7 @@ cvPPLOgo <- function(parent=PPLOdf, sigma=pplo.sigma, sites_to_fill=sites_to_fil
     Z$right.threshold <- log10(Z$n)
     Z$flowtime <- log10(Z$n - Z$nzero)
     model <- gam(flowtime~s(basin_area)+
-                    s(ppt_mean, k=5)+s(temp_mean, k=4)+s(dni_ann, k=7)+s(dni_mar, k=7)+
+                    s(ppt_mean, k=5)+s(temp_mean, k=4)+s(dni_ann, k=7)+
                     developed+grassland+
                     bedperm+decade-1+
         s(x,y), knots=knots,
