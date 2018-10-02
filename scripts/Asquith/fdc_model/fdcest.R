@@ -348,17 +348,17 @@ lines(c(3.3, 4), rep(log10(3653),2), lty=2, lwd=0.65, col=grey(0.5))
 
 abline(0,1, lwd=0.8)
 length(Z$n[Z$nzero == 0])
-#[1] 2007
+#[1] 2002
 length(Z$n[Z$nzero != 0])
-#[1] 739
+#[1] 748
 length(Pto[Pto < log10(3653)])
-#[1] 387
+#[1] 404
 length(Gto[Gto < log10(3653)])
-#[1] 414
-txt <- paste0("Number of streamgage:decade records with no zero-flow conditions: 2,011\n",
-              "Number of streamgage:decade records with zero-flow conditions: 738\n",
-              "Number of survival regression predicted with zero-flow conditions: 388\n",
-              "Number of GAM regression predicted with zero-flow conditions: 409\n")
+#[1] 432
+txt <- paste0("Number of streamgage:decade records with no zero-flow conditions: 2,002\n",
+              "Number of streamgage:decade records with zero-flow conditions: 748\n",
+              "Number of survival regression predicted with zero-flow conditions: 404\n",
+              "Number of GAM regression predicted with zero-flow conditions: 432\n")
 text(3.57, 3.4, txt, pos=4, cex=0.7)
 txt <- paste0("All three grey regions depict predictions of\n",
               "no zero-flow occurrences in at least a decade.\n",
@@ -426,7 +426,7 @@ GM3 <- gam(flowtime~s(basin_area, k=5)+
            family=tobit1(left.threshold=  Z$left.threshold,
                          right.threshold=Z$right.threshold), data=Z); summary(GM3)
 GM4 <- gam(flowtime~s(basin_area, k=5)+
-                    s(ppt_mean, k=5)+s(temp_mean, k=4)+s(dni_ann, k=7)+s(dni_mar, k=7)+
+                    s(ppt_mean, k=5)+s(temp_mean, k=4)+s(dni_ann, k=7)+
                     developed+grassland+
                     bedperm+decade-1+
         s(x,y), knots=knots,
@@ -443,7 +443,7 @@ GM5 <- gam(flowtime~s(basin_area, k=5)+
                     bedperm+decade-1+
         s(x,y), knots=knots,
            family=tobit1(left.threshold=  Z$left.threshold,
-                         right.threshold=Z$right.threshold), data=Z); summary(GM4)
+                         right.threshold=Z$right.threshold), data=Z); summary(GM5)
 
 P <- Po <- predict(SM0); P[P > log10(3653)] <- log10(3653)
 C1 <- C1o <- predict(GM1); C1[C1 > log10(3653)] <- log10(3653)
