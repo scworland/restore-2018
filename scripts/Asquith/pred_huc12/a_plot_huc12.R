@@ -17,8 +17,8 @@ if(! manypdfs) pdf(paste0(file,".pdf"), useDingbats=FALSE, width=11, height=10)
     map_base(xlim=usr[1:2], ylim=usr[3:4])
     choropleth_decade(D, x="pplo", cuts=pploCuts, rev=TRUE)
     shades <- choropleth_cov(H12PPLOdf, decade=d, x="est_pplo", cuts=pploCuts, rev=TRUE)
-    legend_est(gage="zero flow fraction",
-               title=paste0(d," decade\n","zero flow fraction"),
+    legend_est(gage="no-flow fraction",
+               title=paste0(d," decade\n","no-flow fraction"),
                note=TRUE, shades=shades, pplo=TRUE)
     map_annotation()
     if(manypdfs) dev.off()
@@ -195,6 +195,25 @@ if(! manypdfs) pdf(paste0(file,".pdf"), useDingbats=FALSE, width=11, height=10)
 if(! manypdfs) dev.off()
 
 
+spCOV$special_spatial <- retransin(spCOV$developed)/100
+D$special_spatial <- retransin(D$developed)/100
+file <- "Developed"
+if(! manypdfs) pdf(paste0(file,".pdf"), useDingbats=FALSE, width=11, height=10)
+  for(d in sort(unique(D$decade))) {
+    if(manypdfs) pdf(paste0(file,"_",d,".pdf"), useDingbats=FALSE, width=11, height=10)
+    map_base(xlim=usr[1:2], ylim=usr[3:4])
+    choropleth_decade(D, x="special_spatial", cuts=developedCuts)
+    shades <- choropleth_cov(spCOV, decade=d, x="special_spatial", cuts=developedCuts)
+    legend_est(gage="fraction developed",
+               title=paste0(d," decade\n","fraction developed"),
+               note=TRUE, shades=shades)
+    map_annotation()
+    if(manypdfs) dev.off()
+  }
+if(! manypdfs) dev.off()
+
+
+
 bedpermCuts <- function(x, n=6, ...) {
    labs <- 1:n
    cuts <- labs
@@ -247,10 +266,11 @@ dev.off()
 
 cropthem <- TRUE
 crop_em <- function(spawn=FALSE) {
-  files <- c("PPLOfit", "L1fit", "T2fit", "T3fit", "T4fit", "T5fit", "GrassLand", "BedPerm")
+  files <- c("PPLOfit", "L1fit", "T2fit", "T3fit", "T4fit", "T5fit")
+  files <- c(files, "GrassLand", "BedPerm", "Developed")
   files <- c(files, "PPLOsefit", "L1sefit", "T2sefit", "T3sefit", "T4sefit", "T5sefit")
   for(file in files) { for(d in sort(unique(D$decade))) { my.file <- paste0(file,"_",d,".pdf")
-    system(paste0("pdfcrop --margins '-45 -105 -45 0' --clip ",my.file," ",my.file))
+    system(paste0("pdfcrop --margins '-46 -110 -43 0' --clip ",my.file," ",my.file))
   }}
 }
 crop_em(spawn=cropthem)
