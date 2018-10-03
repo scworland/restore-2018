@@ -619,7 +619,14 @@ points(D$east[C3 < log10(3653)], D$north[C3 < log10(3653)], pch=4, lwd=.5, cex=0
 points(D$east[C3 < log10(2000)], D$north[C3 < log10(2000)], pch=16, lwd=.5, cex=0.9, col=rgb(0.5,0,1,.5))
 mtext("Predictions cenGAM of PPLO (C3)")
 
-
+pdf("PPLO.pdf", useDingbats=FALSE)
+  plot(Z$flowtime, fitted.values(PPLO), col=3)
+  abline(0,1)
+  plot(PPLO, scheme=2, residuals=TRUE)
+  points(Z$x, Z$y, pch=4, lwd=.5, cex=0.9, col=8)
+  points(knots$x, knots$y, pch=16, cex=1.1, col=4)
+  text(100, 500, "PPLO")
+dev.off()
 ###### END PPLO
 
 
