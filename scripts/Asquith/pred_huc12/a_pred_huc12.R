@@ -104,7 +104,15 @@ quantile(spCOV$grassland,    probs=(1:9)/10, na.rm=TRUE)
 
 grassCuts <- function(x, n=9, ...) {
    labs <- 1:n
-   cuts <- c(1, 5, 10, 15, 25, 30, 35, 40, 45)/100
+   cuts <- c(0.5, 1, 5, 10, 15, 20, 30, 40, 50)/100
+   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
+}
+
+quantile(spCOV$developed,    probs=(1:9)/10, na.rm=TRUE)
+
+developedCuts <- function(x, n=9, ...) {
+   labs <- 1:n
+   cuts <- c(0.5, 1, 2, 3, 5, 8, 10, 20, 40)/100
    cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
