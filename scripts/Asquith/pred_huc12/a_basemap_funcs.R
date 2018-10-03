@@ -1,3 +1,49 @@
+
+setxt1 <- "standard error of fit"
+setxt2 <- "Standard error of fit"
+
+
+east_grids  <- seq(80,100,by=2)
+north_grids <- seq(26,38, by=2)
+
+gx <- gy <- vector(mode="numeric")
+for(i in 1:length(north_grids)) {
+   gy <- c(gy, rep(north_grids[i], length(east_grids)))
+   gx <- c(gx, east_grids)
+}
+GL <- SpatialPoints(cbind(-gx, gy), proj4string=LATLONG)
+GL <- spTransform(GL, ALBEA)
+XY <- coordinates(GL)
+x <- XY[,1]; y <- XY[,2]
+#ind <- mgcv::inSide(bnd,x,y)
+#XY <- XY[ind,]
+GL <- SpatialPointsDataFrame(cbind(-gx, gy), data=data.frame(onoff=rep(1,length(x))),
+                                    proj4string=LATLONG)
+GL <- spTransform(GL, ALBEA)
+ix <- 1:length(x)
+#plot(GL, pch=1, col=2)
+#text(XY[,1],XY[,2], ix)
+GL$onoff[c(1,3:9, 12, 14:20, 23, 34, 45,  56, 67)] <- 0
+#rgdal::writeOGR(GL, "gridx2deg", "gridx2deg", driver="ESRI Shapefile")
+GL <- GL[-c(1,3:9, 12, 14:20, 23, 34, 45, 56, 67),]
+XY <- coordinates(GL)
+ix <- 1:length(XY[,1])
+#plot(GL, pch=1, col=2)
+#text(XY[,1],XY[,2], ix)
+GLg <- spTransform(GL, LATLONG)
+LL <- coordinates(GLg)
+#plot(GL, pch=1, col=2)
+#for(i in c(47:56)) {
+#  text(XY[i,1], XY[i,2], paste0(as.integer(LL[i,1]),"˚"), cex=0.5, pos=3)
+#}
+#for(i in c(3,6,16,26,36,46,56)) {
+#  text(XY[i,1], XY[i,2], paste0(as.integer(LL[i,2]),"˚"), cex=0.5, pos=2)
+#}
+#for(i in c(1,7,17,27,37,47)) {
+#  text(XY[i,1], XY[i,2], paste0(as.integer(LL[i,2]),"˚"), cex=0.5, pos=4)
+#}
+
+
 my.choro.legend <- function(px, py, sh, under="under", over="over", between="to",
                             fmt="%g", cex=1, ...) {
     x = sh$breaks
@@ -75,7 +121,7 @@ map_annotation <- function() {
   txt <- paste0("Albers Equal Area Projection\n",
                 "North American Datum of 1983\n",
                 "Base modified from USGS digital data, 1:24,000")
-  text(145000, 669000, txt, pos=4, cex=0.45)
+  text(145000, 667000, txt, pos=4, cex=0.5)
   plot(GulfStates_modified, add=TRUE, lwd=.4, lty=2)
   STATES <- c("Texas", "Oklahoma", "Missouri", "Arkansas", "Louisiana", "Mississippi",
               "Tennessee", "Kentucky", "Alabama", "Georgia", "Florida")
@@ -83,11 +129,29 @@ map_annotation <- function() {
                                  490000,  740000,  740000,  740000,
                                  1100000, 1290000),
                        northing=c(955139.0, 1400000, 1558716.4, 1400000,  795000,
-                                  1165000, 1450000, 1600000, 1325000,
+                                  1165000, 1450000, 1580000, 1325000,
                                   1165000, 800000),
                        state=STATES)
   text(STATES$easting, STATES$northing, STATES$state, pos=4, cex=0.8, col=grey(0.3))
+  text(820000, 730000, "Gulf of Mexico", cex=0.9, col=grey(0.3), pos=3)
   plot(GL, lwd=0.4, col=grey(0.22), add=TRUE)
+  XY <- coordinates(GL); LL <- coordinates(GLg)
+  ladj <- 10000; radj <- 5000; tadj <- 5000
+  for(i in c(37:46)) { if(i == 41) next
+    txt <- as.integer(LL[i,1])
+    text(XY[i,1], XY[i,2]-tadj, paste0(txt,"°"), cex=0.5, pos=3)
+    #text(XY[i,1] XY[i,2]-tadj,, paste0(txt,"d"), cex=0.5, pos=3)
+  }
+  for(i in c(3,6,26,36,46,56)) {
+    txt <- as.integer(LL[i,2]) # Option-Shift-8 and **NOT** Option-K for the degree
+    text(XY[i,1]+ladj, XY[i,2], paste0(txt,"°"), cex=0.5, pos=2)
+    #text(XY[i,1]+ladj, XY[i,2], paste0(txt,"d"), cex=0.5, pos=2)
+  }
+  for(i in c(1,7,17,27,37,47)) {
+    txt <- as.integer(LL[i,2])
+    text(XY[i,1]-radj, XY[i,2], paste0(txt,"°"), cex=0.5, pos=4)
+    #text(XY[i,1]-radj, XY[i,2], paste0(txt,"d"), cex=0.5, pos=4)
+  }
 }
 
 map_base <- function(xlim=NA, ylim=NA) {
@@ -255,36 +319,4 @@ legend_est <- function(gage="", title="", note=TRUE, shades=NULL,
     }
   }
 }
-
-
-
-
-
-setxt1 <- "standard error of fit"
-setxt2 <- "Standard error of fit"
-
-
-east_grids  <- seq(80,100,by=2)
-north_grids <- seq(26,38, by=2)
-
-gx <- gy <- vector(mode="numeric")
-for(i in 1:length(north_grids)) {
-   gy <- c(gy, rep(north_grids[i], length(east_grids)))
-   gx <- c(gx, east_grids)
-}
-GL <- SpatialPoints(cbind(-gx, gy), proj4string=LATLONG)
-GL <- spTransform(GL, ALBEA)
-XY <- coordinates(GL)
-x <- XY[,1]; y <- XY[,2]
-#ind <- mgcv::inSide(bnd,x,y)
-#XY <- XY[ind,]
-GL <- SpatialPointsDataFrame(cbind(-gx, gy), data=data.frame(onoff=rep(1,length(x))),
-                                    proj4string=LATLONG)
-GL <- spTransform(GL, ALBEA)
-ix <- 1:length(x)
-#plot(GL, pch=1, col=2)
-#text(XY[,1],XY[,2], ix)
-GL$onoff[c(1,3:9, 12, 14:20, 23, 34, 45)] <- 0
-#writeOGR(GL, "gridx2deg", "gridx2deg", driver="ESRI Shapefile")
-GL <- GL[-c(1,3:9, 12, 14:20, 23, 34, 45),]
 
