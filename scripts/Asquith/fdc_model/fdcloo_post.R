@@ -7,6 +7,14 @@ looT3model   <- read_feather("../../../results/gage/gam/all_gage_looest_T3.feath
 looT4model   <- read_feather("../../../results/gage/gam/all_gage_looest_T4.feather"  )
 looT5model   <- read_feather("../../../results/gage/gam/all_gage_looest_T5.feather"  )
 
+EstMeanFlow_loo <- (1-looPPLOmodel$loo_est_pplo)*looL1model$loo_est_L1*looL1model$loo_bias_corr
+EstMeanFlow <- (1-looPPLOmodel$est_pplo)*looL1model$est_L1*looL1model$bias_corr
+
+ObsMean <- (1-looPPLOmodel$pplo)*looL1model$L1
+
+median(abs(log10(EstMeanFlow_loo) - log10(EstMeanFlow)), na.rm=TRUE)
+median(abs(log10(EstMeanFlow)     - log10(ObsMean)), na.rm=TRUE)
+median(abs(log10(EstMeanFlow_loo) - log10(ObsMean)), na.rm=TRUE)
 
 pdf("true_mean_comparison.pdf", useDingbats=FALSE, height=6, width=7.5)
 par(mgp=c(3,0.5,0)) # going to tick to the inside, change some parameters
@@ -44,24 +52,10 @@ gcol <- 3
 #site <- "08202700" # far from to the line
 #print(mean(DDo$pplo[DDo$site_no == site]))
 
-#ObsMean <- 0*looPPLOmodel$loo_est_pplo + (1-looPPLOmodel$loo_est_pplo)*looL1model$loo_est_L1
-EstMeanFlow_loo <- (1-looPPLOmodel$loo_est_pplo)*looL1model$loo_est_L1*looL1model$loo_bias_corr
-EstMeanFlow <- (1-looPPLOmodel$est_pplo)*looL1model$est_L1*looL1model$bias_corr
 EstMeanFlow_loo[looL1model$site_no == site]
-EstMeanFlow[looL1model$site_no == site]
-#plot(EstMeanFlow, EstMeanFlow_loo, log='xy', pch=16, col=rgb(1,0,0,.3), lwd=0.5, cex=1,
-#     xlab="Estimated Decadal Mean Flow", ylab="LOO Estimated Decadle Mean Flow")
-#abline(0,1)
-
-ObsMean <- (1-looPPLOmodel$pplo)*looL1model$L1
-
-median(abs(log10(EstMeanFlow_loo) - log10(EstMeanFlow)), na.rm=TRUE)
-median(abs(log10(EstMeanFlow)     - log10(ObsMean)), na.rm=TRUE)
-median(abs(log10(EstMeanFlow_loo) - log10(ObsMean)), na.rm=TRUE)
-
-
-ObsMean[looL1model$site_no == site]*(1/0.3048^3)
-EstMeanFlow[looL1model$site_no == site]*(1/0.3048^3)
+EstMeanFlow[    looL1model$site_no == site]
+ObsMean[        looL1model$site_no == site]*(1/0.3048^3)
+EstMeanFlow[    looL1model$site_no == site]*(1/0.3048^3)
 EstMeanFlow_loo[looL1model$site_no == site]*(1/0.3048^3)
 green <- GISTools::add.alpha(rgb(0.5,1,0.5), 0.8)
 points(ObsMean[        looL1model$site_no == site],
@@ -151,7 +145,7 @@ round(sqrt(mean((tmp$T5-tmp$loo_est_T5)^2, na.rm=TRUE)), 3)
 
 
 tmp <- looPPLOmodel[looPPLOmodel$in_model_pplo == 1,]
-n <- length(tmp$pplo)
+n <- length(tmp$pplo); print(n)
 sum(tmp$pplo > 0)/n
 sum(tmp$est_pplo > 0)/n
 sum(tmp$loo_est_pplo > 0)/n
@@ -177,10 +171,10 @@ round(sqrt(mean((tmp$flowtime-tmp$loo_est_flowtime)^2)), 3)
 
 sum(tmp$pplo         >  0) # [1] 748
 sum(tmp$pplo         == 0) # [1] 2002
-sum(tmp$est_pplo     >  0) # [1] 513
-sum(tmp$est_pplo     == 0) # [1] 2237
-sum(tmp$loo_est_pplo >  0) # [1] 525
-sum(tmp$loo_est_pplo == 0) # [1] 2225
+sum(tmp$est_pplo     >  0) # [1] 510
+sum(tmp$est_pplo     == 0) # [1] 2240
+sum(tmp$loo_est_pplo >  0) # [1] 518
+sum(tmp$loo_est_pplo == 0) # [1] 2232
 
 
 summary(tmp$pplo        )
