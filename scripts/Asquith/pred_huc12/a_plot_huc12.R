@@ -265,15 +265,18 @@ pdf("L1del.pdf", useDingbats=FALSE, width=11, height=10)
 dev.off()
 
 cropthem <- TRUE
-crop_em <- function(spawn=FALSE) {
-  files <- c("PPLOfit", "L1fit", "T2fit", "T3fit", "T4fit", "T5fit")
-  files <- c(files, "GrassLand", "BedPerm", "Developed")
-  files <- c(files, "PPLOsefit", "L1sefit", "T2sefit", "T3sefit", "T4sefit", "T5sefit")
-  for(file in files) { for(d in sort(unique(D$decade))) { my.file <- paste0(file,"_",d,".pdf")
+crop_em <- function(decades=NULL, spawn=FALSE, files=NULL) {
+  if(is.null(files)) {
+     files <- c("PPLOfit", "L1fit", "T2fit", "T3fit", "T4fit", "T5fit")
+     files <- c(files, "GrassLand", "BedPerm", "Developed")
+     files <- c(files, "PPLOsefit", "L1sefit", "T2sefit", "T3sefit",
+                                               "T4sefit", "T5sefit")
+  }
+  for(file in files) { for(d in decades) { my.file <- paste0(file,"_",d,".pdf")
     system(paste0("pdfcrop --margins '-46 -110 -43 0' --clip ",my.file," ",my.file))
   }}
 }
-crop_em(spawn=cropthem)
+crop_em(decades=sort(unique(D$decade)), spawn=cropthem)
 
 
 
