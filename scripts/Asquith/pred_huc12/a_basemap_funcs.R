@@ -64,14 +64,16 @@ my.choro.legend <- function(px, py, sh, under="under", over="over", between="to"
 
 my.choro.legend.cat <- function(px, py, sh,
                                 fmt="%g", cex=1, cat.levels=NULL, ...) {
+    #print(sh)
     x = sh$breaks
     lx = length(x)
     if (lx < 3)
         stop("break vector too short")
     res = cat.levels
+    #print(c(length(res), length(sh$cols)))
     maxwidth <- max(strwidth(res))
     temp <- legend(x = px, y = py, legend = rep(" ", length(res)),
-        fill = sh$cols, text.width = maxwidth, cex = cex, ...)
+        fill = sh$cols[2:length(res)], text.width = maxwidth, cex = cex, ...)
     offset <- 50000
     text(temp$rect$left + temp$rect$w - offset, temp$text$y, res, pos = 2,
         cex = cex)
@@ -194,16 +196,15 @@ choropleth_decade <-
 
 
 choropleth_decade_cat <-
-  function(data, cuts, n=NA, x=NA, rev=FALSE, trans=function(t) {t}) {
+  function(data, cuts, n=NA, x=NA) {
     env <- as.environment(as.list(slot(data, "data")))
     x <- get(x, envir=env)
     decade <- get("decade", envir=env)
-    cols <- add.alpha(brewer.pal(n+1,"Dark2"),.7)
-    if(rev) cols <- rev(cols)
+    cols <- add.alpha(brewer.pal(n+1,"Set2"),.7) # we need one extra color
     k <- 0; ks <- c(0.6,0.8,1.0,1.2,1.4,1.6)
     for(d in sort(unique(decade))) {
       k <- k + 1
-      tmp <- trans(x[decade == d])
+      tmp <- x[decade == d]
       shades <- auto.shading(tmp, cutter=cuts, n=n, cols=cols)
       choropleth(data[data$decade == d,], tmp, pch=1, lwd=0.7, cex=ks[k], shading=shades, add=TRUE)
     }
@@ -224,15 +225,13 @@ choropleth_cov <-
   }
 
 choropleth_cat <-
-  function(data, cuts, n=NA, x=NA, decade="2000", rev=FALSE, trans=function(t) {t}) {
+  function(data, cuts, n=NA, x=NA, decade="2000") {
     data <- data[data$decade == decade,]
     env <- as.environment(as.list(slot(data, "data")))
     x <- get(x,   envir=env)
-    cols <- add.alpha(brewer.pal(n+1,"Dark2"),.7)
-    if(rev) cols <- rev(cols)
-    tmp <- trans(x)
-    shades <- auto.shading(tmp, cutter=cuts, n=n+1, cols=cols)
-    choropleth(data, tmp, pch=16, cex=0.4, shading=shades, add=TRUE)
+    cols <- add.alpha(brewer.pal(n+1,"Set2"),.7)# we need one extra color
+    shades <- auto.shading(x, cutter=cuts, n=n+1, cols=cols)
+    choropleth(data, x, pch=16, cex=0.4, shading=shades, add=TRUE)
     return(shades)
   }
 
