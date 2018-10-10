@@ -183,7 +183,7 @@ mean(abs(tmp$loo_est_pplo - tmp$pplo) <= 0.05)
 mean(abs(tmp$loo_est_pplo - tmp$pplo) <= 0.10)
 
 
-message("PPLO RMSE: ",
+message("PPLO RMSE (flowtime): ",
 round(sqrt(mean((tmp$flowtime-tmp$est_flowtime)^2)), 3), " & ",
 round(sqrt(mean((tmp$flowtime-tmp$loo_est_flowtime)^2)), 3)
 )
@@ -203,13 +203,25 @@ summary(tmp$loo_est_pplo)
 
 
 n <- length(tmp$flowtime)
-o1 <- sum(tmp$est_lwr_flowtime > tmp$flowtime &
+o1 <- sum(tmp$est_lwr_flowtime > tmp$flowtime |
           tmp$est_upr_flowtime < tmp$flowtime)
 o2 <- sum(tmp$loo_est_lwr_flowtime > tmp$flowtime |
           tmp$loo_est_upr_flowtime < tmp$flowtime)
 cp1 <- round(1 - o1/n, 3); cp2 <- round(1 - o2/n, 3)
 message("95% coverage probability, PPLO: GAM=",cp1," and GAMloo=",cp2)
 
+
+
+message("PPLO RMSE (pplo): ",
+round(sqrt(mean((tmp$pplo - tmp$est_pplo)^2)), digits=3), " & ",
+round(sqrt(mean((tmp$pplo - tmp$loo_est_pplo)^2)), digits=3))
+
+jtmpa <- tmp[tmp$est_pplo     != 0,] # Kroll and Stedinger (1999)
+jtmpb <- tmp[tmp$loo_est_pplo != 0,] # Kroll and Stedinger (1999)
+message("PPLO RMSE (pplo [KS1999]): ",
+round(sqrt(mean((jtmpa$pplo - jtmpa$est_pplo)^2)), digits=3), " & ",
+round(sqrt(mean((jtmpb$pplo - jtmpb$loo_est_pplo)^2)) , digits=3))
+rm(jtmpa, jtmpb)
 
 
 whole.correct <- (sum(tmp$pplo  > 0 & tmp$est_pplo  > 0) +
