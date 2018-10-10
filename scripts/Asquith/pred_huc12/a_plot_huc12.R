@@ -29,7 +29,7 @@ if(! manypdfs) pdf(paste0(file,".pdf"), useDingbats=FALSE, width=11, height=10)
   for(d in sort(unique(D$decade))) {
     if(manypdfs) pdf(paste0(file,"_",d,".pdf"), useDingbats=FALSE, width=11, height=10)
     map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase()
-    shades <- choropleth_cov(H12PPLOdf, decade=d, x="se.fit_pplo", cuts=pploCutsSE, rev=TRUE)
+    shades <- choropleth_cov(H12PPLOdf, decade=d, x="se.fit_flowtime", cuts=pploCutsSE, rev=TRUE)
     legend_est(gage=setxt1,
                title=paste0(d," decade\n",setxt1),
                note=FALSE, shades=shades, itgage=FALSE)
@@ -74,7 +74,7 @@ if(! manypdfs) pdf(paste0(file,".pdf"), useDingbats=FALSE, width=11, height=10)
     map_base(xlim=usr[1:2], ylim=usr[3:4]);
     choropleth_decade(D, x="T2", cuts=T2Cuts)
     shades <- choropleth_cov(H12T2df, decade=d, x="est_T2", cuts=T2Cuts)
-    legend_est(gage="L-CV of nonzero streamflow",
+    legend_est(gage="LCV of nonzero streamflow",
                title=paste0(d," decade\n","L-CV of nonzero streamflow"),
                note=TRUE, shades=shades, more="; L-CV, coefficient of L-variation")
     map_annotation()
@@ -105,6 +105,14 @@ if(! manypdfs) pdf(paste0(file,".pdf"), useDingbats=FALSE, width=11, height=10)
                title=paste0(d," decade\n","L-skew of nonzero streamflow"),
                note=TRUE, shades=shades)
     map_annotation()
+    #unique(spCOV$comid[abs(spCOV$dec_long_va - -97.92399) < .1 &
+    #                   abs(spCOV$dec_lat_va  -  29.56245) < .1])
+    xy <- coordinates(spCOV[spCOV$comid == "1620855", ])
+    points(xy[,1], xy[,2], pch=0, col="#b51b96", cex=2)
+    arrows(x0=147500, y0=573000, xy[,1], xy[,2],
+         lwd=.5, length=0.15, angle=15, col="#b51b96")
+    text(147500, 573000, "COMID 1620855 used for a discussion point in the text",
+                       cex=0.7, pos=4, col="#7a1265")
     if(manypdfs) dev.off()
   }
 if(! manypdfs) dev.off()
