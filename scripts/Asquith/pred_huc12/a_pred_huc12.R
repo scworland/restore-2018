@@ -153,15 +153,15 @@ H12PPLOdf <- data.frame(comid=spCOV$comid, huc12=spCOV$huc12,
 H12PPLOdf$est_lwr_pplo[H12PPLOdf$est_lwr_pplo < 0] <- 0
 H12PPLOdf$est_pplo[    H12PPLOdf$est_pplo     < 0] <- 0
 H12PPLOdf$est_upr_pplo[H12PPLOdf$est_upr_pplo < 0] <- 0
-H12PPLOdf$rse_pplo <- PPLO$pplo.sigma[1]
-H12PPLOdf$se.fit_pplo <- EPo$se.fit
+H12PPLOdf$rse_flowtime <- PPLO$pplo.sigma[1]
+H12PPLOdf$se.fit_flowtime <- EPo$se.fit
 H12PPLOdf <- SpatialPointsDataFrame(cbind(H12PPLOdf$dec_long_va,H12PPLOdf$dec_lat_va),
                                     data=H12PPLOdf, proj4string=LATLONG)
 H12PPLOdf <- spTransform(H12PPLOdf, ALBEA)
 
 
 quantile(H12PPLOdf$est_pplo,    probs=(1:9)/10, na.rm=TRUE)
-quantile(H12PPLOdf$se.fit_pplo, probs=(1:9)/10, na.rm=TRUE)
+quantile(H12PPLOdf$se.fit_flowtime, probs=(1:9)/10, na.rm=TRUE)
 
 pploCuts <- function(x, n=9, ...) {
    labs <- 1:n
