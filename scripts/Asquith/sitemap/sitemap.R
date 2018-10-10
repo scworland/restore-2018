@@ -107,7 +107,7 @@ cropthem <- TRUE
 crop_em <- function(spawn=FALSE) {
   files <- c("SiteMapA", "SiteMapB")
   for(file in files) { my.file <- paste0(file,".pdf")
-    system(paste0("pdfcrop --margins '-45 -105 -45 0' --clip ",my.file," ",my.file))
+    system(paste0("pdfcrop --margins '-46 -110 -43 0' --clip ",my.file," ",my.file))
   }
 }
 crop_em(spawn=cropthem)
