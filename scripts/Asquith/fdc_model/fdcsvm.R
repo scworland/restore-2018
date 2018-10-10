@@ -55,7 +55,7 @@ n <- length(Y)
 RVM <- rvm(Y[1:n]~area[1:n]+slope[1:n]+ppt[1:n]+temp[1:n]+rad[1:n]+flood[1:n]+dev[1:n]+decade[1:n])
 # SVMs are O(n^2) but results in more supports than RVMs, don't sweat RVM taking more time
 SVM <- ksvm(Y[1:n]~area[1:n]+slope[1:n]+ppt[1:n]+temp[1:n]+rad[1:n]+flood[1:n]+dev[1:n]+decade[1:n],
-            C=10.00)
+            C=1, epsilon=.3)
 SVMresults <- ksvm2me(SVM, Y)
 
 plot(Y, SVMresults$fit, col=rgb(0,0,0.5,0.2))
@@ -64,7 +64,7 @@ points(Y, predict(RVM), col=rgb(0.5,0,0,0.2))
 ix <- RVindex(RVM)
 points(Y[ix], predict(RVM)[ix], col=2, pch=16)
 
-points(Y[SVMresults$inSVM], SVMresults$fit[SVMresults$inSVM])
+points(Y[SVMresults$inSVM], SVMresults$fit[SVMresults$inSVM], pch=16, cex=0.5)
 
 #https://cran.r-project.org/web/packages/kernlab/vignettes/kernlab.pdf
 #Furthermore, unlike the SVM classifier, the non-zero weights in the RVM are not
