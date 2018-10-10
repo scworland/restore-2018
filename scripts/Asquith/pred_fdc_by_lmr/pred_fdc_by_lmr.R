@@ -68,7 +68,7 @@ phi <- 0.9 # Asquith and others (2006): Drainage-area ratio
 duan <- gL1$bias_corr[1]
 
 zero <- 0.01*(0.3048^3)
-pdf("test_fdc.pdf", useDingbats=FALSE, height=6, width=7)
+pdf("pred_fdc.pdf", useDingbats=FALSE, height=6, width=7)
 opts <- par(); par(las=1, mgp=c(3,0.5,0))
 
 plot(1,1, xlim=range(qnorm(FF)), ylim=c(0.001,1000), xaxt="n", yaxt="n", xlab="",
