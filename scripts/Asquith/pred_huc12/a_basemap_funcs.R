@@ -37,11 +37,21 @@ LL <- coordinates(GLg)
 #  text(XY[i,1], XY[i,2], paste0(as.integer(LL[i,1]),"˚"), cex=0.5, pos=3)
 #}
 #for(i in c(3,6,16,26,36,46,56)) {
-#  text(XY[i,1], XY[i,2], paste0(as.integer(LL[i,2]),"˚"), cex=0.5, pos=2)
+#  text(XY[i,1], XY[i,2], paste0(floor(LL[i,2]+0.001),"˚"), cex=0.5, pos=2)
 #}
 #for(i in c(1,7,17,27,37,47)) {
-#  text(XY[i,1], XY[i,2], paste0(as.integer(LL[i,2]),"˚"), cex=0.5, pos=4)
+#  text(XY[i,1], XY[i,2], paste0(floor(LL[i,2]+0.001),"˚"), cex=0.5, pos=4)
 #}
+
+my.north.arrow <-
+function(xb, yb, len, lab="North", cex.lab=0.6, tcol="black",  ...) {
+    s <- len
+    arrow.x = c(-1, 1, 1, 2, 0, -2, -1, -1)
+    arrow.y = c(0, 0, 4, 4, 7, 4, 4, 0)
+    polygon(xb + arrow.x * s, yb + arrow.y * s, ...)
+    text(xb, yb - strheight(lab, cex = cex.lab), lab, cex = cex.lab,
+        col = tcol)
+}
 
 
 my.choro.legend <- function(px, py, sh, under="under", over="over", between="to",
@@ -55,7 +65,7 @@ my.choro.legend <- function(px, py, sh, under="under", over="over", between="to"
     for (i in 1:(lx - 1)) res[i + 1] <- paste(paste0(sprintf(fmt, x[i]),"1"), # WHA hack
         between, sprintf(fmt, x[i + 1]))
     res[lx + 1] <- paste(over, paste0(sprintf(fmt, x[lx]),"1")) # WHA hack
-    maxwidth <- max(strwidth(res))
+    maxwidth <- max(strwidth(res))*.75
     temp <- legend(x = px, y = py, legend = rep(" ", length(res)),
         fill = sh$cols, text.width = maxwidth, cex = cex, ...)
     text(temp$rect$left + temp$rect$w, temp$text$y, res, pos = 2,
@@ -71,10 +81,10 @@ my.choro.legend.cat <- function(px, py, sh,
         stop("break vector too short")
     res = cat.levels
     #print(c(length(res), length(sh$cols)))
-    maxwidth <- max(strwidth(res))
+    maxwidth <- max(strwidth(res))*0.75
     temp <- legend(x = px, y = py, legend = rep(" ", length(res)),
         fill = sh$cols[2:length(res)], text.width = maxwidth, cex = cex, ...)
-    offset <- 50000
+    offset <- 0 #50000
     text(temp$rect$left + temp$rect$w - offset, temp$text$y, res, pos = 2,
         cex = cex)
 }
@@ -96,7 +106,7 @@ my.choro.legend.pplo <- function(px, py, sh, under="under", over="over", between
         between, sprintf(fmt, x[i + 1]))
     res[lx + 1] <- paste(over, paste0(sprintf(fmt, x[lx]),"1")) # WHA hack
     res[2] <- paste("0 to",x[2]) # WHA hack
-    maxwidth <- max(strwidth(res))
+    maxwidth <- max(strwidth(res))*.75
     temp <- legend(x = px, y = py, legend = rep(" ", length(res[2:(lx+1)])),
         fill = sh$cols[2:(lx+1)], text.width = maxwidth, cex = cex, ...)
     #print(temp)
@@ -123,7 +133,7 @@ map_annotation <- function() {
   txt <- paste0("Albers Equal Area Projection\n",
                 "North American Datum of 1983\n",
                 "Base modified from USGS digital data, 1:24,000")
-  text(145000, 667000, txt, pos=4, cex=0.5)
+  text(145000, 660000, txt, pos=4, cex=0.5)
   plot(GulfStates_modified, add=TRUE, lwd=.4, lty=2)
   STATES <- c("Texas", "Oklahoma", "Missouri", "Arkansas", "Louisiana", "Mississippi",
               "Tennessee", "Kentucky", "Alabama", "Georgia", "Florida")
@@ -145,15 +155,16 @@ map_annotation <- function() {
     #text(XY[i,1] XY[i,2]-tadj,, paste0(txt,"d"), cex=0.5, pos=3)
   }
   for(i in c(3,6,26,36,46,56)) {
-    txt <- as.integer(LL[i,2]) # Option-Shift-8 and **NOT** Option-K for the degree
+    txt <- floor(LL[i,2]+0.001) # Option-Shift-8 and **NOT** Option-K for the degree
     text(XY[i,1]+ladj, XY[i,2], paste0(txt,"°"), cex=0.5, pos=2)
     #text(XY[i,1]+ladj, XY[i,2], paste0(txt,"d"), cex=0.5, pos=2)
   }
   for(i in c(1,7,17,27,37,47)) {
-    txt <- as.integer(LL[i,2])
+    txt <- floor(LL[i,2]+0.001)
     text(XY[i,1]-radj, XY[i,2], paste0(txt,"°"), cex=0.5, pos=4)
     #text(XY[i,1]-radj, XY[i,2], paste0(txt,"d"), cex=0.5, pos=4)
   }
+  my.north.arrow(1280000, 1380000, 12000, col=grey(0.5))
 }
 
 map_base <- function(xlim=NA, ylim=NA) {
@@ -291,13 +302,13 @@ legend_est <- function(gage="", title="", note=TRUE, shades=NULL,
   }
   if(! is.null(shades)) {
    if(pplo) {
-      my.choro.legend.pplo(895000, 720000, shades, cex=0.7, bty="n", box.col=grey(1), bg=grey(1),
+      my.choro.legend.pplo(970000, 720000, shades, cex=0.7, bty="n", box.col=grey(1), bg=grey(1),
                fmt="%g", xjust=0, title=title)
    } else if(cat) {
-      my.choro.legend.cat(950000, 720000, shades, cex=0.7, bty="n", box.col=grey(1), bg=grey(1),
+      my.choro.legend.cat(970000, 720000, shades, cex=0.7, bty="n", box.col=grey(1), bg=grey(1),
                fmt="%g", xjust=0, title=title, cat.levels=cat.levels)
    } else {
-      my.choro.legend(895000, 720000, shades, cex=0.7, bty="n", box.col=grey(1), bg=grey(1),
+      my.choro.legend(910000, 720000, shades, cex=0.7, bty="n", box.col=grey(1), bg=grey(1),
                fmt="%g", xjust=0, title=title)
    }
   }
