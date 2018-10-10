@@ -1,11 +1,31 @@
 library(lmomco)
 library(feather)
+
+load("./Models.RData")
 looPPLOmodel <- read_feather("../../../results/gage/gam/all_gage_looest_pplo.feather")
 looL1model   <- read_feather("../../../results/gage/gam/all_gage_looest_L1.feather"  )
 looT2model   <- read_feather("../../../results/gage/gam/all_gage_looest_T2.feather"  )
 looT3model   <- read_feather("../../../results/gage/gam/all_gage_looest_T3.feather"  )
 looT4model   <- read_feather("../../../results/gage/gam/all_gage_looest_T4.feather"  )
 looT5model   <- read_feather("../../../results/gage/gam/all_gage_looest_T5.feather"  )
+
+chkBasins <- data.frame(site_no=looL1model$site_no, decade=looL1model$decade,
+                        stringsAsFactors=FALSE)
+areas <- sapply(1:length(chkBasins$site_no),
+               function(i) { d <- chkBasins$decade[i]; s <- chkBasins$site_no[i]
+                             DDo$basin_area[DDo$site_no == s & DDo$decade == d]  })
+for(s in unique(DDo$site_no)) {
+  for(d in DDo$decade[DDo$site_no == s]) {
+    rt <- looL1model$L1[looL1model$site_no == s & looL1model$decade == d]
+    if(length(rt) == 0) {
+      message("Not found ",s," and ",d)
+      # We don't want to find 02341500 for 5 decades as 02341505 has that record too
+    } else {
+      #message(s," and ",d," and ",length(rt))
+    }
+  }
+}
+
 
 EstMeanFlow_loo <- (1-looPPLOmodel$loo_est_pplo)*looL1model$loo_est_L1*looL1model$loo_bias_corr
 EstMeanFlow <- (1-looPPLOmodel$est_pplo)*looL1model$est_L1*looL1model$bias_corr
@@ -183,7 +203,7 @@ summary(tmp$loo_est_pplo)
 
 
 n <- length(tmp$flowtime)
-o1 <- sum(tmp$est_lwr_flowtime > tmp$flowtime |
+o1 <- sum(tmp$est_lwr_flowtime > tmp$flowtime &
           tmp$est_upr_flowtime < tmp$flowtime)
 o2 <- sum(tmp$loo_est_lwr_flowtime > tmp$flowtime |
           tmp$loo_est_upr_flowtime < tmp$flowtime)
