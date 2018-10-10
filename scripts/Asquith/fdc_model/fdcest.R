@@ -516,8 +516,8 @@ PPLOdf <- data.frame(comid=Z$comid, site_no=Z$site_no, huc12=Z$huc12,
 PPLOdf$est_lwr_pplo[PPLOdf$est_lwr_pplo < 0] <- 0
 PPLOdf$est_pplo[    PPLOdf$est_pplo     < 0] <- 0
 PPLOdf$est_upr_pplo[PPLOdf$est_upr_pplo < 0] <- 0
-PPLOdf$rse_pplo <- pplo.sigma
-PPLOdf$se.fit_pplo <- PGAM$se.fit
+PPLOdf$rse_flowtime <- pplo.sigma
+PPLOdf$se.fit_flowtime <- PGAM$se.fit
 
 sites_to_fill <- unique(c(sites_of_area_bust, DDo$site_no[DDo$ed_rch_zone == 1]))
 i <- 0
@@ -537,7 +537,7 @@ for(site in sites_to_fill) {
                                      DDo$nzero[DDo$site_no == site & DDo$decade == decade]),
                       est_lwr_pplo=NA, est_pplo=NA, est_upr_pplo=NA,
                       est_lwr_flowtime=NA, est_flowtime=NA, est_upr_flowtime=NA,
-                      rse_pplo=NA, se.fit_pplo=NA, stringsAsFactors=FALSE)
+                      rse_flowtime=NA, se.fit_flowtime=NA, stringsAsFactors=FALSE)
     PPLOdf <- rbind(PPLOdf, tmp)
   }
   tmp <- DDo[DDo$site_no == site,]
@@ -564,8 +564,8 @@ for(site in sites_to_fill) {
   df$est_lwr_pplo[df$est_lwr_pplo < 0] <- 0
   df$est_pplo[    df$est_pplo     < 0] <- 0
   df$est_upr_pplo[df$est_upr_pplo < 0] <- 0
-  df$rse_pplo <- pplo.sigma
-  df$se.fit_pplo <- pgk$se.fit
+  df$rse_flowtime <- pplo.sigma
+  df$se.fit_flowtime <- pgk$se.fit
   PPLOdf[PPLOdf$site_no == site,] <- df
 }
 #PPLOdf$in_model_pplo[PPLOdf$in_model_pplo == 1] <- "yes"
