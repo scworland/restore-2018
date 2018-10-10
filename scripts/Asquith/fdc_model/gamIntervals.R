@@ -40,3 +40,4 @@ function(gam_predicts_with_se.fit, gam=NULL, sigma=NULL,
    attr(z, "t-dist_degrees_of_freedom") <- df
    return(z)
 }
+
