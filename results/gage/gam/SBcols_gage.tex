@@ -1,0 +1,251 @@
+\documentclass[1p, authoryear, 11pt, times, preprint]{elsarticle}
+\usepackage{ragged2e}
+\usepackage{setspace}
+\usepackage{xcolor}
+\definecolor{codecolor}{rgb}{0.555,0,0.602}
+
+\usepackage{listings}
+\lstset{breaklines=true,
+        frame=tb,
+        framesep=2.5pt,
+        columns=fixed,
+        xleftmargin=6pt,
+        numbers=left,
+        stepnumber=1,
+        numberstyle=\tiny\sffamily,
+        numbersep=6pt,
+        abovecaptionskip=0.5\baselineskip,
+        belowcaptionskip=0.5\baselineskip,
+        belowskip=.15\baselineskip
+        }
+\lstset{basicstyle=\scriptsize\ttfamily,
+                    keywordstyle=\scriptsize\ttfamily}
+
+\newcommand{\code}[1]{{\color{black}%
+                       \mbox{\lstinline[basicstyle={\small\ttfamily},
+                                        keywordstyle=\scriptsize\ttfamily]|#1|}}}
+
+\righthyphenmin=3
+\lefthyphenmin=3
+
+
+\begin{document}
+
+\singlespacing
+
+\section{cGAM-PPLO model (\code{all_gage_looest_pplo.feather})}
+
+
+
+\begin{enumerate}
+\footnotesize
+\RaggedRight
+\item \code{comid} --- The stream reach specific common identification number (COMID) of the stream reach identified as the stream reach of the USGS streamgage. Note that geometrically, streamgages could share a COMID, so do not rely on COMID being absolutely not repeated between streamgages.
+\item \code{site_no} --- The USGS streamflow-gaging (streamgage) identification number.
+\item \code{huc12} --- The level-12 hydrologic unit code (HUC12) number containing the streamgage. Note that geometrically, streamgages could share a HUC12, so do not rely on HUC12 being absolutely not repeated between streamgages.
+\item \code{decade} --- The decade for which the 1950 decade is defined as the days January 1, 1950 to December 31, 1959.
+\item \code{dec_long_va} --- The decimal degrees longitude in North American Datum of 1983.
+\item \code{dec_long_va} --- The decimal degrees latitude in North American Datum of 1983.
+\item \code{in_model_pplo} --- A binary indicator (1 = yes, 0 = no) that the streamgage-decade record was included in the whole-model computations to construct the censored generalized additive model.
+\item \code{pplo} --- The observed decadal no-flow fraction.
+\item \code{flowtime} --- The flowtime of the decadal no-flow fraction for which the flowtime is the base-10 logarithmic transformation of the number of nonzero streamflow days observed in the decade.
+\item \code{est_lwr_pplo} --- The whole-model lower 95-percent prediction limit of the decadal no-flow fraction.
+\item \code{est_pplo} --- The whole-model estimate of the decadal no-flow fraction.
+\item \code{est_upr_pplo} --- The whole-model upper 95-percent prediction limit of the decadal no-flow fraction.
+\item \code{est_lwr_flowtime} --- The whole-model lower 95-percent prediction limit of the decadal flowtime in base-10 logarithms of days.
+\item \code{est_flowtime} --- The whole-model estimate of the decadal flowtime is the base-10 logarithmic transformation of the number of nonzero streamflow days observed in the decade.
+\item \code{est_upr_flowtime} --- The whole-model upper 95-percent prediction limit of the decadal flowtime in base-10 logarithms of days.
+\item \code{rse_flowtime} --- The scale of the residuals of the whole model in base-10 logarithmic transformation of days, and note that the model is constructed as a censored regression of the flowtime and not the no-flow fraction.
+\item \code{se.fit_flowtime} --- The standard error of fit reported by the whole model and note that the model is constructed as a censored regression of the flowtime and not the no-flow fraction.
+\item \code{loo_est_lwr_pplo} --- The leave-one-watershed-out (LOO) lower 95-percent prediction limit of decadal no-flow fraction.
+\item \code{loo_est_pplo} --- The LOO estimate of decadal no-flow fraction.
+\item \code{loo_est_upr_pplo} --- The LOO upper 95-percent prediction limit of decadal no-flow fraction.
+\item \code{loo_est_lwr_flowtime} --- The LOO lower 95-percent prediction limit of the decadal flowtime in base-10 logarithms of days.
+\item \code{loo_est_flowtime} --- The LOO estimate of the decadal flowtime in base-10 logarithms of days.
+\item \code{loo_est_upr_flowtime} --- The LOO upper 95-percent prediction limit of the decadal flowtime in base-10 logarithms of days.
+\end{enumerate}
+
+%> length(unique(looPPLOmodel$site_no))
+%[1] 955
+%> length(unique(looPPLOmodel$comid))
+%[1] 949
+
+%> names(looPPLOmodel)
+% [1] "comid"                "site_no"             
+% [3] "huc12"                "decade"              
+% [5] "dec_long_va"          "dec_lat_va"          
+% [7] "in_model_pplo"        "pplo"                
+% [9] "flowtime"             "est_lwr_pplo"        
+%[11] "est_pplo"             "est_upr_pplo"        
+%[13] "est_lwr_flowtime"     "est_flowtime"        
+%[15] "est_upr_flowtime"     "rse_flowtime"        
+%[17] "se.fit_flowtime"      "loo_est_lwr_pplo"    
+%[19] "loo_est_pplo"         "loo_est_upr_pplo"    
+%[21] "loo_est_lwr_flowtime" "loo_est_flowtime"    
+%[23] "loo_est_upr_flowtime"
+
+
+
+
+\section{GAM-L1 model (\code{all_gage_looest_L1.feather})}
+\begin{enumerate}
+\footnotesize
+\RaggedRight
+\item \code{comid} --- The stream reach specific common identification number (COMID) of the stream reach identified as the stream reach of the USGS streamgage. Note that geometrically, streamgages could share a COMID, so do not rely on COMID being absolutely not repeated between streamgages.
+\item \code{site_no} --- The USGS streamflow-gaging (streamgage) identification number.
+\item \code{huc12} --- The level-12 hydrologic unit code (HUC12) number containing the streamgage. Note that geometrically, streamgages could share a HUC12, so do not rely on HUC12 being absolutely not repeated between streamgages.
+\item \code{decade} --- The decade for which the 1950 decade is defined as the days January 1, 1950 to December 31, 1959.
+\item \code{dec_long_va} --- The decimal degrees longitude in North American Datum of 1983.
+\item \code{dec_long_va} --- The decimal degrees latitude in North American Datum of 1983.
+\item \code{in_model_L1} --- A binary indicator (1 = yes, 0 = no) that the streamgage-decade record was included in the whole-model computations to construct the generalized additive model.
+\item \code{L1} --- The observed decadal mean nonzero streamflow, base-10 logarithms of cubic meters per second.
+\item \code{est_lwr_L1} --- The whole-model lower 95-percent prediction limit of the decadal mean nonzero streamflow, base-10 logarithms of cubic meters per second.
+\item \code{est_L1} --- The whole-model estimate the decadal mean nonzero streamflow, base-10 logarithms of cubic meters per second.
+\item \code{est_upr_L1} --- The whole-model upper 95-percent prediction limit of the decadal mean nonzero streamflow, base-10 logarithms of cubic meters per second.
+\item \code{rse_L1} --- The scale of the residuals of the whole model, base-10 logarithms of cubic meters per second.
+\item \code{se.fit_L1} --- The standard error of fit reported by the whole model, base-10 logarithms of cubic meters per second.
+\item \code{loo_est_lwr_L1} --- The leave-one-watershed-out (LOO) lower 95-percent prediction limit of the decadal mean nonzero streamflow, base-10 logarithms of cubic meters per second.
+\item \code{loo_est_L1} --- The LOO estimate of the decadal mean nonzero streamflow, base-10 logarithms of cubic meters per second.
+\item \code{loo_est_upr_L1} --- The LOO upper 95-percent prediction limit of the decadal  mean nonzero streamflow, base-10 logarithms of cubic meters per second.
+\end{enumerate}
+
+%> length(unique(looL1model$site_no))
+%[1] 955
+%> length(unique(looL1model$comid))
+%[1] 949
+%> length(unique(looL1model$huc12))
+%[1] 879
+
+%> names(looL1model)
+% [1] "comid"          "site_no"        "huc12"          "decade"        
+% [5] "dec_long_va"    "dec_lat_va"     "in_model_L1"    "bias_corr"     
+% [9] "L1"             "est_lwr_L1"     "est_L1"         "est_upr_L1"    
+%[13] "rse_L1"         "se.fit_L1"      "loo_bias_corr"  "loo_est_lwr_L1"
+%[17] "loo_est_L1"     "loo_est_upr_L1"
+
+
+
+\section{GAM-T2 model (\code{all_gage_looest_T2.feather})}
+\begin{enumerate}
+\footnotesize
+\RaggedRight
+\item \code{comid} --- The stream reach specific common identification number (COMID) of the stream reach identified as the stream reach of the USGS streamgage. Note that geometrically, streamgages could share a COMID, so do not rely on COMID being absolutely not repeated between streamgages.
+\item \code{site_no} --- The USGS streamflow-gaging (streamgage) identification number.
+\item \code{huc12} --- The level-12 hydrologic unit code (HUC12) number containing the streamgage. Note that geometrically, streamgages could share a HUC12, so do not rely on HUC12 being absolutely not repeated between streamgages.
+\item \code{decade} --- The decade for which the 1950 decade is defined as the days January 1, 1950 to December 31, 1959.
+\item \code{dec_long_va} --- The decimal degrees longitude in North American Datum of 1983.
+\item \code{dec_long_va} --- The decimal degrees latitude in North American Datum of 1983.
+\item \code{in_model_T2} --- A binary indicator (1 = yes, 0 = no) that the streamgage-decade record was included in the whole-model computations to construct the generalized additive model.
+\item \code{T2} --- The observed decadal coefficient of L-variation of the nonzero streamflows, dimensionless.
+\item \code{est_lwr_T2} --- The whole-model lower 95-percent prediction limit of the decadal coefficient of L-variation, dimensionless.
+\item \code{est_T2} --- The whole-model estimate the decadal coefficient of L-variation , dimensionless.
+\item \code{est_upr_T2} --- The whole-model upper 95-percent prediction limit of the decadal coefficient of L-variation, dimensionless.
+\item \code{rse_T2} --- The scale of the residuals of the whole model, dimensionless.
+\item \code{se.fit_T2} --- The standard error of fit reported by the whole model, dimensionless.
+\item \code{loo_est_lwr_T2} --- The leave-one-watershed-out (LOO) lower 95-percent prediction limit of the decadal coefficient of L-variation, dimensionless.
+\item \code{loo_est_T2} --- The LOO estimate of the decadal coefficient of L-variation, dimensionless.
+\item \code{loo_est_upr_T2} --- The LOO upper 95-percent prediction limit of the decadal coefficient of L-variation, dimensionless.
+\end{enumerate}
+
+
+%> names(looT2model)
+% [1] "comid"          "site_no"        "huc12"          "decade"        
+% [5] "dec_long_va"    "dec_lat_va"     "in_model_T2"    "T2"            
+% [9] "est_lwr_T2"     "est_T2"         "est_upr_T2"     "rse_T2"        
+%[13] "se.fit_T2"      "loo_est_lwr_T2" "loo_est_T2"     "loo_est_upr_T2"
+
+
+
+\section{GAM-T3 model (\code{all_gage_looest_T3.feather})}
+\begin{enumerate}
+\footnotesize
+\RaggedRight
+\item \code{comid} --- The stream reach specific common identification number (COMID) of the stream reach identified as the stream reach of the USGS streamgage. Note that geometrically, streamgages could share a COMID, so do not rely on COMID being absolutely not repeated between streamgages.
+\item \code{site_no} --- The USGS streamflow-gaging (streamgage) identification number.
+\item \code{huc12} --- The level-12 hydrologic unit code (HUC12) number containing the streamgage. Note that geometrically, streamgages could share a HUC12, so do not rely on HUC12 being absolutely not repeated between streamgages.
+\item \code{decade} --- The decade for which the 1950 decade is defined as the days January 1, 1950 to December 31, 1959.
+\item \code{dec_long_va} --- The decimal degrees longitude in North American Datum of 1983.
+\item \code{dec_long_va} --- The decimal degrees latitude in North American Datum of 1983.
+\item \code{in_model_T3} --- A binary indicator (1 = yes, 0 = no) that the streamgage-decade record was included in the whole-model computations to construct the generalized additive model.
+\item \code{T3} --- The observed decadal L-skew of the nonzero streamflows, dimensionless.
+\item \code{est_lwr_T3} --- The whole-model lower 95-percent prediction limit of the decadal L-skew, dimensionless.
+\item \code{est_T3} --- The whole-model estimate the decadal L-skew, dimensionless.
+\item \code{est_upr_T3} --- The whole-model upper 95-percent prediction limit of the decadal L-skew, dimensionless.
+\item \code{rse_T3} --- The scale of the residuals of the whole model, dimensionless.
+\item \code{se.fit_T3} --- The standard error of fit reported by the whole model, dimensionless.
+\item \code{loo_est_lwr_T3} --- The leave-one-watershed-out (LOO) lower 95-percent prediction limit of the decadal L-skew, dimensionless.
+\item \code{loo_est_T3} --- The LOO estimate of the decadal L-skew, dimensionless.
+\item \code{loo_est_upr_T3} --- The LOO upper 95-percent prediction limit of the decadal  L-skew, dimensionless.
+\end{enumerate}
+
+
+%> names(looT3model)
+% [1] "comid"          "site_no"        "huc12"          "decade"        
+% [5] "dec_long_va"    "dec_lat_va"     "in_model_T3"    "T3"            
+% [9] "est_lwr_T3"     "est_T3"         "est_upr_T3"     "rse_T3"        
+%[13] "se.fit_T3"      "loo_est_lwr_T3" "loo_est_T3"     "loo_est_upr_T3"
+
+
+
+\section{GAM-T4 model (\code{all_gage_looest_T4.feather})}
+\begin{enumerate}
+\footnotesize
+\RaggedRight
+\item \code{comid} --- The stream reach specific common identification number (COMID) of the stream reach identified as the stream reach of the USGS streamgage. Note that geometrically, streamgages could share a COMID, so do not rely on COMID being absolutely not repeated between streamgages.
+\item \code{site_no} --- The USGS streamflow-gaging (streamgage) identification number.
+\item \code{huc12} --- The level-12 hydrologic unit code (HUC12) number containing the streamgage. Note that geometrically, streamgages could share a HUC12, so do not rely on HUC12 being absolutely not repeated between streamgages.
+\item \code{decade} --- The decade for which the 1950 decade is defined as the days January 1, 1950 to December 31, 1959.
+\item \code{dec_long_va} --- The decimal degrees longitude in North American Datum of 1983.
+\item \code{dec_long_va} --- The decimal degrees latitude in North American Datum of 1983.
+\item \code{in_model_T4} --- A binary indicator (1 = yes, 0 = no) that the streamgage-decade record was included in the whole-model computations to construct the generalized additive model.
+\item \code{T4} --- The observed decadal L-kurtosis of the nonzero streamflows, dimensionless.
+\item \code{est_lwr_T4} --- The whole-model lower 95-percent prediction limit of the decadal L-kurtosis, dimensionless.
+\item \code{est_T4} --- The whole-model estimate the decadal L-kurtosis, dimensionless.
+\item \code{est_upr_T4} --- The whole-model upper 95-percent prediction limit of the decadal L-kurtosis, dimensionless.
+\item \code{rse_T4} --- The scale of the residuals of the whole model, dimensionless.
+\item \code{se.fit_T4} --- The standard error of fit reported by the whole model, dimensionless.
+\item \code{loo_est_lwr_T4} --- The leave-one-watershed-out (LOO) lower 95-percent prediction limit of the decadal L-kurtosis, dimensionless.
+\item \code{loo_est_T4} --- The LOO estimate of the decadal L-kurtosis, dimensionless.
+\item \code{loo_est_upr_T4} --- The LOO upper 95-percent prediction limit of the decadal  L-kurtosis, dimensionless.
+\end{enumerate}
+
+
+%> names(looT4model)
+% [1] "comid"          "site_no"        "huc12"          "decade"        
+% [5] "dec_long_va"    "dec_lat_va"     "in_model_T4"    "T4"            
+% [9] "est_lwr_T4"     "est_T4"         "est_upr_T4"     "rse_T4"        
+%[13] "se.fit_T4"      "loo_est_lwr_T4" "loo_est_T4"     "loo_est_upr_T4"
+
+
+\section{GAM-T5 model (\code{all_gage_looest_T5.feather})}
+\begin{enumerate}
+\footnotesize
+\RaggedRight
+\item \code{comid} --- The stream reach specific common identification number (COMID) of the stream reach identified as the stream reach of the USGS streamgage. Note that geometrically, streamgages could share a COMID, so do not rely on COMID being absolutely not repeated between streamgages.
+\item \code{site_no} --- The USGS streamflow-gaging (streamgage) identification number.
+\item \code{huc12} --- The level-12 hydrologic unit code (HUC12) number containing the streamgage. Note that geometrically, streamgages could share a HUC12, so do not rely on HUC12 being absolutely not repeated between streamgages.
+\item \code{decade} --- The decade for which the 1950 decade is defined as the days January 1, 1950 to December 31, 1959.
+\item \code{dec_long_va} --- The decimal degrees longitude in North American Datum of 1983.
+\item \code{dec_long_va} --- The decimal degrees latitude in North American Datum of 1983.
+\item \code{in_model_T5} --- A binary indicator (1 = yes, 0 = no) that the streamgage-decade record was included in the whole-model computations to construct the generalized additive model.
+\item \code{T5} --- The observed decadal fifth L-moment ratio of the nonzero streamflows, dimensionless.
+\item \code{est_lwr_T5} --- The whole-model lower 95-percent prediction limit of the decadal fifth L-moment ratio, dimensionless.
+\item \code{est_T5} --- The whole-model estimate the decadal fifth L-moment ratio, dimensionless.
+\item \code{est_upr_T5} --- The whole-model upper 95-percent prediction limit of the decadal fifth L-moment ratio, dimensionless.
+\item \code{rse_T5} --- The scale of the residuals of the whole model, dimensionless.
+\item \code{se.fit_T5} --- The standard error of fit reported by the whole model, dimensionless.
+\item \code{loo_est_lwr_T5} --- The leave-one-watershed-out (LOO) lower 95-percent prediction limit of the decadal fifth L-moment ratio, dimensionless.
+\item \code{loo_est_T5} --- The LOO estimate of the decadal fifth L-moment ratio, dimensionless.
+\item \code{loo_est_upr_T5} --- The LOO upper 95-percent prediction limit of the decadal fifth L-moment ratio, dimensionless.
+\end{enumerate}
+
+
+%> names(looT5model)
+% [1] "comid"          "site_no"        "huc12"          "decade"        
+% [5] "dec_long_va"    "dec_lat_va"     "in_model_T5"    "T5"            
+% [9] "est_lwr_T5"     "est_T5"         "est_upr_T5"     "rse_T5"        
+%[13] "se.fit_T5"      "loo_est_lwr_T5" "loo_est_T5"     "loo_est_upr_T5"
+
+
+\end{document}
+
