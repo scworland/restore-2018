@@ -228,3 +228,34 @@ whole.correct <- (sum(tmp$pplo  > 0 & tmp$est_pplo  > 0) +
                   sum(tmp$pplo == 0 & tmp$est_pplo == 0))/n
 loo.correct   <- (sum(tmp$pplo  > 0 & tmp$loo_est_pplo  > 0) +
                   sum(tmp$pplo == 0 & tmp$loo_est_pplo == 0))/n
+
+message("PPLO -- lengths(site_no, comid, huc12): ",
+length(unique(looPPLOmodel$site_no)), ", ",
+length(unique(looPPLOmodel$comid)), ", ",
+length(unique(looPPLOmodel$huc12)))
+
+message("L1 -- lengths(site_no, comid, huc12): ",
+length(unique(looL1model$site_no)), ", ",
+length(unique(looL1model$comid)), ", ",
+length(unique(looL1model$huc12)))
+
+message("T2 -- lengths(site_no, comid, huc12): ",
+length(unique(looT2model$site_no)), ", ",
+length(unique(looT2model$comid)), ", ",
+length(unique(looT2model$huc12)))
+
+message("T3 -- lengths(site_no, comid, huc12): ",
+length(unique(looT3model$site_no)), ", ",
+length(unique(looT3model$comid)), ", ",
+length(unique(looT3model$huc12)))
+
+message("T4 -- lengths(site_no, comid, huc12): ",
+length(unique(looT4model$site_no)), ", ",
+length(unique(looT4model$comid)), ", ",
+length(unique(looT4model$huc12)))
+
+message("T5 -- lengths(site_no, comid, huc12): ",
+length(unique(looT5model$site_no)), ", ",
+length(unique(looT5model$comid)), ", ",
+length(unique(looT5model$huc12)))
+
