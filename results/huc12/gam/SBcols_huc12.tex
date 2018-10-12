@@ -1,0 +1,162 @@
+\documentclass[1p, authoryear, 11pt, times, preprint]{elsarticle}
+\usepackage{ragged2e}
+\usepackage{setspace}
+\usepackage{xcolor}
+\definecolor{codecolor}{rgb}{0.555,0,0.602}
+
+\usepackage{listings}
+\lstset{breaklines=true,
+        frame=tb,
+        framesep=2.5pt,
+        columns=fixed,
+        xleftmargin=6pt,
+        numbers=left,
+        stepnumber=1,
+        numberstyle=\tiny\sffamily,
+        numbersep=6pt,
+        abovecaptionskip=0.5\baselineskip,
+        belowcaptionskip=0.5\baselineskip,
+        belowskip=.15\baselineskip
+        }
+\lstset{basicstyle=\scriptsize\ttfamily,
+                    keywordstyle=\scriptsize\ttfamily}
+
+\newcommand{\code}[1]{{\color{black}%
+                       \mbox{\lstinline[basicstyle={\small\ttfamily},
+                                        keywordstyle=\scriptsize\ttfamily]|#1|}}}
+
+\righthyphenmin=3
+\lefthyphenmin=3
+
+
+\begin{document}
+
+\singlespacing
+
+\section{cGAM-PPLO model (\code{all_huc12_pplo.feather})}
+
+
+
+\begin{enumerate}
+\footnotesize
+\RaggedRight
+\item \code{comid} --- The stream reach specific common identification number (COMID) of the stream reach identified as the stream reach of the USGS streamgage. Note that geometrically, streamgages could share a COMID, so do not rely on COMID being absolutely not repeated between streamgages.
+\item \code{huc12} --- The level-12 hydrologic unit code (HUC12) number containing the streamgage. Note that geometrically, streamgages could share a HUC12, so do not rely on HUC12 being absolutely not repeated between streamgages.
+\item \code{decade} --- The decade for which the 1950 decade is defined as the days January 1, 1950 to December 31, 1959.
+\item \code{dec_long_va} --- The decimal degrees longitude in North American Datum of 1983.
+\item \code{dec_lat_va} --- The decimal degrees latitude in North American Datum of 1983.
+\item \code{est_lwr_pplo} --- The whole-model lower 95-percent prediction limit of the decadal no-flow fraction.
+\item \code{est_pplo} --- The whole-model estimate of the decadal no-flow fraction.
+\item \code{est_upr_pplo} --- The whole-model upper 95-percent prediction limit of the decadal no-flow fraction.
+\item \code{est_lwr_flowtime} --- The whole-model lower 95-percent prediction limit of the decadal flowtime in base-10 logarithms of days.
+\item \code{est_flowtime} --- The whole-model estimate of the decadal flowtime is the base-10 logarithmic transformation of the number of nonzero streamflow days observed in the decade.
+\item \code{est_upr_flowtime} --- The whole-model upper 95-percent prediction limit of the decadal flowtime in base-10 logarithms of days.
+\item \code{rse_flowtime} --- The scale of the residuals of the whole model in base-10 logarithmic transformation of days, and note that the model is constructed as a censored regression of the flowtime and not the no-flow fraction.
+\item \code{se.fit_flowtime} --- The standard error of fit reported by the whole model and note that the model is constructed as a censored regression of the flowtime and not the no-flow fraction.
+\item \code{delta_est_pplo} --- The decade to decade change in the \code{est_pplo} and the 1950s decade is hence missing (NA).
+\end{enumerate}
+
+ 
+
+
+\section{GAM-L1 model (\code{all_huc12_L1.feather})}
+\begin{enumerate}
+\footnotesize
+\RaggedRight
+\item \code{comid} --- The stream reach specific common identification number (COMID) of the stream reach identified as the stream reach of the USGS streamgage. Note that geometrically, streamgages could share a COMID, so do not rely on COMID being absolutely not repeated between streamgages.
+\item \code{huc12} --- The level-12 hydrologic unit code (HUC12) number containing the streamgage. Note that geometrically, streamgages could share a HUC12, so do not rely on HUC12 being absolutely not repeated between streamgages.
+\item \code{decade} --- The decade for which the 1950 decade is defined as the days January 1, 1950 to December 31, 1959.
+\item \code{dec_long_va} --- The decimal degrees longitude in North American Datum of 1983.
+\item \code{dec_lat_va} --- The decimal degrees latitude in North American Datum of 1983.
+\item \code{bias_corr} --- The Duan smearing estimator of the re-transformation bias correction factor.
+\item \code{est_lwr_L1} --- The whole-model lower 95-percent prediction limit of the decadal mean nonzero streamflow, base-10 logarithms of cubic meters per second.
+\item \code{est_L1} --- The whole-model estimate the decadal mean nonzero streamflow, base-10 logarithms of cubic meters per second.
+\item \code{est_upr_L1} --- The whole-model upper 95-percent prediction limit of the decadal mean nonzero streamflow, base-10 logarithms of cubic meters per second.
+\item \code{rse_L1} --- The scale of the residuals of the whole model, base-10 logarithms of cubic meters per second.
+\item \code{se.fit_L1} --- The standard error of fit reported by the whole model, base-10 logarithms of cubic meters per second.
+\item \code{delta_est_L1} --- The decade to decade change in the \code{est_L1} and the 1950s decade is hence missing (NA).
+\end{enumerate}
+
+%> length(unique(L1$comid))
+%[1] 8988
+%> length(unique(L1$huc12))
+%[1] 9220
+
+\section{GAM-T2 model (\code{all_huc12_T2.feather})}
+\begin{enumerate}
+\footnotesize
+\RaggedRight
+\item \code{comid} --- The stream reach specific common identification number (COMID) of the stream reach identified as the stream reach of the USGS streamgage. Note that geometrically, streamgages could share a COMID, so do not rely on COMID being absolutely not repeated between streamgages.
+\item \code{huc12} --- The level-12 hydrologic unit code (HUC12) number containing the streamgage. Note that geometrically, streamgages could share a HUC12, so do not rely on HUC12 being absolutely not repeated between streamgages.
+\item \code{decade} --- The decade for which the 1950 decade is defined as the days January 1, 1950 to December 31, 1959.
+\item \code{dec_long_va} --- The decimal degrees longitude in North American Datum of 1983.
+\item \code{dec_lat_va} --- The decimal degrees latitude in North American Datum of 1983.
+\item \code{est_lwr_T2} --- The whole-model lower 95-percent prediction limit of the decadal coefficient of L-variation, dimensionless.
+\item \code{est_T2} --- The whole-model estimate the decadal coefficient of L-variation , dimensionless.
+\item \code{est_upr_T2} --- The whole-model upper 95-percent prediction limit of the decadal coefficient of L-variation, dimensionless.
+\item \code{rse_T2} --- The scale of the residuals of the whole model, dimensionless.
+\item \code{se.fit_T2} --- The standard error of fit reported by the whole model, dimensionless.
+\item \code{delta_est_T2} --- The decade to decade change in the \code{est_T2} and the 1950s decade is hence missing (NA).
+\end{enumerate}
+
+ 
+
+\section{GAM-T3 model (\code{all_huc12_T3.feather})}
+\begin{enumerate}
+\footnotesize
+\RaggedRight
+\item \code{comid} --- The stream reach specific common identification number (COMID) of the stream reach identified as the stream reach of the USGS streamgage. Note that geometrically, streamgages could share a COMID, so do not rely on COMID being absolutely not repeated between streamgages.
+\item \code{huc12} --- The level-12 hydrologic unit code (HUC12) number containing the streamgage. Note that geometrically, streamgages could share a HUC12, so do not rely on HUC12 being absolutely not repeated between streamgages.
+\item \code{decade} --- The decade for which the 1950 decade is defined as the days January 1, 1950 to December 31, 1959.
+\item \code{dec_long_va} --- The decimal degrees longitude in North American Datum of 1983.
+\item \code{dec_lat_va} --- The decimal degrees latitude in North American Datum of 1983.
+\item \code{est_lwr_T3} --- The whole-model lower 95-percent prediction limit of the decadal L-skew, dimensionless.
+\item \code{est_T3} --- The whole-model estimate the decadal L-skew, dimensionless.
+\item \code{est_upr_T3} --- The whole-model upper 95-percent prediction limit of the decadal L-skew, dimensionless.
+\item \code{rse_T3} --- The scale of the residuals of the whole model, dimensionless.
+\item \code{se.fit_T3} --- The standard error of fit reported by the whole model, dimensionless.
+\item \code{delta_est_T3} --- The decade to decade change in the \code{est_T3} and the 1950s decade is hence missing (NA).
+\end{enumerate}
+
+ 
+
+
+\section{GAM-T4 model (\code{all_huc12_T4.feather})}
+\begin{enumerate}
+\footnotesize
+\RaggedRight
+\item \code{comid} --- The stream reach specific common identification number (COMID) of the stream reach identified as the stream reach of the USGS streamgage. Note that geometrically, streamgages could share a COMID, so do not rely on COMID being absolutely not repeated between streamgages.
+\item \code{huc12} --- The level-12 hydrologic unit code (HUC12) number containing the streamgage. Note that geometrically, streamgages could share a HUC12, so do not rely on HUC12 being absolutely not repeated between streamgages.
+\item \code{decade} --- The decade for which the 1950 decade is defined as the days January 1, 1950 to December 31, 1959.
+\item \code{dec_long_va} --- The decimal degrees longitude in North American Datum of 1983.
+\item \code{dec_lat_va} --- The decimal degrees latitude in North American Datum of 1983.
+\item \code{est_lwr_T4} --- The whole-model lower 95-percent prediction limit of the decadal L-kurtosis, dimensionless.
+\item \code{est_T4} --- The whole-model estimate the decadal L-kurtosis, dimensionless.
+\item \code{est_upr_T4} --- The whole-model upper 95-percent prediction limit of the decadal L-kurtosis, dimensionless.
+\item \code{rse_T4} --- The scale of the residuals of the whole model, dimensionless.
+\item \code{se.fit_T4} --- The standard error of fit reported by the whole model, dimensionless.
+\item \code{delta_est_T4} --- The decade to decade change in the \code{est_T4} and the 1950s decade is hence missing (NA).
+\end{enumerate}
+
+
+ 
+\section{GAM-T5 model (\code{all_huc12_T5.feather})}
+\begin{enumerate}
+\footnotesize
+\RaggedRight
+\item \code{comid} --- The stream reach specific common identification number (COMID) of the stream reach identified as the stream reach of the USGS streamgage. Note that geometrically, streamgages could share a COMID, so do not rely on COMID being absolutely not repeated between streamgages.
+\item \code{huc12} --- The level-12 hydrologic unit code (HUC12) number containing the streamgage. Note that geometrically, streamgages could share a HUC12, so do not rely on HUC12 being absolutely not repeated between streamgages.
+\item \code{decade} --- The decade for which the 1950 decade is defined as the days January 1, 1950 to December 31, 1959.
+\item \code{dec_long_va} --- The decimal degrees longitude in North American Datum of 1983.
+\item \code{dec_lat_va} --- The decimal degrees latitude in North American Datum of 1983.
+\item \code{est_lwr_T5} --- The whole-model lower 95-percent prediction limit of the decadal fifth L-moment ratio, dimensionless.
+\item \code{est_T5} --- The whole-model estimate the decadal fifth L-moment ratio, dimensionless.
+\item \code{est_upr_T5} --- The whole-model upper 95-percent prediction limit of the decadal fifth L-moment ratio, dimensionless.
+\item \code{rse_T5} --- The scale of the residuals of the whole model, dimensionless.
+\item \code{se.fit_T5} --- The standard error of fit reported by the whole model, dimensionless.
+\item \code{delta_est_T3} --- The decade to decade change in the \code{est_T5} and the 1950s decade is hence missing (NA).
+\end{enumerate}
+
+ 
+\end{document}
+
