@@ -45,7 +45,7 @@
 \item \code{huc12} --- The level-12 hydrologic unit code (HUC12) number containing the streamgage. Note that geometrically, streamgages could share a HUC12, so do not rely on HUC12 being absolutely not repeated between streamgages.
 \item \code{decade} --- The decade for which the 1950 decade is defined as the days January 1, 1950 to December 31, 1959.
 \item \code{dec_long_va} --- The decimal degrees longitude in North American Datum of 1983.
-\item \code{dec_long_va} --- The decimal degrees latitude in North American Datum of 1983.
+\item \code{dec_lat_va} --- The decimal degrees latitude in North American Datum of 1983.
 \item \code{in_model_pplo} --- A binary indicator (1 = yes, 0 = no) that the streamgage-decade record was included in the whole-model computations to construct the censored generalized additive model.
 \item \code{pplo} --- The observed decadal no-flow fraction.
 \item \code{flowtime} --- The flowtime of the decadal no-flow fraction for which the flowtime is the base-10 logarithmic transformation of the number of nonzero streamflow days observed in the decade.
@@ -96,8 +96,9 @@
 \item \code{huc12} --- The level-12 hydrologic unit code (HUC12) number containing the streamgage. Note that geometrically, streamgages could share a HUC12, so do not rely on HUC12 being absolutely not repeated between streamgages.
 \item \code{decade} --- The decade for which the 1950 decade is defined as the days January 1, 1950 to December 31, 1959.
 \item \code{dec_long_va} --- The decimal degrees longitude in North American Datum of 1983.
-\item \code{dec_long_va} --- The decimal degrees latitude in North American Datum of 1983.
+\item \code{dec_lat_va} --- The decimal degrees latitude in North American Datum of 1983.
 \item \code{in_model_L1} --- A binary indicator (1 = yes, 0 = no) that the streamgage-decade record was included in the whole-model computations to construct the generalized additive model.
+\item \code{bias_corr} --- The Duan smearing estimator of the re-transformation bias correction factor.
 \item \code{L1} --- The observed decadal mean nonzero streamflow, base-10 logarithms of cubic meters per second.
 \item \code{est_lwr_L1} --- The whole-model lower 95-percent prediction limit of the decadal mean nonzero streamflow, base-10 logarithms of cubic meters per second.
 \item \code{est_L1} --- The whole-model estimate the decadal mean nonzero streamflow, base-10 logarithms of cubic meters per second.
@@ -134,7 +135,7 @@
 \item \code{huc12} --- The level-12 hydrologic unit code (HUC12) number containing the streamgage. Note that geometrically, streamgages could share a HUC12, so do not rely on HUC12 being absolutely not repeated between streamgages.
 \item \code{decade} --- The decade for which the 1950 decade is defined as the days January 1, 1950 to December 31, 1959.
 \item \code{dec_long_va} --- The decimal degrees longitude in North American Datum of 1983.
-\item \code{dec_long_va} --- The decimal degrees latitude in North American Datum of 1983.
+\item \code{dec_lat_va} --- The decimal degrees latitude in North American Datum of 1983.
 \item \code{in_model_T2} --- A binary indicator (1 = yes, 0 = no) that the streamgage-decade record was included in the whole-model computations to construct the generalized additive model.
 \item \code{T2} --- The observed decadal coefficient of L-variation of the nonzero streamflows, dimensionless.
 \item \code{est_lwr_T2} --- The whole-model lower 95-percent prediction limit of the decadal coefficient of L-variation, dimensionless.
@@ -165,7 +166,7 @@
 \item \code{huc12} --- The level-12 hydrologic unit code (HUC12) number containing the streamgage. Note that geometrically, streamgages could share a HUC12, so do not rely on HUC12 being absolutely not repeated between streamgages.
 \item \code{decade} --- The decade for which the 1950 decade is defined as the days January 1, 1950 to December 31, 1959.
 \item \code{dec_long_va} --- The decimal degrees longitude in North American Datum of 1983.
-\item \code{dec_long_va} --- The decimal degrees latitude in North American Datum of 1983.
+\item \code{dec_lat_va} --- The decimal degrees latitude in North American Datum of 1983.
 \item \code{in_model_T3} --- A binary indicator (1 = yes, 0 = no) that the streamgage-decade record was included in the whole-model computations to construct the generalized additive model.
 \item \code{T3} --- The observed decadal L-skew of the nonzero streamflows, dimensionless.
 \item \code{est_lwr_T3} --- The whole-model lower 95-percent prediction limit of the decadal L-skew, dimensionless.
@@ -196,7 +197,7 @@
 \item \code{huc12} --- The level-12 hydrologic unit code (HUC12) number containing the streamgage. Note that geometrically, streamgages could share a HUC12, so do not rely on HUC12 being absolutely not repeated between streamgages.
 \item \code{decade} --- The decade for which the 1950 decade is defined as the days January 1, 1950 to December 31, 1959.
 \item \code{dec_long_va} --- The decimal degrees longitude in North American Datum of 1983.
-\item \code{dec_long_va} --- The decimal degrees latitude in North American Datum of 1983.
+\item \code{dec_lat_va} --- The decimal degrees latitude in North American Datum of 1983.
 \item \code{in_model_T4} --- A binary indicator (1 = yes, 0 = no) that the streamgage-decade record was included in the whole-model computations to construct the generalized additive model.
 \item \code{T4} --- The observed decadal L-kurtosis of the nonzero streamflows, dimensionless.
 \item \code{est_lwr_T4} --- The whole-model lower 95-percent prediction limit of the decadal L-kurtosis, dimensionless.
@@ -226,7 +227,7 @@
 \item \code{huc12} --- The level-12 hydrologic unit code (HUC12) number containing the streamgage. Note that geometrically, streamgages could share a HUC12, so do not rely on HUC12 being absolutely not repeated between streamgages.
 \item \code{decade} --- The decade for which the 1950 decade is defined as the days January 1, 1950 to December 31, 1959.
 \item \code{dec_long_va} --- The decimal degrees longitude in North American Datum of 1983.
-\item \code{dec_long_va} --- The decimal degrees latitude in North American Datum of 1983.
+\item \code{dec_lat_va} --- The decimal degrees latitude in North American Datum of 1983.
 \item \code{in_model_T5} --- A binary indicator (1 = yes, 0 = no) that the streamgage-decade record was included in the whole-model computations to construct the generalized additive model.
 \item \code{T5} --- The observed decadal fifth L-moment ratio of the nonzero streamflows, dimensionless.
 \item \code{est_lwr_T5} --- The whole-model lower 95-percent prediction limit of the decadal fifth L-moment ratio, dimensionless.
