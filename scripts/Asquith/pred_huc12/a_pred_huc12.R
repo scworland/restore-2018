@@ -365,11 +365,11 @@ for(comid in unique(H12T5df$comid)) {
       c(NA,diff(H12T5df$est_T5[H12T5df$comid == comid]))
 }
 
-write_feather(slot(H12PPLOdf, "data"), "all_gam_huc12_pplo.feather")
-write_feather(slot(H12L1df,   "data"),   "all_gam_huc12_L1.feather")
-write_feather(slot(H12T2df,   "data"),   "all_gam_huc12_T2.feather")
-write_feather(slot(H12T3df,   "data"),   "all_gam_huc12_T3.feather")
-write_feather(slot(H12T4df,   "data"),   "all_gam_huc12_T4.feather")
-write_feather(slot(H12T5df,   "data"),   "all_gam_huc12_T5.feather")
+write_feather(slot(H12PPLOdf, "data"), "all_huc12_pplo.feather")
+write_feather(slot(H12L1df,   "data"),   "all_huc12_L1.feather")
+write_feather(slot(H12T2df,   "data"),   "all_huc12_T2.feather")
+write_feather(slot(H12T3df,   "data"),   "all_huc12_T3.feather")
+write_feather(slot(H12T4df,   "data"),   "all_huc12_T4.feather")
+write_feather(slot(H12T5df,   "data"),   "all_huc12_T5.feather")
 
 # source("a_plot_huc12.R")
