@@ -1,4 +1,5 @@
 library(sp)
+library(feather)
 
 LATLONG <- paste0("+proj=longlat +ellps=GRS80 ",
                   "+datum=NAD83 +no_defs +towgs84=0,0,0")
@@ -32,12 +33,12 @@ gT3   <- read_feather("../../../results/gage/gam/all_gage_looest_T3.feather")
 gT4   <- read_feather("../../../results/gage/gam/all_gage_looest_T4.feather")
 gT5   <- read_feather("../../../results/gage/gam/all_gage_looest_T5.feather")
 
-hPPLO <- read_feather("../../../results/huc12/gam/all_gam_huc12_pplo.feather")
-hL1   <- read_feather("../../../results/huc12/gam/all_gam_huc12_L1.feather")
-hT2   <- read_feather("../../../results/huc12/gam/all_gam_huc12_T2.feather")
-hT3   <- read_feather("../../../results/huc12/gam/all_gam_huc12_T3.feather")
-hT4   <- read_feather("../../../results/huc12/gam/all_gam_huc12_T4.feather")
-hT5   <- read_feather("../../../results/huc12/gam/all_gam_huc12_T5.feather")
+hPPLO <- read_feather("../../../results/huc12/gam/all_huc12_pplo.feather")
+hL1   <- read_feather("../../../results/huc12/gam/all_huc12_L1.feather")
+hT2   <- read_feather("../../../results/huc12/gam/all_huc12_T2.feather")
+hT3   <- read_feather("../../../results/huc12/gam/all_huc12_T3.feather")
+hT4   <- read_feather("../../../results/huc12/gam/all_huc12_T4.feather")
+hT5   <- read_feather("../../../results/huc12/gam/all_huc12_T5.feather")
 
 G   <- read_feather("../../../data/gage/all_gage_data.feather")
 
@@ -76,7 +77,7 @@ plot(1,1, xlim=range(qnorm(FF)), ylim=c(0.001,1000), xaxt="n", yaxt="n", xlab=""
           ylab="COMID-scaled, daily-mean streamflow, cubic meters per second")
 add.lmomco.axis(las=2, tcl=0.5, side.type="NPP", cex=0.8, case="lower")
 add.log.axis(side=2, tcl=0.8*abs(par()$tcl), two.sided=TRUE)
-add.log.axis(logs=c(1),   tcl=-0.5*abs(par()$tcl), side=2, two.sided=TRUE)
+#add.log.axis(logs=c(1),   tcl=-0.5*abs(par()$tcl), side=2, two.sided=TRUE)
 add.log.axis(logs=c(1),   tcl=+1.3*abs(par()$tcl), side=2, two.sided=TRUE)
 add.log.axis(logs=c(1, 2, 4, 6), side=2, make.labs=TRUE, las=1, label="")
 
@@ -90,9 +91,9 @@ for(i in 1:length(names(fdc))) {
 
 text(-3.5, 1000, paste0("USGS 08167000 streamgage ('next to' COMID 3588922) has area of ",gage_area," square kilometers"), pos=4, cex=0.7)
 text(-3.5, 700, paste0("COMID 3588922 has area of ",cmp_area," square kilometers"), pos=4, cex=0.7)
-text(-3.5, 300, "'Observed' flow-duration curve (FDC) for COMID = \n Gaged FDC * (acc_basin_area of COMID / acc_basin_area of streamgage)^0.9", pos=4, cex=0.7)
-text(-1.0,.0015, paste0("A Duan smearing estimator (Helsel and Hirsch, 2002) of ",
-                     round(duan, digits=3), " was\n",
+text(-3.5, 300, "'Observed' flow-duration curve (FDC) for COMID = \n Gaged FDC * (basin_area of COMID / basin_area of streamgage)^0.9", pos=4, cex=0.7)
+text(-1.0,.003, paste0("A Duan smearing estimator (Helsel and Hirsch, 2002) of ",
+                     round(duan, digits=4), " was\n",
                      "used to correct retransformation bias in the mean (first L-moment)\n",
                      "prior to fitting of the distributions to the L-moments."),
              pos=4, cex=0.7)
