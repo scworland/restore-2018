@@ -55,7 +55,7 @@ add.log.axis(logs=c(1, 2, 3, 4, 6), side=2, make.labs=TRUE, las=1,
 add.log.axis(logs=c(1, 2, 3, 4, 6), side=1, make.labs=TRUE, las=1,
              label="Observed decadal mean flow (zeros included), in cms")
 
-site <- "08160000"
+site <- "08167000"
 #for(site in unique(DDo$site_no[DDo$ed_rch_zone == 1])) {
 gcol <- 3
 #if(site == "08155300" | site == "08155400" | site == "08156800") gcol <- 0
@@ -72,8 +72,9 @@ gcol <- 3
 #site <- "08202700" # far from to the line
 #print(mean(DDo$pplo[DDo$site_no == site]))
 
-EstMeanFlow_loo[looL1model$site_no == site]
+ObsMean[        looL1model$site_no == site]
 EstMeanFlow[    looL1model$site_no == site]
+EstMeanFlow_loo[looL1model$site_no == site]
 ObsMean[        looL1model$site_no == site]*(1/0.3048^3)
 EstMeanFlow[    looL1model$site_no == site]*(1/0.3048^3)
 EstMeanFlow_loo[looL1model$site_no == site]*(1/0.3048^3)
