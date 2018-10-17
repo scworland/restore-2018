@@ -1,6 +1,11 @@
 
 
-sw_k_foldcv <- function(build_model,k=10,epochs=75,batch_size=25,X=X,Y=Y,data=d){
+sw_k_foldcv <- function(build_model,k=10,epochs=75,batch_size=25,X=X,Y=Y,data=d,loss_weights){
+  
+  library(keras)
+  library(dplyr)
+  library(tidyr)
+  library(purrr)
   
   #start the clock and progress bar
   ptm <- proc.time()
@@ -118,6 +123,11 @@ sw_k_foldcv <- function(build_model,k=10,epochs=75,batch_size=25,X=X,Y=Y,data=d)
   average_mse <- data.frame(epoch = seq(1:epochs)) %>%
     mutate(val_mse = apply(mse_all, 2, mean))
   
+  mse_all <- data.frame(t(mse_all)) %>%
+    set_names(paste0("kfold",1:k)) %>%
+    mutate(epoch = seq(1:epochs)) %>%
+    select(epoch,everything())
+  
     est_obs <- yhat_all %>%
       mutate(site_no=site_no_all$site_no,
              decade=site_no_all$decade) %>%
@@ -126,12 +136,14 @@ sw_k_foldcv <- function(build_model,k=10,epochs=75,batch_size=25,X=X,Y=Y,data=d)
   
   if(length(Ytest)==1){
     result <- list(average_mse=average_mse,
+                   mse_all=mse_all,
                    yhat_all=yhat_all,
                    obs_all=obs_all,
                    est_obs=est_obs,
                    time=proc.time() - ptm)
   }else{
     result <- list(average_mse=average_mse,
+                   mse_all=mse_all,
                    yhat_all=yhat_all,
                    obs_all=obs_all,
                    est_obs=est_obs,

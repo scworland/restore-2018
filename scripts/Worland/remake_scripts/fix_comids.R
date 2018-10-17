@@ -22,6 +22,7 @@ sw_fix_comids <- function(site_comids){
 }
 
 
+
 # Additional notes 5/1/2018
 # site number "07341500" is associated with comid "19947688" because the "updated_locs"
 # file erroneously dropped the site because someone thought it was "stage only". So

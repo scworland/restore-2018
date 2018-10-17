@@ -1,16 +1,27 @@
 
-sw_build_snn_quantile <- function(gage_all) {
+sw_build_snn_quantile <- function(gage_all,cor_covars) {
   
   d <- gage_all
   
-  f15 <- c("f0.02","f0.5","f05","f10","f20", "f30","f40","f50",
-           "f60","f70","f80","f90","f95","f99.5","f99.98")
+  f27 <- c("f0.02","f0.05","f0.1","f0.2","f0.5","f01","f02","f05",
+           "f10","f20","f25","f30","f40","f50","f60","f70","f75",
+           "f80","f90","f95","f98","f99","f99.5","f99.8","f99.9",
+           "f99.95","f99.98")
   
-  Y <- select(d,f15) %>%
-    mutate_all(funs(.+2)) %>%
-    mutate_all(funs(log10))
+  # grab basin area for later
+  area <- d$basin_area
   
-  X <- select(d,major:flood_storage) %>%
+  # quantiles
+  Y <- select(d,f27) %>%
+    mutate_all(funs(.+0.001)) %>%
+    mutate_all(funs(./area)) %>%
+    mutate_all(funs(log10)) 
+  
+  # remove 1 variable of highly correlated pairs
+  # cor_vars <- distinct(cor_covars, drop)
+  
+  X <- select(d,major:flood_storage, -basin_area) %>%
+    #select(-c(cor_vars$drop)) %>%
     mutate_all(funs(as.numeric(as.factor(.)))) %>%
     mutate_all(funs(as.vector(scale(.)))) %>%
     select_if(~!any(is.na(.)))  %>% 
@@ -21,35 +32,40 @@ sw_build_snn_quantile <- function(gage_all) {
     input <- layer_input(shape=dim(X)[2],name="basinchars")
     
     base_model <- input  %>%
-      layer_dense(units = 25,activation="relu") %>%
-      layer_dropout(rate=0.558) %>%
-      layer_dense(units = 49,activation="relu") %>%
-      layer_dropout(rate=0.591) 
+      layer_dense(units = 20, activation="relu") %>%
+      layer_dropout(rate=0.5) %>%
+      layer_dense(units = 20, activation="relu") %>%
+      layer_dropout(rate=0.5)  
     
     output <- base_model %>%
       layer_dense(units = 1)
     
     model <- keras_model(input,output) %>%
-      compile(optimizer_rmsprop(lr = 0.002536862),
+      compile(optimizer_rmsprop(lr = 0.0005),
               loss="mse",
               metrics="mae")
     
     return(model)
   }
   
+  
   preds <- NULL
   for(j in 1:ncol(Y)){
-    print(paste0("Processing quantile ",j, " out of ", ncol(Y)))
+    print(paste0("Processing quantile ",j," out of ", ncol(Y)))
     y <- Y[,j]
-    cv_results <- sw_k_foldcv(build_model,k=5,epochs=162,batch_size=294,Y=y,X=X,data=d)
-    preds[[j]] <- cv_results$est_obs
+    
+    cv_results <- sw_k_foldcv(build_model,k=2,epochs=400,batch_size=350,Y=y,X=X,data=d)
+    
+    pred_j <- cv_results$est_obs %>%
+      mutate(obs = round(10^(obs)*area-0.001,2),
+             nnet = round(10^(nnet)*area,2),
+             #nnet = ifelse(nnet<0,0,nnet),
+             variable = as.numeric(substring(variable, 2)))
+    
+    preds[[j]] <- pred_j
   }
   
-  preds_df <- bind_rows(preds) %>%
-    mutate(obs = (10^obs)-2,
-           nnet = round((10^nnet)-2,2),
-           nnet = ifelse(nnet<0,0,nnet),
-           variable = as.numeric(substring(variable, 2)))
+  preds_df <- bind_rows(preds) 
   
   return(preds_df)
 }

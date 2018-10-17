@@ -4,129 +4,77 @@ sw_build_mnn_quantile <- function(gage_all) {
   
   d <- gage_all
   
-  f15 <- c("f0.02","f0.5","f05","f10","f20", "f30","f40","f50",
-           "f60","f70","f80","f90","f95","f99.5","f99.98")
+  f27 <- c("f0.02","f0.05","f0.1","f0.2","f0.5","f01","f02","f05",
+           "f10","f20","f25","f30","f40","f50","f60","f70","f75",
+           "f80","f90","f95","f98","f99","f99.5","f99.8","f99.9",
+           "f99.95","f99.98")
   
-  Y <- select(d,f15) %>%
-    mutate_all(funs(.+2)) %>%
-    mutate_all(funs(log10))
+  # grab basin area for later
+  area <- d$basin_area
   
-  X <- select(d,major:flood_storage) %>%
+  # quantiles
+  Y <- select(d,f27) %>%
+    mutate_all(funs(.+0.001)) %>%
+    mutate_all(funs(./area)) %>%
+    mutate_all(funs(log10)) 
+  
+  # remove 1 variable of highly correlated pairs
+  # cor_vars <- distinct(cor_covars, drop)
+  
+  X <- select(d,major:flood_storage, -basin_area) %>%
+    #select(-c(cor_vars$drop)) %>%
     mutate_all(funs(as.numeric(as.factor(.)))) %>%
     mutate_all(funs(as.vector(scale(.)))) %>%
     select_if(~!any(is.na(.)))  %>% 
     as.matrix()
+  
+  loss_weights <- c(rep(1,10),rep(1e-2,17))
   
   # Build model function for multiple outputs
   build_model <- function(){
     input <- layer_input(shape=dim(X)[2],name="basinchars")
     
     base_model <- input  %>%
-      layer_dense(units = 25,activation="relu") %>%
-      layer_dropout(rate=0.558) %>%
-      layer_dense(units = 49,activation="relu") %>%
-      layer_dropout(rate=0.591) 
+      layer_dense(units = 28,activation="relu") %>%
+      layer_dropout(rate=0.27) %>%
+      layer_dense(units = 40,activation="relu") %>%
+      layer_dropout(rate=0.70)  
     
     for(i in 1:dim(Y)[2]){
       y <- colnames(Y)[i]
       outstring <- paste0(
         sprintf("%s <- base_model %%>%%", y), 
-        sprintf(" layer_dense(units = 1, activation='relu', name='%s')",y)
+        sprintf(" layer_dense(units = 1, activation='linear', name='%s')",y)
       )
       eval(parse(text=outstring))
     }
     
     Ylist <- paste0("list(",paste(colnames(Y),sep="",collapse=","),")")
     model <- keras_model(input,eval(parse(text=Ylist))) %>%
-      compile(optimizer_rmsprop(lr = 0.002536862),
-              loss="mse",
+      compile(optimizer_rmsprop(lr = 0.0004),
+              loss_weights = loss_weights,
+              loss=keras::loss_mean_squared_error,
               metrics="mae")
     
     return(model)
   }
   
-  # K-fold cross validation
-  # source("scripts/Worland/remake_scripts/keras_funs.R")
-  
-  cv_results <- sw_k_foldcv(build_model,k=10,epochs=162,batch_size=294,Y=Y,X=X,data=d)
+  cv_results <- sw_k_foldcv(build_model,k=10,epochs=500,batch_size=100,Y=Y,X=X,data=d,loss_weights)
   
   cv_results$est_obs <- cv_results$est_obs %>%
-    mutate(obs = (10^obs)-2,
-           nnet = round((10^nnet)-2,2),
-           nnet = ifelse(nnet<0,0,nnet),
-           variable = as.numeric(substring(variable, 2)))
+    left_join(select(d,site_no,area=basin_area),by="site_no") %>%
+    mutate(obs = round(10^(obs)*area-0.001,2),
+           nnet = round(10^(nnet)*area,2),
+           variable = as.numeric(substring(variable, 2))) %>%
+    dplyr::distinct(site_no,decade,variable, .keep_all=TRUE)
   
   return(cv_results)
 }
 
-# tail(cv_results$average_mse)
-# 
-# ggplot(cv_results$average_mse) +
-#   geom_line(aes(x = epoch, y = val_mse))
-# 
-# # fit metrics
-# metrics <- cv_results$est_obs %>%
-#   mutate(obs = (10^obs)-2,
-#          nnet = round((10^nnet)-2,2),
-#          variable = as.numeric(substring(variable, 2))) %>%
-#   group_by(variable,decade) %>%
-#   summarize(corr = cor(obs,nnet),
-#             rmse = sqrt(mean((obs-nnet)^2))/mean(obs),
-#             mpe = median(abs((nnet[obs>0]-obs[obs>0])/obs[obs>0]))*100) %>%
-#   gather(metric,value,-variable,-decade)
-#   
-# ggplot(metrics) +
-#   geom_line(aes(variable,value)) +
-#   facet_grid(metric~decade,scales="free_y") +
-#   labs(x = "exceedance probability") +
-#   theme_bw()
-# 
-# # plots estimated vs observed
-# est_obs <- cv_results$est_obs %>%
-#   mutate(obs = (10^obs)-2,
-#          nnet = round((10^nnet)-2,2),
-#          variable = as.numeric(substring(variable, 2))) %>%
-#   group_by(site_no,decade) %>%
-#   mutate(nnet = sort(nnet)) %>%
-#   # mutate(nnet = ifelse(nnet<0,0,nnet) %>%
-#   #          ifelse(.==cummax(.),.,NA) %>%
-#   #          na.approx(.,rule=2)) %>%
-#          #loess_fit = predict(loess(nnet~variable,span=0.2))) %>%
-#   gather(model,value,-site_no,-decade,-variable) %>%
-#   group_by(site_no) %>%
-#   sample_n_groups(6)
-# 
-# ggplot(est_obs) +
-#   geom_line(aes(variable,value,linetype=model)) +
-#   scale_linetype_manual(values=c("dashed","solid","dotted")) +
-#   facet_wrap(site_no~decade,scales="free_y") +
-#   labs(x="EP",y="Q") +
-#   theme_bw() +
-#   scale_y_log10()
-# 
-# # constrained GAM
-# # hold <- cv_results$est_obs %>%
-# #   rename(nn=model) %>%
-# #   left_join(scales,by=c("variable","decade")) %>%
-# #   mutate(nn = (nn*sigma)+mu-2) %>%
-# #   select(-mu,-sigma) %>%
-# #   filter(site_no == "02352500")  %>%
-# #   mutate(variable = as.numeric(substring(variable, 2))) %>%
-# #   group_by(decade,site_no) %>%
-# #   do(augment(scam(nn ~ s(variable, k=14,bs="mpi"), data =.))) 
-# 
-# # Y <- select(d,decade,f0.02:f99.98) %>%
-# #   mutate_all(funs(replace(., .==0, 0.001))) %>%
-# #   mutate_all(funs(log10)) 
-# 
-# 
-# hold <- data.frame(t(cv_results$violations)) %>%
+# viol_count <- data.frame(t(mnn_quantile_est$violations)) %>%
 #   set_names(paste0("kfold",1:ncol(.))) %>%
-#   mutate(epoch=1:800) %>%
-#   gather(fold,value,-epoch) 
-# 
-# ggplot(hold) +
-#   geom_line(aes(epoch,value,group=fold),alpha=0.5) +
-#   theme_bw() +
-#   scale_y_log10()
+#   mutate(epoch=1:nrow(.)) %>%
+#   gather(kfold,value,-epoch) %>%
+#   ggplot() +
+#   geom_line(aes(epoch,value,color=kfold))
 

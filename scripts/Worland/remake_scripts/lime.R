@@ -525,87 +525,103 @@ predict_model.WrappedModel <- function(x, newdata, type, ...) {
 
 
 # apply lime to multioutput model
-sw_lime <- function(gage_all) {
+sw_lime <- function(final_fdc_model, gage_all, huc12_covariates) {
   
   d <- gage_all
   
-  f15 <- c("f0.02","f0.5","f05","f10","f20", "f30","f40","f50",
-           "f60","f70","f80","f90","f95","f99.5","f99.98")
+  #model <- final_fdc_model
   
-  Y <- select(d,f15) %>%
-    mutate_all(funs(.+2)) %>%
-    mutate_all(funs(log10)) %>%
-    as.matrix()
+  f27 <- c("f0.02","f0.05","f0.1","f0.2","f0.5","f01","f02","f05",
+           "f10","f20","f25","f30","f40","f50","f60","f70","f75",
+           "f80","f90","f95","f98","f99","f99.5","f99.8","f99.9",
+           "f99.95","f99.98")
   
-  X <- select(d,major:flood_storage) %>%
+  # covariates
+  X <- select(d, ppt_mean, temp_mean, hay_pasture, nid_storage) %>%
     mutate_all(funs(as.numeric(as.factor(.)))) %>%
     mutate_all(funs(as.vector(scale(.)))) %>%
-    select_if(~!any(is.na(.)))  %>% 
+    select_if(~!any(is.na(.)))  %>%
     as.matrix()
   
-  # create train and test set
-  set.seed(0)
-  ind <- sample(2, nrow(d), replace=T, prob=c(0.7, 0.3))
+  # X <- select(d,major:flood_storage, -basin_area) %>%
+  #   mutate_all(funs(as.numeric(as.factor(.)))) %>%
+  #   mutate_all(funs(as.vector(scale(.)))) %>%
+  #   select_if(~!any(is.na(.)))  %>%
+  #   as.matrix()
   
-  Xtrain <- X[ind==1,]
-  Ytrain <- Y[ind==1,] %>%
-    split(.,col(.)) %>%
-    unname() %>%
-    keras_array()
+  # quantiles
+  Y <- select(d,f27) %>%
+    mutate_all(funs(.+0.001)) %>%
+    mutate_all(funs(./area)) %>%
+    mutate_all(funs(log10)) 
   
-  Xtest <- X[ind==2,]
-  Ytest <- Y[ind==2,] %>%
-    split(.,col(.)) %>%
-    unname() %>%
-    keras_array()
-  
-  # Build model function for multiple outputs
-  build_model <- function(){
-    input <- layer_input(shape=dim(X)[2],name="basinchars")
-    
-    base_model <- input  %>%
-      layer_dense(units = 25,activation="relu") %>%
-      layer_dropout(rate=0.558) %>%
-      layer_dense(units = 49,activation="relu") %>%
-      layer_dropout(rate=0.591) 
-    
-    
-    for(i in 1:dim(Y)[2]){
-      y <- colnames(Y)[i]
-      outstring <- paste0(
-        sprintf("%s <- base_model %%>%%", y), 
-        sprintf(" layer_dense(units = 1, activation='relu', name='%s')",y)
-      )
-      eval(parse(text=outstring))
-    }
-    
-    Ylist <- paste0("list(",paste(colnames(Y),sep="",collapse=","),")")
-    model <- keras_model(input,eval(parse(text=Ylist))) %>%
-      compile(optimizer_rmsprop(lr = 0.002536862),
-              loss="mse",
-              metrics="mae")
-    
-    return(model)
+  # train NN model 
+  input <- layer_input(shape=dim(X)[2],name="basinchars")
+
+  base_model <- input  %>%
+    layer_dense(units = 10,activation="relu") %>%
+    layer_dropout(rate=0.5) %>%
+    layer_dense(units = 10,activation="relu") %>%
+    layer_dropout(rate=0.5)
+
+  for(i in 1:dim(Y)[2]){
+    y <- colnames(Y)[i]
+    outstring <- paste0(
+      sprintf("%s <- base_model %%>%%", y),
+      sprintf(" layer_dense(units = 1, activation='linear', name='%s')",y)
+    )
+    eval(parse(text=outstring))
   }
-  
-  model <- build_model()
-  
-  model_fit <- model %>% 
-    fit(x=Xtrain,
-        y=Ytrain, 
-        epochs=162, 
-        batch_size = 294, 
-        validation_split = 0.2,
+
+  # not very sensitive, just make it small
+  loss_weights <- c(rep(1,10),rep(1e-2,17))
+
+  Ylist <- paste0("list(",paste(colnames(Y),sep="",collapse=","),")")
+  model <- keras_model(input,eval(parse(text=Ylist))) %>%
+    compile(optimizer = optimizer_rmsprop(lr = 0.001),
+            loss_weights = loss_weights,
+            loss="mse",
+            metrics="mae")
+
+  model_fit <- model %>%
+    fit(x=X,
+        y=Y,
+        epochs=150,
+        batch_size = 450,
+        validation_split=0.1,
         verbose=0)
   
-  Xtrain <- as.tibble(Xtrain)
-  Xtest <- as.tibble(Xtest)
+  # extract biases in last layer
+  model_weights <- keras::get_weights(model)
+  
+  bias <- NULL
+  for(i in 1:length(model_weights)){
+    weight <- model_weights[[i]]
+    
+    if(dim(weight)==1){
+      bias <- rbind(bias,weight)
+    }
+  }
+  
+  # make tibble for LIME
+  X_explainer <- as.tibble(X)
+  
+  # prepare covariates for model predictions
+  all_X <- huc12_covariates %>% 
+    distinct(comid,decade,.keep_all=T) %>% # drop duplicate comids
+    select(major:flood_storage, -basin_area) %>%
+    filter(decade==2000) %>%
+    select(ppt_mean, temp_mean, hay_pasture, nid_storage) %>%
+    mutate_all(funs(as.numeric(as.factor(.)))) %>%
+    mutate_all(funs(as.vector(scale(.)))) %>%
+    select_if(~!any(is.na(.))) %>%
+    as.tibble()
   
   explanation_all <- NULL
-  for (j in 1:ncol(Y)) {
-  #for (j in 1:3) {
+  for (j in 1:length(f27)) {
+  #for (j in c(1,9,14,19,27)) {
     
-    print(paste0("Calculating LIME for quantile number",j," out of ", ncol(Y)))
+    print(paste0("Calculating LIME for quantile number ",j," out of ", length(f27)))
     
     # predict_model.keras.engine.training.Model <- function(x, newdata, type='raw', n=j, ...) {
     #   if (!requireNamespace('keras', quietly = TRUE)) {
@@ -627,24 +643,28 @@ sw_lime <- function(gage_all) {
     # }
 
     # run lime() on training set
-    explainer <- lime::lime(x = Xtrain, 
+    explainer <- lime::lime(x = X_explainer, 
                             model = model, 
                             bin_continuous = FALSE)
     
-    # run explain() on the explainer on first 500 rows
-    explanation <- lime::explain(x = Xtest[1:500,], 
+    # run explain() on huc12 pour point data
+    explanation <- lime::explain(x = all_X, 
                                  explainer = explainer, 
-                                 n_features = 10,
+                                 n_features = 5,
                                  kernel_width = 0.2,
-                                 n_permutations = 2000,
+                                 n_permutations = 500,
                                  feature_select = "highest_weights",
                                  n = j) %>%
-      mutate(quantile = names(data.frame(Y))[j])
+      mutate(quantile = f27[j])
     
     explanation_all <- rbind(explanation_all, explanation)
   }
   
-  return(explanation_all)
+  
+  result <- list(explanation_all=explanation_all,
+                  bias=bias)
+  
+  return(result)
   
 }
 
