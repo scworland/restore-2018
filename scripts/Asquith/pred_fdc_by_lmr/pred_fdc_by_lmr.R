@@ -42,7 +42,8 @@ hT5   <- read_feather("../../../results/huc12/gam/all_huc12_T5.feather")
 
 G   <- read_feather("../../../data/gage/all_gage_data.feather")
 
-FF <- 1/(3653+1); FF <- seq(qnorm(FF), qnorm(1-FF), 0.005); FF <- pnorm(FF)
+FF <- 1/(3653+1); FF <- seq(qnorm(FF), qnorm(1-FF), 0.005)
+FF <- pnorm(FF); FF <- c(0.00001, 0.99999, FF); FF <- sort(unique(FF))
 #huc12 <- sample(hL1$huc12, 1)
 #comid <- sample(hL1$comid, 1)
 site <- "08167000"
@@ -72,44 +73,47 @@ zero <- 0.01*(0.3048^3)
 pdf("pred_fdc.pdf", useDingbats=FALSE, height=6, width=7)
 opts <- par(); par(las=1, mgp=c(3,0.5,0))
 
-plot(1,1, xlim=range(qnorm(FF)), ylim=c(0.001,1000), xaxt="n", yaxt="n", xlab="",
-          log="y", type="n",
-          ylab="COMID-scaled, daily-mean streamflow, cubic meters per second")
+plot(1,1, xlim=qnorm(c(0.0001, 0.9999)), ylim=c(0.001,500), xaxt="n", yaxt="n", xlab="",
+          log="y", type="n", xaxs="i", yaxs="i",
+          ylab="Projected and estimated mean streamflow, cms")
 add.lmomco.axis(las=2, tcl=0.5, side.type="NPP", cex=0.8, case="lower")
 add.log.axis(side=2, tcl=0.8*abs(par()$tcl), two.sided=TRUE)
 #add.log.axis(logs=c(1),   tcl=-0.5*abs(par()$tcl), side=2, two.sided=TRUE)
 add.log.axis(logs=c(1),   tcl=+1.3*abs(par()$tcl), side=2, two.sided=TRUE)
 add.log.axis(logs=c(1, 2, 4, 6), side=2, make.labs=TRUE, las=1, label="")
 
+ks <- c(0.6,0.8,1.0,1.2,1.4,1.6)-0.1
 col <- .8; pch <- 3
 for(i in 1:length(names(fdc))) {
   gmp <- fdc[,i]; #gmp[gmp == 0] <- 0.001
   lines(ff,  gmp*(cmp_area/gage_area)^phi, col=grey(col))
-  points(ff, gmp*(cmp_area/gage_area)^phi, pch=pch, col=grey(col))
-  col <- col - .1; pch <- ifelse(pch == 3, 4, 3)
+  points(ff, gmp*(cmp_area/gage_area)^phi, pch=21, bg=grey(col), lwd=0.7, cex=ks[i])
+  col <- col - .1; #pch <- ifelse(pch == 3, 4, 3)
 }
 
-text(-3.5, 1000, paste0("USGS 08167000 streamgage ('next to' COMID 3588922) has area of ",gage_area," square kilometers"), pos=4, cex=0.7)
-text(-3.5, 700, paste0("COMID 3588922 has area of ",cmp_area," square kilometers"), pos=4, cex=0.7)
-text(-3.5, 300, "'Observed' flow-duration curve (FDC) for COMID = \n Gaged FDC * (basin_area of COMID / basin_area of streamgage)^0.9", pos=4, cex=0.7)
+text(-3.4, 300, paste0("USGS streamgage ",site," ('next to' COMID ",comid," has area of ",gage_area," square kilometers"), pos=4, cex=0.7)
+text(-3.4, 200, paste0("COMID ",comid," has area of ",cmp_area," square kilometers"), pos=4, cex=0.7)
+text(-3.4, 60, paste0("'Projected' flow-duration curve (FDC) for COMID = \n   gaged FDC * ",
+                       "(COMID basin_area / streamgage basin_area)^0.9 = flow,\n   in cubic meters per second (cms)"),
+                pos=4, cex=0.7)
 text(-1.0,.003, paste0("A Duan smearing estimator (Helsel and Hirsch, 2002) of ",
                      round(duan, digits=4), " was\n",
                      "used to correct retransformation bias in the mean (first L-moment)\n",
                      "prior to fitting of the distributions to the L-moments."),
              pos=4, cex=0.7)
-txt <- c(paste0("Observed flow-duration curve by decade where grey increases from 1950s to 2000s\n",
-                "and symbol alternates with each increment of decade"))
-legend(-3.5, 200, txt, col=grey(0.2), bty="n", lwd=1, pch=NA, cex=0.7)
+txt <- c(paste0("Projected decadal FDC where circle size and greyness increases\n",
+                "by decade from 1950s to 2000s"))
+legend(-3.3, 40, txt, pt.bg=grey(0.7), bty="n", lwd=0.7, pch=21, cex=0.7, pt.cex=0.9)
 
 
 
 for(decade in cmp$decade) {
-  lwd <- ifelse(decade == "1950", 0.5,
-         ifelse(decade == "1960", 1,
-         ifelse(decade == "1970", 1.5,
-         ifelse(decade == "1980", 0.5,
-         ifelse(decade == "1990", 1.0,
-         ifelse(decade == "2000", 1.5, 2))))))
+  lwd <- ifelse(decade == "1950", 0.75,
+         ifelse(decade == "1960", 1.15,
+         ifelse(decade == "1970", 1.55,
+         ifelse(decade == "1980", 0.75,
+         ifelse(decade == "1990", 1.15,
+         ifelse(decade == "2000", 1.55, 2))))))
   lty <- ifelse(decade == "1950", 2,
          ifelse(decade == "1960", 2,
          ifelse(decade == "1970", 2,
@@ -128,17 +132,17 @@ for(decade in cmp$decade) {
   nep1 <- qnorm(f2f(FF, pp=my.pplo))
   qua1 <- qua1o <- qlmomco(f2flo(FF, pp=my.pplo), aep4)
   qua1[qua1 <= zero] <- zero
-  lines(nep1,qua1, col=rgb(1,0,0,0.9), lwd=lwd, lty=lty)
+  lines(nep1,qua1, col="red", lwd=lwd, lty=lty)
   gno <- pargno(lmr)
   nep2 <- qnorm(f2f(FF, pp=my.pplo))
   qua2 <- qua2o <- qlmomco(f2flo(FF, pp=my.pplo), gno)
   qua2[qua2 <= zero] <- zero
-  lines(nep2,qua2, col=rgb(0,1,0,0.9), lwd=lwd, lty=lty)
+  lines(nep2,qua2, col="#006F41", lwd=lwd, lty=lty)
   kap <- parkap(lmr, snap.tau4=TRUE)
   nep3 <- qnorm(f2f(FF, pp=my.pplo))
   qua3 <- qua3o <- qlmomco(f2flo(FF, pp=my.pplo), kap)
   qua3[qua3 <= zero] <- zero
-  lines(nep3,qua3, col=rgb(0,0,1,0.9), lwd=lwd, lty=lty)
+  lines(nep3,qua3, col="blue", lwd=lwd, lty=lty)
   df1 <- data.frame(nep=pnorm(nep1), qua1=qua1o)
   df2 <- data.frame(nep=pnorm(nep2), qua2=qua2o)
   df3 <- data.frame(nep=pnorm(nep3), qua3=qua3o)
@@ -154,7 +158,7 @@ for(decade in cmp$decade) {
                      qua2=df$qua2[1], qua3=df$qua3[1], FF=1/(3653+1),
                       Qfp=df$Qfp[1], Qfo=df$Qfo[1])
   df <- merge(df, row1, all=TRUE)
-  lines(qnorm(df$nep), df$Qfp, col=6, lwd=3, lty=1)
+  #lines(qnorm(df$nep), df$Qfp, col=6, lwd=3, lty=1)
 
   comboMu <- function(f, combo) approx(combo$nep,combo$Qfo,xout=f,rule=2)$y
   mu <- integrate(comboMu, lower=0, upper=1, combo=df)$value
@@ -164,6 +168,9 @@ mtext(paste0("COMID: ",comid))
 txt <- c("Asymmetric exponential power distribution (four parameter)",
          "Generalized normal distribution (three parameter log-Normal)",
          "Kappa distribution (four parameter)")
-legend(-3.5, 30, txt, col=c(2,3,4), bty="n", lwd=1, cex=0.7)
+legend(-3.4, 16, txt, col=c("red","#006F41","blue"), bty="n", lwd=1, cex=0.7)
+text(-3.0, 1.9, paste0("Solid lines are 1980s to 2000s, dashed lines are 1950s to 1970s,\n",
+                     "   and line width increases for the distributions."),
+              cex=0.6, pos=4)
 suppressWarnings(par(opts))
 dev.off()
