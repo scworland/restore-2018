@@ -42,8 +42,10 @@ hT5   <- read_feather("../../../results/huc12/gam/all_huc12_T5.feather")
 
 G   <- read_feather("../../../data/gage/all_gage_data.feather")
 
-FF <- 1/(3653+1); FF <- seq(qnorm(FF), qnorm(1-FF), 0.005)
-FF <- pnorm(FF); FF <- c(0.00001, 0.99999, FF); FF <- sort(unique(FF))
+FF <- 1/(3653+1); FF <- seq(qnorm(FF), qnorm(1-FF), 0.001)
+FF <- pnorm(FF); FF <- c(0.00001, 0.99999, FF)
+FF <- c(0.0001, 0.0015, 0.0002, FF) # for deep left tail smoothness
+FF <- sort(unique(FF))
 #huc12 <- sample(hL1$huc12, 1)
 #comid <- sample(hL1$comid, 1)
 site <- "08167000"
@@ -69,7 +71,7 @@ names(fdc) <- as.character(gage$decade)
 phi <- 0.9 # Asquith and others (2006): Drainage-area ratio
 duan <- gL1$bias_corr[1]
 
-zero <- 0.01*(0.3048^3)
+zero <- 0.001*(0.3048^3)
 pdf("pred_fdc.pdf", useDingbats=FALSE, height=6, width=7)
 opts <- par(); par(las=1, mgp=c(3,0.5,0))
 
@@ -127,22 +129,23 @@ for(decade in cmp$decade) {
                     hT4$est_T4[hT4$comid == comid & hT4$decade == decade],
                     hT5$est_T5[hT5$comid == comid & hT5$decade == decade]
                     ), lscale=FALSE)
-  aep4 <- paraep4(lmr, type="aep4", snap.tau4 =TRUE)
+  aep4 <- paraep4(lmr, snap.tau4 =TRUE)
   my.pplo <- hPPLO$est_pplo[hPPLO$comid == comid & hPPLO$decade == decade]
   nep1 <- qnorm(f2f(FF, pp=my.pplo))
   qua1 <- qua1o <- qlmomco(f2flo(FF, pp=my.pplo), aep4)
   qua1[qua1 <= zero] <- zero
-  lines(nep1,qua1, col="red", lwd=lwd, lty=lty)
+  lines(c(min(nep1),nep1),c(zero,qua1), col="red", lwd=lwd, lty=lty)
   gno <- pargno(lmr)
   nep2 <- qnorm(f2f(FF, pp=my.pplo))
   qua2 <- qua2o <- qlmomco(f2flo(FF, pp=my.pplo), gno)
   qua2[qua2 <= zero] <- zero
-  lines(nep2,qua2, col="#006F41", lwd=lwd, lty=lty)
+  lines(c(min(nep2),nep2),c(zero,qua2), col="#006F41", lwd=lwd, lty=lty)
   kap <- parkap(lmr, snap.tau4=TRUE)
+  #if(kap$ifail > 0) message(decade, " decade above GLO")
   nep3 <- qnorm(f2f(FF, pp=my.pplo))
   qua3 <- qua3o <- qlmomco(f2flo(FF, pp=my.pplo), kap)
   qua3[qua3 <= zero] <- zero
-  lines(nep3,qua3, col="blue", lwd=lwd, lty=lty)
+  lines(c(min(nep3),nep3),c(zero,qua3), col="blue", lwd=lwd, lty=lty)
   df1 <- data.frame(nep=pnorm(nep1), qua1=qua1o)
   df2 <- data.frame(nep=pnorm(nep2), qua2=qua2o)
   df3 <- data.frame(nep=pnorm(nep3), qua3=qua3o)
