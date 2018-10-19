@@ -99,15 +99,15 @@
 \item \code{dec_lat_va} --- The decimal degrees latitude in North American Datum of 1983.
 \item \code{in_model_L1} --- A binary indicator (1 = yes, 0 = no) that the streamgage-decade record was included in the whole-model computations to construct the generalized additive model.
 \item \code{bias_corr} --- The Duan smearing estimator of the re-transformation bias correction factor.
-\item \code{L1} --- The observed decadal mean nonzero streamflow, base-10 logarithms of cubic meters per second.
-\item \code{est_lwr_L1} --- The whole-model lower 95-percent prediction limit of the decadal mean nonzero streamflow, base-10 logarithms of cubic meters per second.
-\item \code{est_L1} --- The whole-model estimate the decadal mean nonzero streamflow, base-10 logarithms of cubic meters per second.
-\item \code{est_upr_L1} --- The whole-model upper 95-percent prediction limit of the decadal mean nonzero streamflow, base-10 logarithms of cubic meters per second.
-\item \code{rse_L1} --- The scale of the residuals of the whole model, base-10 logarithms of cubic meters per second.
-\item \code{se.fit_L1} --- The standard error of fit reported by the whole model, base-10 logarithms of cubic meters per second.
-\item \code{loo_est_lwr_L1} --- The leave-one-watershed-out (LOO) lower 95-percent prediction limit of the decadal mean nonzero streamflow, base-10 logarithms of cubic meters per second.
-\item \code{loo_est_L1} --- The LOO estimate of the decadal mean nonzero streamflow, base-10 logarithms of cubic meters per second.
-\item \code{loo_est_upr_L1} --- The LOO upper 95-percent prediction limit of the decadal  mean nonzero streamflow, base-10 logarithms of cubic meters per second.
+\item \code{L1} --- The observed decadal mean nonzero streamflow, cubic meters per second.
+\item \code{est_lwr_L1} --- The whole-model lower 95-percent prediction limit of the decadal mean nonzero streamflow, cubic meters per second.
+\item \code{est_L1} --- The whole-model estimate the decadal mean nonzero streamflow, cubic meters per second.
+\item \code{est_upr_L1} --- The whole-model upper 95-percent prediction limit of the decadal mean nonzero streamflow, cubic meters per second.
+\item \code{rse_L1} --- The scale of the residuals of the whole model, cubic meters per second.
+\item \code{se.fit_L1} --- The standard error of fit reported by the whole model, cubic meters per second.
+\item \code{loo_est_lwr_L1} --- The leave-one-watershed-out (LOO) lower 95-percent prediction limit of the decadal mean nonzero streamflow, cubic meters per second.
+\item \code{loo_est_L1} --- The LOO estimate of the decadal mean nonzero streamflow, cubic meters per second.
+\item \code{loo_est_upr_L1} --- The LOO upper 95-percent prediction limit of the decadal  mean nonzero streamflow, cubic meters per second.
 \end{enumerate}
 
 %> length(unique(looL1model$site_no))
@@ -123,6 +123,29 @@
 % [9] "L1"             "est_lwr_L1"     "est_L1"         "est_upr_L1"    
 %[13] "rse_L1"         "se.fit_L1"      "loo_bias_corr"  "loo_est_lwr_L1"
 %[17] "loo_est_L1"     "loo_est_upr_L1"
+
+
+
+\section{Combined cGAM-PPLO and GAM-L1 models (\code{all_gage_looest_overL1.feather})}
+\begin{enumerate}
+\footnotesize
+\RaggedRight
+\item \code{comid} --- The stream reach specific common identification number (COMID) of the stream reach identified as the stream reach of the USGS streamgage. Note that geometrically, streamgages could share a COMID, so do not rely on COMID being absolutely not repeated between streamgages.
+\item \code{site_no} --- The USGS streamflow-gaging (streamgage) identification number.
+\item \code{huc12} --- The level-12 hydrologic unit code (HUC12) number containing the streamgage. Note that geometrically, streamgages could share a HUC12, so do not rely on HUC12 being absolutely not repeated between streamgages.
+\item \code{decade} --- The decade for which the 1950 decade is defined as the days January 1, 1950 to December 31, 1959.
+\item \code{dec_long_va} --- The decimal degrees longitude in North American Datum of 1983.
+\item \code{dec_lat_va} --- The decimal degrees latitude in North American Datum of 1983.
+over
+\item \code{in_model_L1} --- A binary indicator (1 = yes, 0 = no) that the streamgage-decade record was included in the whole-model computations to construct the generalized additive model.
+\item \code{overL1} --- The decadal mean streamflow, cubic meters per second.
+\item \code{est_lwr_overL1} --- The whole-model lower 95-percent prediction limit of the decadal mean streamflow corrected by (1+0.23) correction to tighten the limits to correct 95-percent coverage probabilities and Duan smearing factor applied in computation of the mean, cubic meters per second.
+\item \code{est_overL1} --- The whole-model estimate the decadal mean streamflow and Duan smearing factor applied in computation of the mean, cubic meters per second.
+\item \code{est_upr_overL1} --- The whole-model upper 95-percent prediction limit of the decadal mean streamflow corrected by (1-0.23) correction to tighten the limits to correct 95-percent coverage probabilities and Duan smearing factor applied in computation of the mean, cubic meters per second.
+\item \code{loo_est_lwr_overL1} --- The leave-one-watershed-out (LOO) lower 95-percent prediction limit of the decadal mean streamflow corrected by (1+0.23) correction to tighten the limits to correct 95-percent coverage probabilities and Duan smearing factor applied in computation of the mean, cubic meters per second.
+\item \code{loo_est_overL1} --- The LOO estimate of the decadal mean streamflow and Duan smearing factor applied in computation of the mean, cubic meters per second.
+\item \code{loo_est_upr_overL1} --- The LOO upper 95-percent prediction limit of the decadal mean nonzero streamflow corrected by (1-0.23) correction to tighten the limits to correct 95-percent coverage probabilities and Duan smearing factor applied in computation of the mean, cubic meters per second.
+\end{enumerate}
 
 
 
