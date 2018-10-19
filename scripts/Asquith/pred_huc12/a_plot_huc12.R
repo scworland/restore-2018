@@ -184,6 +184,26 @@ if(! manypdfs) pdf(paste0(file,".pdf"), useDingbats=FALSE, width=11, height=10)
 if(! manypdfs) dev.off()
 
 
+D$overL1 <- (1-D$pplo)*(D$L1)
+file <- "OverL1fit"
+if(! manypdfs) pdf(paste0(file,".pdf"), useDingbats=FALSE, width=11, height=10)
+  OverL1df$est_overL1_log10 <- log10(OverL1df$est_overL1)
+  for(d in sort(unique(D$decade))) {
+    if(manypdfs) pdf(paste0(file,"_",d,".pdf"), useDingbats=FALSE, width=11, height=10)
+    map_base(xlim=usr[1:2], ylim=usr[3:4])
+    choropleth_decade(D, x="overL1", cuts=OverL1Cuts, trans=log10)
+    shades <- choropleth_cov(OverL1df, decade=d, x="est_overL1_log10", cuts=OverL1Cuts)
+    legend_est(gage="mean streamflow",
+               title=paste0(d," decade\n","mean streamflow,\n","in log10(cms)"),
+               note=TRUE, shades=shades, more="; cms, cubic feet per second")
+    map_annotation()
+    if(manypdfs) dev.off()
+  }
+  OverL1df$est_overL1_log10 <- NULL
+if(! manypdfs) dev.off()
+D$overL1 <- NULL
+
+
 
 spCOV$special_spatial <- retransin(spCOV$grassland)/100
 D$special_spatial <- retransin(D$grassland)/100
@@ -275,7 +295,7 @@ dev.off()
 cropthem <- TRUE
 crop_em <- function(decades=NULL, spawn=FALSE, files=NULL) {
   if(is.null(files)) {
-     files <- c("PPLOfit", "L1fit", "T2fit", "T3fit", "T4fit", "T5fit")
+     files <- c("PPLOfit", "L1fit", "OverL1fit", "T2fit", "T3fit", "T4fit", "T5fit")
      files <- c(files, "GrassLand", "BedPerm", "Developed")
      files <- c(files, "PPLOsefit", "L1sefit", "T2sefit", "T3sefit",
                                                "T4sefit", "T5sefit")
