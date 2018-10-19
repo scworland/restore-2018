@@ -202,7 +202,7 @@ L1Cuts <- function(x, n=9, ...) {
 
 L1CutsSE <- function(x, n=9, ...) {
   labs <- 1:n
-  cuts <- c(0.0157, 0.0165, 0.0172, 0.0178, 0.0185, 0.0193, 0.0203, 0.02149, 0.0250)
+  cuts <- c(0.0157, 0.0165, 0.0172, 0.0178, 0.0185, 0.0193, 0.0210, 0.0220, 0.0250)
   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
@@ -365,6 +365,38 @@ for(comid in unique(H12T5df$comid)) {
       c(NA,diff(H12T5df$est_T5[H12T5df$comid == comid]))
 }
 
+corr <- 0 # never set this to unity
+corr <- 0.23 # computed from fdcloo.R
+OverL1df <-
+  data.frame(comid=H12L1df$comid,
+             huc12=H12L1df$huc12, decade=H12L1df$decade,
+             dec_long_va=H12L1df$dec_long_va, dec_lat_va=H12L1df$dec_lat_va,
+             stringsAsFactors=FALSE)
+OverL1df$est_lwr_overL1 <- (1-H12PPLOdf$est_upr_pplo)*H12L1df$est_lwr_L1*H12L1df$bias_corr
+OverL1df$est_overL1     <- (1-H12PPLOdf$est_pplo)    *H12L1df$est_L1*H12L1df$bias_corr
+OverL1df$est_upr_overL1 <- (1-H12PPLOdf$est_lwr_pplo)*H12L1df$est_upr_L1*H12L1df$bias_corr
+OverL1df$est_lwr_overL1 <- (1+corr)*OverL1df$est_lwr_overL1
+OverL1df$est_upr_overL1 <- (1-corr)*OverL1df$est_upr_overL1
+OverL1df$delta_est_overL1 <- NA
+for(comid in unique(OverL1df$comid)) {
+   OverL1df$delta_est_overL1[       OverL1df$comid == comid] <-
+      c(NA,diff(OverL1df$est_overL1[OverL1df$comid == comid]))
+}
+OverL1df <- SpatialPointsDataFrame(cbind(OverL1df$dec_long_va,
+                                         OverL1df$dec_lat_va),
+                                      OverL1df, proj4string=LATLONG)
+OverL1df <- spTransform(OverL1df, ALBEA)
+
+quantile(log10(OverL1df$est_overL1), probs=(1:9)/10, na.rm=TRUE)
+
+OverL1Cuts <- function(x, n=9, ...) {
+  labs <- 1:n # seems that the top five might be same as for L1Cuts
+  cuts <- c(-0.48, -0.13, 0.06, 0.22, 0.37, 0.55, 0.76, 1.07, 1.58)
+  cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
+}
+
+
+write_feather(slot(OverL1df,  "data"), "all_huc12_overL1.feather")
 write_feather(slot(H12PPLOdf, "data"), "all_huc12_pplo.feather")
 write_feather(slot(H12L1df,   "data"),   "all_huc12_L1.feather")
 write_feather(slot(H12T2df,   "data"),   "all_huc12_T2.feather")
