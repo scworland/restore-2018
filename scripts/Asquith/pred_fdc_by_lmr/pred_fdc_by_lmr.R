@@ -129,7 +129,9 @@ for(decade in cmp$decade) {
                     hT4$est_T4[hT4$comid == comid & hT4$decade == decade],
                     hT5$est_T5[hT5$comid == comid & hT5$decade == decade]
                     ), lscale=FALSE)
-  aep4 <- paraep4(lmr, snap.tau4 =TRUE)
+  aep4 <- paraep4(lmr, snap.tau4=FALSE)
+  print(aep4)
+  aep4 <- paraep4(lmr, snap.tau4=TRUE)
   my.pplo <- hPPLO$est_pplo[hPPLO$comid == comid & hPPLO$decade == decade]
   nep1 <- qnorm(f2f(FF, pp=my.pplo))
   qua1 <- qua1o <- qlmomco(f2flo(FF, pp=my.pplo), aep4)
@@ -140,8 +142,9 @@ for(decade in cmp$decade) {
   qua2 <- qua2o <- qlmomco(f2flo(FF, pp=my.pplo), gno)
   qua2[qua2 <= zero] <- zero
   lines(c(min(nep2),nep2),c(zero,qua2), col="#006F41", lwd=lwd, lty=lty)
+  kap <- parkap(lmr, snap.tau4=FALSE)
+  if(kap$ifail > 0) message(decade, " decade above GLO for KAP")
   kap <- parkap(lmr, snap.tau4=TRUE)
-  #if(kap$ifail > 0) message(decade, " decade above GLO")
   nep3 <- qnorm(f2f(FF, pp=my.pplo))
   qua3 <- qua3o <- qlmomco(f2flo(FF, pp=my.pplo), kap)
   qua3[qua3 <= zero] <- zero
