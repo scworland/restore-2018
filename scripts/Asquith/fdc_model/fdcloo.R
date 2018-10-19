@@ -473,9 +473,24 @@ while(1) {
    Sys.sleep(50)
 }
 
-
+looOverL1model <-
+  data.frame(comid=looL1model$comid, site_no=looL1model$site_no,
+             huc12=looL1model$huc12, decade=looL1model$decade,
+             dec_long_va=looL1model$dec_long_va,
+             dec_lat_va=looL1model$dec_lat_va,
+             in_model_pplo=looPPLOmodel$in_model_pplo,
+             in_model_L1=looL1model$in_model_L1,
+             overL1=(1-looPPLOmodel$pplo)*looL1model$L1,
+             stringsAsFactors=FALSE)
+looOverL1model$est_lwr_overL1 <- (1-looPPLOmodel$est_upr_pplo)*looL1model$est_lwr_L1*looL1model$bias_corr
+looOverL1model$est_overL1     <- (1-looPPLOmodel$est_pplo)    *looL1model$est_L1*looL1model$bias_corr
+looOverL1model$est_upr_overL1 <- (1-looPPLOmodel$est_lwr_pplo)*looL1model$est_upr_L1*looL1model$bias_corr
+looOverL1model$loo_est_lwr_overL1 <- (1-looPPLOmodel$loo_est_upr_pplo)*looL1model$loo_est_lwr_L1*looL1model$bias_corr
+looOverL1model$loo_est_overL1     <- (1-looPPLOmodel$loo_est_pplo)    *looL1model$loo_est_L1*looL1model$bias_corr
+looOverL1model$loo_est_upr_overL1 <- (1-looPPLOmodel$loo_est_lwr_pplo)*looL1model$loo_est_upr_L1*looL1model$bias_corr
 
 assign("last.warning", NULL, envir = baseenv())
+write_feather(looOverL1model, "all_gage_looest_overL1.feather") # must then run fdcloo_post.R
 write_feather(looPPLOmodel, "all_gage_looest_pplo.feather")
 write_feather(looL1model,   "all_gage_looest_L1.feather"  )
 write_feather(looT2model,   "all_gage_looest_T2.feather"  )
