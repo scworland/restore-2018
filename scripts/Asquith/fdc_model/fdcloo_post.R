@@ -2,6 +2,7 @@ library(lmomco)
 library(feather)
 
 load("./Models.RData")
+looOverL1model <- read_feather("../../../results/gage/gam/all_gage_looest_overL1.feather")
 looPPLOmodel <- read_feather("../../../results/gage/gam/all_gage_looest_pplo.feather")
 looL1model   <- read_feather("../../../results/gage/gam/all_gage_looest_L1.feather"  )
 looT2model   <- read_feather("../../../results/gage/gam/all_gage_looest_T2.feather"  )
@@ -27,8 +28,8 @@ for(s in unique(DDo$site_no)) {
 }
 
 
-EstMeanFlow_loo <- (1-looPPLOmodel$loo_est_pplo)*looL1model$loo_est_L1*looL1model$loo_bias_corr
-EstMeanFlow <- (1-looPPLOmodel$est_pplo)*looL1model$est_L1*looL1model$bias_corr
+EstMeanFlow <- looOverL1model$est_overL1
+EstMeanFlow_loo <- looOverL1model$loo_est_overL1
 
 ObsMean <- (1-looPPLOmodel$pplo)*looL1model$L1
 
@@ -89,7 +90,7 @@ legend(0.011,800, c("Equal value line",
                     "GAM L1 LOO streamflow for which some no-flow days were observed",
                     paste0("USGS streamgage ",site," (GAM L1+PPLO estimated [non-LOO])"),
                     paste0("USGS streamgage ",site," (GAM L1+PPLO LOO estimated)")),
-          bty="n", lty=c(1,NA,NA,NA,NA), col=c(1,4,2,green,green), pch=c(NA,16,16,16,1),
+          bty="n", lty=c(1,NA,NA,NA,NA), col=c(1,4,2,rgb(0.5,1,0.5),rgb(0.5,1,0.5)), pch=c(NA,16,16,16,1),
           cex = 0.8, pt.cex=c(NA,1,1,1.25,2))
 txt <- paste0("Abbreviations: GAM, generalized additive model;\n",
               "   L1, nonzero-flow mean; PPLO, decadal percentage of no flow;\n",
@@ -98,6 +99,26 @@ txt <- paste0("Abbreviations: GAM, generalized additive model;\n",
 text(.3, 0.03, txt, pos=4, cex=0.8)
 par(mgp=c(3,1,0)) # restore defaults
 dev.off()
+
+# The coverage probability for the overall mean is too large
+tf <- looOverL1model$in_model_L1 == 1 & looOverL1model$in_model_pplo
+tmp <- looOverL1model[tf,]; tmpo <- ObsMean[tf]
+n <- length(tmpo)
+o1 <- sum(tmp$est_lwr_overL1     > tmpo | tmp$est_upr_overL1     < tmpo)
+o2 <- sum(tmp$loo_est_lwr_overL1 > tmpo | tmp$loo_est_upr_overL1 < tmpo)
+cp1 <- round(1 - o1/n, 3); cp2 <- round(1 - o2/n, 3)
+message("95% coverage probability, overL1: GAM=",cp1," and GAMloo=",cp2)
+corr <- 0.23
+o1 <- sum((1+corr)*tmp$est_lwr_overL1     > tmpo | (1-corr)*tmp$est_upr_overL1     < tmpo)
+o2 <- sum((1+corr)*tmp$loo_est_lwr_overL1 > tmpo | (1-corr)*tmp$loo_est_upr_overL1 < tmpo)
+cp1 <- round(1 - o1/n, 3); cp2 <- round(1 - o2/n, 3)
+message("Corrected 95% coverage probability, overL1: GAM=",cp1," and GAMloo=",cp2)
+
+looOverL1model_corr <- looOverL1model
+looOverL1model_corr$est_lwr_overL1 <- (1+corr)*looOverL1model_corr$est_lwr_overL1
+looOverL1model_corr$est_upr_overL1 <- (1-corr)*looOverL1model_corr$est_upr_overL1
+write_feather(looOverL1model_corr, "all_gage_looest_overL1.feather")
+
 
 tmp <- looL1model[looL1model$in_model_L1 == 1,]
 n <- length(tmp$L1)
