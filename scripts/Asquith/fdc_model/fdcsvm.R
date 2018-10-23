@@ -55,7 +55,7 @@ n <- length(Y)
 RVM <- rvm(Y[1:n]~area[1:n]+slope[1:n]+ppt[1:n]+temp[1:n]+rad[1:n]+flood[1:n]+dev[1:n]+decade[1:n])
 # SVMs are O(n^2) but results in more supports than RVMs, don't sweat RVM taking more time
 SVM <- ksvm(Y[1:n]~area[1:n]+slope[1:n]+ppt[1:n]+temp[1:n]+rad[1:n]+flood[1:n]+dev[1:n]+decade[1:n],
-            C=1, epsilon=.3)
+            C=1, epsilon=.2)
 SVMresults <- ksvm2me(SVM, Y)
 
 plot(Y, SVMresults$fit, col=rgb(0,0,0.5,0.2))
@@ -100,27 +100,27 @@ rsites <- unique(rsites)
 
 
 ix <- D$decade == "1950"; the.sites <- D$site_no[ix]
-dSVM <- ksvm(Y[ix]~area[ix]+slope[ix]+ppt[ix]+temp[ix]+rad[ix]+flood[ix])
+dSVM <- ksvm(Y[ix]~area[ix]+slope[ix]+ppt[ix]+temp[ix]+rad[ix]+flood[ix],C=1, epsilon=.2)
 ix <- ksvm2me(dSVM, Y[ix])$inSVM
 ssites <- the.sites[ix]
 ix <- D$decade == "1960"; the.sites <- D$site_no[ix]
-dSVM <- ksvm(Y[ix]~area[ix]+slope[ix]+ppt[ix]+temp[ix]+rad[ix]+flood[ix])
+dSVM <- ksvm(Y[ix]~area[ix]+slope[ix]+ppt[ix]+temp[ix]+rad[ix]+flood[ix],C=1, epsilon=.2)
 ix <- ksvm2me(dSVM, Y[ix])$inSVM
 ssites <- c(ssites,the.sites[ix])
 ix <- D$decade == "1970"; the.sites <- D$site_no[ix]
-dSVM <- ksvm(Y[ix]~area[ix]+slope[ix]+ppt[ix]+temp[ix]+rad[ix]+flood[ix])
+dSVM <- ksvm(Y[ix]~area[ix]+slope[ix]+ppt[ix]+temp[ix]+rad[ix]+flood[ix],C=1, epsilon=.2)
 ix <- ksvm2me(dSVM, Y[ix])$inSVM
 ssites <- c(ssites,the.sites[ix])
 ix <- D$decade == "1980"; the.sites <- D$site_no[ix]
-dSVM <- ksvm(Y[ix]~area[ix]+slope[ix]+ppt[ix]+temp[ix]+rad[ix]+flood[ix])
+dSVM <- ksvm(Y[ix]~area[ix]+slope[ix]+ppt[ix]+temp[ix]+rad[ix]+flood[ix],C=1, epsilon=.2)
 ix <- ksvm2me(dSVM, Y[ix])$inSVM
 ssites <- c(ssites,the.sites[ix])
 ix <- D$decade == "1990"; the.sites <- D$site_no[ix]
-dSVM <- ksvm(Y[ix]~area[ix]+slope[ix]+ppt[ix]+temp[ix]+rad[ix]+flood[ix])
+dSVM <- ksvm(Y[ix]~area[ix]+slope[ix]+ppt[ix]+temp[ix]+rad[ix]+flood[ix],C=1, epsilon=.2)
 ix <- ksvm2me(dSVM, Y[ix])$inSVM
 ssites <- c(ssites,the.sites[ix])
 ix <- D$decade == "2000"; the.sites <- D$site_no[ix]
-dSVM <- ksvm(Y[ix]~area[ix]+slope[ix]+ppt[ix]+temp[ix]+rad[ix]+flood[ix])
+dSVM <- ksvm(Y[ix]~area[ix]+slope[ix]+ppt[ix]+temp[ix]+rad[ix]+flood[ix],C=1, epsilon=.2)
 ix <- ksvm2me(dSVM, Y[ix])$inSVM
 ssites <- c(ssites,the.sites[ix])
 ssites <- unique(ssites)
@@ -132,25 +132,43 @@ AD$active[AD$end_cal_year >= 2016] <- TRUE
 sum(AD$active) # [1] 673
 # 673/956 thus 0.7039749 of the network is active
 
+pdf("PPLOfit_junk.pdf", useDingbats=FALSE, width=11, height=10)
+  plot(spRESTORE_MGCV_BND)  # by creation of the PDF, we can get a handle on a global
+  usr <- par()$usr # setting of the plotting limits by preserving the usr.
+dev.off()
+unlink("PPLOfit_junk.pdf")  # just quietly throw the file away
 
-plot(D, lwd=0.4, cex=0)
+pdf("svm_rvm_inactivegages.pdf", useDingbats=FALSE, width=11, height=10)
+map_base(xlim=usr[1:2], ylim=usr[3:4])
+#plot(D, lwd=0.4, cex=0)
 for(site in AD$site_no) {
   active <- AD$active[AD$site_no == site]
-  plot(D[D$site_no == site,], pch=2, cex=.5+0.5*as.numeric(active), col=2+as.numeric(active), lwd=0.7, add=TRUE)
+  plot(D[D$site_no == site,], pch=2+15*as.numeric(!active), cex=.7+0.2*as.numeric(! active), col=6-3*as.numeric(active), lwd=0.5, add=TRUE)
 }
 for(site in rsites) {
-#  plot(D[D$site_no == site,], pch=16, col=2, add=TRUE)
+  active <- AD$active[AD$site_no == site]
+  if(active) next
+  plot(D[D$site_no == site,], pch=1, cex=1.5-as.numeric(active), col=2, lwd=0.7, add=TRUE)
 }
 for(site in ssites) {
   active <- AD$active[AD$site_no == site]
   if(active) next
   plot(D[D$site_no == site,], pch=1, cex=1.5-as.numeric(active), col=4, lwd=0.7, add=TRUE)
 }
-
+legend(-10000, 580000,
+       c("Active (2016+) streamgage with at least one decade of record (1950s to 2000s)",
+         "Inactive (2016-) streamgage with at least one decade of record (1950s to 2000s)",
+         "Inactive site needed by RVM to estimate the log10(decadal mean nonzero streamflow)",
+         "Inactive site needed by SVM to estimate the log10(decadal mean nonzero streamflow)"),
+       cex=0.9, bty="n",
+       pch=c(2,17,1,1), col=c(3,6,2,4))
+map_annotation()
+dev.off()
+#system(paste0("pdfcrop --margins '-46 -110 -43 0' --clip svm_rvm_inactivegages.pdf svm_rvm_inactivegages.pdf"))
 
 Z <- D
 Y <- as.factor(Z$nzero == 0)
 dat <- data.frame(area=area,slope=slope,ppt=ppt,temp=temp,rad=rad,grass=grass,dev=dev,decade=decade)
-SVM <- ksvm(Y~area+slope+ppt+temp+rad+grass+dev+decade, data=dat)
+SVM <- ksvm(Y~area+slope+ppt+temp+rad+grass+dev+decade, data=dat,C=1, epsilon=.2)
 plot(Y,fitted(SVM))
 sum(as.logical(Y) == as.logical(fitted(SVM)))/length(Y)
