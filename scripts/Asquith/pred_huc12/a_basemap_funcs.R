@@ -169,8 +169,12 @@ map_annotation <- function() {
 
 map_base <- function(xlim=NA, ylim=NA) {
   par(lend=1, ljoin=1)
-  plot(spCOV, pch=NA, xlim=usr[1:2], ylim=usr[3:4])
-  plot(GulfStates_modified, add=TRUE, lty=0, col=grey(0.93))
+  if(length(grep("spCOV",ls())) != 0) {
+    plot(spCOV, pch=NA, xlim=usr[1:2], ylim=usr[3:4])
+    plot(GulfStates_modified, add=TRUE, lty=0, col=grey(0.93))
+  } else {
+    plot(GulfStates_modified, lty=0, col=grey(0.93), xlim=usr[1:2], ylim=usr[3:4])
+  }
   polygon(bnd[[1]]$x*1000,bnd[[1]]$y*1000, col=grey(.99), lwd=1.7)
 }
 
