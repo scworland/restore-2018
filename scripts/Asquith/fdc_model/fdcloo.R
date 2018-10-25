@@ -482,11 +482,11 @@ looOverL1model <-
              in_model_L1=looL1model$in_model_L1,
              overL1=(1-looPPLOmodel$pplo)*looL1model$L1,
              stringsAsFactors=FALSE)
-looOverL1model$est_lwr_overL1 <- (1-looPPLOmodel$est_upr_pplo)*looL1model$est_lwr_L1*looL1model$bias_corr
-looOverL1model$est_overL1     <- (1-looPPLOmodel$est_pplo)    *looL1model$est_L1*looL1model$bias_corr
-looOverL1model$est_upr_overL1 <- (1-looPPLOmodel$est_lwr_pplo)*looL1model$est_upr_L1*looL1model$bias_corr
+looOverL1model$est_lwr_overL1     <- (1-looPPLOmodel$est_upr_pplo)    *looL1model$est_lwr_L1    *looL1model$bias_corr
+looOverL1model$est_overL1         <- (1-looPPLOmodel$est_pplo)        *looL1model$est_L1        *looL1model$bias_corr
+looOverL1model$est_upr_overL1     <- (1-looPPLOmodel$est_lwr_pplo)    *looL1model$est_upr_L1    *looL1model$bias_corr
 looOverL1model$loo_est_lwr_overL1 <- (1-looPPLOmodel$loo_est_upr_pplo)*looL1model$loo_est_lwr_L1*looL1model$bias_corr
-looOverL1model$loo_est_overL1     <- (1-looPPLOmodel$loo_est_pplo)    *looL1model$loo_est_L1*looL1model$bias_corr
+looOverL1model$loo_est_overL1     <- (1-looPPLOmodel$loo_est_pplo)    *looL1model$loo_est_L1    *looL1model$bias_corr
 looOverL1model$loo_est_upr_overL1 <- (1-looPPLOmodel$loo_est_lwr_pplo)*looL1model$loo_est_upr_L1*looL1model$bias_corr
 
 assign("last.warning", NULL, envir = baseenv())
