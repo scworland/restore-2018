@@ -129,8 +129,9 @@ for(decade in cmp$decade) {
                     hT4$est_T4[hT4$comid == comid & hT4$decade == decade],
                     hT5$est_T5[hT5$comid == comid & hT5$decade == decade]
                     ), lscale=FALSE)
+
   aep4 <- paraep4(lmr, snap.tau4=FALSE)
-  print(aep4)
+  #print(aep4)
   aep4 <- paraep4(lmr, snap.tau4=TRUE)
   my.pplo <- hPPLO$est_pplo[hPPLO$comid == comid & hPPLO$decade == decade]
   nep1 <- qnorm(f2f(FF, pp=my.pplo))
@@ -169,6 +170,12 @@ for(decade in cmp$decade) {
   comboMu <- function(f, combo) approx(combo$nep,combo$Qfo,xout=f,rule=2)$y
   mu <- integrate(comboMu, lower=0, upper=1, combo=df)$value
   message(mu)
+
+  print(lmr$ratios[4:5])
+  print(theoLmoms(aep4)$ratios[4:5])
+  print(theoLmoms(gno)$ratios[4:5])
+  print(theoLmoms(kap)$ratios[4:5])
+
 }
 mtext(paste0("COMID: ",comid))
 txt <- c("Asymmetric exponential power distribution (four parameter)",
@@ -180,3 +187,5 @@ text(-3.0, 1.9, paste0("Solid lines are 1980s to 2000s, dashed lines are 1950s t
               cex=0.6, pos=4)
 suppressWarnings(par(opts))
 dev.off()
+
+
