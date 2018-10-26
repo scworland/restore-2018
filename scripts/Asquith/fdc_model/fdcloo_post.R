@@ -2,7 +2,7 @@ library(lmomco)
 library(feather)
 
 load("./Models.RData")
-looOverL1model <- read_feather("../../../results/gage/gam/all_gage_looest_overL1.feather")
+#looOverL1model <- read_feather("../../../results/gage/gam/all_gage_looest_overL1.feather")
 looPPLOmodel <- read_feather("../../../results/gage/gam/all_gage_looest_pplo.feather")
 looL1model   <- read_feather("../../../results/gage/gam/all_gage_looest_L1.feather"  )
 looT2model   <- read_feather("../../../results/gage/gam/all_gage_looest_T2.feather"  )
@@ -115,9 +115,11 @@ cp1 <- round(1 - o1/n, 3); cp2 <- round(1 - o2/n, 3)
 message("Corrected 95% coverage probability, overL1: GAM=",cp1," and GAMloo=",cp2)
 
 looOverL1model_corr <- looOverL1model
-looOverL1model_corr$est_lwr_overL1 <- (1+corr)*looOverL1model_corr$est_lwr_overL1
-looOverL1model_corr$est_upr_overL1 <- (1-corr)*looOverL1model_corr$est_upr_overL1
-write_feather(looOverL1model_corr, "all_gage_looest_overL1.feather")
+looOverL1model_corr$est_lwr_overL1     <- (1+corr)*looOverL1model_corr$est_lwr_overL1
+looOverL1model_corr$est_upr_overL1     <- (1-corr)*looOverL1model_corr$est_upr_overL1
+looOverL1model_corr$loo_est_lwr_overL1 <- (1+corr)*looOverL1model_corr$loo_est_lwr_overL1
+looOverL1model_corr$loo_est_upr_overL1 <- (1-corr)*looOverL1model_corr$loo_est_upr_overL1
+#write_feather(looOverL1model_corr, "all_gage_looest_overL1.feather")
 
 
 tmp <- looL1model[looL1model$in_model_L1 == 1,]
