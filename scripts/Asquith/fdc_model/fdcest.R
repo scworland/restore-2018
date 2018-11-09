@@ -355,8 +355,8 @@ length(Pto[Pto < log10(3653)])
 #[1] 404
 length(Gto[Gto < log10(3653)])
 #[1] 432
-txt <- paste0("Number of streamgage:decade records with no zero-flow conditions: 2,002\n",
-              "Number of streamgage:decade records with zero-flow conditions: 748\n",
+txt <- paste0("Number of streamgage-decade records with no zero-flow conditions: 2,002\n",
+              "Number of streamgage-decade records with zero-flow conditions: 748\n",
               "Number of survival regression predicted with zero-flow conditions: 404\n",
               "Number of GAM regression predicted with zero-flow conditions: 432\n")
 text(3.57, 3.4, txt, pos=4, cex=0.7)
@@ -367,7 +367,7 @@ txt <- paste0("All three grey regions depict predictions of\n",
               "or more zero-flow might have been observed.")
 text(3.295, 3.9, txt, pos=4, cex=0.7)
 text(3.95, 3.95, "Equal value line", cex=0.7)
-legend(3.31, 3.75, c("A unique streamgage:decade record\n in the database colored by decade"),
+legend(3.31, 3.75, c("A unique streamgage-decade record\n in the database colored by decade"),
               pch=21, lty=0, col=grey(0.5), pt.bg=2, bty="n", cex=0.8)
 dev.off()
 
