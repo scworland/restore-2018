@@ -1,5 +1,12 @@
 library(lmomco)
 library(feather)
+library(sp)
+LATLONG <- paste0("+proj=longlat +ellps=GRS80 ",
+                  "+datum=NAD83 +no_defs +towgs84=0,0,0")
+LATLONG <- sp::CRS(LATLONG)
+ALBEA <- paste0("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 ",
+                "+datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0")
+ALBEA <- sp::CRS(ALBEA)
 
 hPPLO <- read_feather("../../../results/huc12/gam/all_huc12_pplo.feather")
 hL1   <- read_feather("../../../results/huc12/gam/all_huc12_L1.feather")
@@ -156,12 +163,21 @@ for(i in ix) {
 }
 est_lmr_overall <- PHaep4$overall_mean_by_pploubL1
 
-PHaep4[is.na(PHaep4$site_no),]
-PHgno[ is.na(PHaep4$site_no),]
-PHkap[ is.na(PHaep4$site_no),]
+write_feather(PHaep4, "ORGall_huc_fdclmr_aep.feather")
+write_feather(PHgno,  "ORGall_huc_fdclmr_gno.feather")
+write_feather(PHkap,  "ORGall_huc_fdclmr_kap.feather")
+
+PHaep4 <- read_feather("ORGall_huc_fdclmr_aep.feather")
+PHgno  <- read_feather("ORGall_huc_fdclmr_gno.feather")
+PHkap  <- read_feather("ORGall_huc_fdclmr_kap.feather")
+
+
+PHaep4[is.na(PHaep4$comid),]
+PHgno[ is.na(PHaep4$comid),]
+PHkap[ is.na(PHaep4$comid),]
 
 PHaep4$snapped <- as.numeric(PHaep4$snapped)
-PHgno$snapped <- as.numeric(PHgno$snapped)
+#PHgno$snapped <- as.numeric(PHgno$snapped) # character "not applicable"
 PHkap$snapped <- as.numeric(PHkap$snapped)
 
 PHaep4$overall_mean_by_dist[PHaep4$overall_mean_by_dist == 0] <- NA
@@ -186,37 +202,37 @@ SG <- PHgno[ ! is.na(PHgno$overall_mean_by_dist ) & abs(del2) > 0.1,]
 SK <- PHkap[ ! is.na(PHkap$overall_mean_by_dist ) & abs(del3) > 0.1,]
 
 
-for(s in unique(SA$site_no)) {
-  tmp <- SA[SA$site_no == s,]
+for(s in unique(SA$comid)) {
+  tmp <- SA[SA$comid == s,]
   for(d in tmp$decade) {
      message("AEP4: resetting quantiles and overall mean to NA for ",s," and ",d,
              " because means don't align within 0.1 log10")
      for(i in 6:32) {
-        PHaep4[PHaep4$site_no == s & PHaep4$decade == d, i] <- NA
+        PHaep4[PHaep4$comid == s & PHaep4$decade == d, i] <- NA
      }
-     PHaep4$overall_mean_by_dist[PHaep4$site_no == s & PHaep4$decade == d] <- NA
+     PHaep4$overall_mean_by_dist[PHaep4$comid == s & PHaep4$decade == d] <- NA
   }
 }
-for(s in unique(SG$site_no)) {
-  tmp <- SG[SG$site_no == s,]
+for(s in unique(SG$comid)) {
+  tmp <- SG[SG$comid == s,]
   for(d in tmp$decade) {
      message("GNO: resetting quantiles and overall mean to NA for ",s," and ",d,
              " because means don't align within 0.1 log10")
      for(i in 6:32) {
-        PHgno[PHgno$site_no == s & PHgno$decade == d, i] <- NA
+        PHgno[PHgno$comid == s & PHgno$decade == d, i] <- NA
      }
-     PHgno$overall_mean_by_dist[PHgno$site_no == s & PHgno$decade == d] <- NA
+     PHgno$overall_mean_by_dist[PHgno$comid == s & PHgno$decade == d] <- NA
   }
 }
-for(s in unique(SK$site_no)) {
-  tmp <- SK[SK$site_no == s,]
+for(s in unique(SK$comid)) {
+  tmp <- SK[SK$comid == s,]
   for(d in tmp$decade) {
      message("KAP: resetting quantiles and overall mean to NA for ",s," and ",d,
              " because means don't align within 0.1 log10")
      for(i in 6:32) {
-        PHkap[PHkap$site_no == s & PHkap$decade == d, i] <- NA
+        PHkap[PHkap$comid == s & PHkap$decade == d, i] <- NA
      }
-     PHkap$overall_mean_by_dist[PHkap$site_no == s & PHkap$decade == d] <- NA
+     PHkap$overall_mean_by_dist[PHkap$comid == s & PHkap$decade == d] <- NA
   }
 }
 
@@ -224,24 +240,30 @@ plot(est_lmr_overall, PHaep4$overall_mean_by_dist, log="xy")
 plot(est_lmr_overall, PHgno$overall_mean_by_dist,  log="xy")
 plot(est_lmr_overall, PHkap$overall_mean_by_dist,  log="xy")
 
-PHaep4[is.na(PHaep4$site_no),]
-PHgno[ is.na(PHgno$site_no),]
-PHkap[ is.na(PHkap$site_no),]
+PHaep4[is.na(PHaep4$comid),]
+PHgno[ is.na(PHgno$comid),]
+PHkap[ is.na(PHkap$comid),]
+
+as.data.frame(PHaep4[! is.na(PHaep4$f99.98) & PHaep4$f99.98 == 0,])
+as.data.frame(PHgno[! is.na(PHgno$f99.98) & PHgno$f99.98 == 0,])
+as.data.frame(PHkap[! is.na(PHkap$f99.98) & PHkap$f99.98 == 0,])
 
 
-# This is potentially superfluous in the sense that the
-# default could have been NA on definition above. But I think best
-# to use the -9999 as a means to distinguish at times the quantiles
-# that were less than zero and those that were set to zero by the
-# pplo.
 for(i in 1:length(PHaep4$comid)) {
-  for(j in 6:32) {
-    if(PHaep4[i,j] == -9999) PHaep4[i,j] <- NA
-    if(PHgno[i,j]  == -9999) PHgno[i,j] <- NA
-    if(PHkap[i,j]  == -9999) PHkap[i,j] <- NA
+  if(is.na(PHaep4$overall_mean_by_dist[i])) {
+     for(j in 6:32) PHaep4[i,j] <- NA
+  }
+  if(is.na(PHgno$overall_mean_by_dist[i])) {
+     for(j in 6:32) PHgno[i,j] <- NA
+  }
+  if(is.na(PHkap$overall_mean_by_dist[i])) {
+     for(j in 6:32) PHkap[i,j] <- NA
   }
 }
 
+as.data.frame(PHaep4[! is.na(PHaep4$f99.98) & PHaep4$f99.98 == 0,])
+as.data.frame(PHgno[! is.na(PHgno$f99.98) & PHgno$f99.98 == 0,])
+as.data.frame(PHkap[! is.na(PHkap$f99.98) & PHkap$f99.98 == 0,])
 
 
 write_feather(PHaep4, "all_huc_fdclmr_aep.feather")
@@ -252,3 +274,28 @@ write_feather(PHkap,  "all_huc_fdclmr_kap.feather")
 PHaep4 <- read_feather("all_huc_fdclmr_aep.feather")
 PHgno  <- read_feather("all_huc_fdclmr_gno.feather")
 PHkap  <- read_feather("all_huc_fdclmr_kap.feather")
+
+
+spPHaep4 <- SpatialPointsDataFrame(cbind(PHaep4$dec_long_va,
+                                       PHaep4$dec_lat_va),
+                        data=PHaep4, proj4string=LATLONG)
+spPHaep4 <- spTransform(spPHaep4, ALBEA)
+spPHgno <- SpatialPointsDataFrame(cbind(PHgno$dec_long_va,
+                                       PHgno$dec_lat_va),
+                        data=PHgno, proj4string=LATLONG)
+spPHgno <- spTransform(spPHgno, ALBEA)
+spPHkap <- SpatialPointsDataFrame(cbind(PHkap$dec_long_va,
+                                       PHkap$dec_lat_va),
+                        data=PHkap, proj4string=LATLONG)
+spPHkap <- spTransform(spPHkap, ALBEA)
+
+pdf("junk.pdf", useDingbats=FALSE)
+  plot(spPHgno, lwd=0.2, pch=1, cex=0.5); mtext("AEP4 distribution")
+  plot(spPHaep4[is.na(spPHaep4$overall_mean_by_dist),], add=TRUE, col=2, pch=2, cex=0.4)
+  plot(spPHgno, lwd=0.2, pch=1, cex=0.5); mtext("GNO distribution")
+  plot(spPHgno[is.na(spPHgno$overall_mean_by_dist),], add=TRUE, col=3, pch=3, cex=0.4)
+  plot(spPHgno, lwd=0.2, pch=1, cex=0.5); mtext("KAP distribution")
+  plot(spPHkap[is.na(spPHkap$overall_mean_by_dist),], add=TRUE, col=4, pch=4, cex=0.4)
+dev.off()
+
+

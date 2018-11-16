@@ -1,5 +1,14 @@
 library(lmomco)
 library(feather)
+library(sp)
+LATLONG <- paste0("+proj=longlat +ellps=GRS80 ",
+                  "+datum=NAD83 +no_defs +towgs84=0,0,0")
+LATLONG <- sp::CRS(LATLONG)
+ALBEA <- paste0("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 ",
+                "+datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0")
+ALBEA <- sp::CRS(ALBEA)
+
+
 gPPLO <- read_feather("../../../results/gage/gam/all_gage_looest_pplo.feather")
 gL1   <- read_feather("../../../results/gage/gam/all_gage_looest_L1.feather")
 gT2   <- read_feather("../../../results/gage/gam/all_gage_looest_T2.feather")
@@ -145,21 +154,30 @@ for(i in ix) {
 }
 est_lmr_overall <- PGaep4$overall_mean_by_pploubL1
 
+write_feather(PGaep4, "ORG_all_gage_fdclmr_aep.feather")
+write_feather(PGgno,  "ORG_all_gage_fdclmr_gno.feather")
+write_feather(PGkap,  "ORG_all_gage_fdclmr_kap.feather")
+
+PGaep4 <- read_feather("ORG_all_gage_fdclmr_aep.feather")
+PGgno  <- read_feather("ORG_all_gage_fdclmr_gno.feather")
+PGkap  <- read_feather("ORG_all_gage_fdclmr_kap.feather")
+
+
 PGaep4[is.na(PGaep4$site_no),]
 PGgno[is.na(PGgno$site_no),]
 PGkap[is.na(PGkap$site_no),]
 
 PGaep4$snapped <- as.numeric(PGaep4$snapped)
-PGgno$snapped <- as.numeric(PGaep4$snapped)
-PGkap$snapped <- as.numeric(PGaep4$snapped)
+#PGgno$snapped <- as.numeric(PGgno$snapped) # character "not applicable"
+PGkap$snapped <- as.numeric(PGkap$snapped)
 
 PGaep4$overall_mean_by_dist[! is.na(PGaep4$overall_mean_by_dist) & PGaep4$overall_mean_by_dist == 0] <- NA
 PGgno$overall_mean_by_dist[! is.na(PGgno$overall_mean_by_dist) & PGgno$overall_mean_by_dist == 0] <- NA
 PGkap$overall_mean_by_dist[! is.na(PGkap$overall_mean_by_dist) & PGkap$overall_mean_by_dist == 0] <- NA
 
-plot(overall_mean_by_dist, PGaep4$overall_mean_by_dist, log="xy")
-plot(overall_mean_by_dist, PGgno$overall_mean_by_dist, log="xy")
-plot(overall_mean_by_dist, PGkap$overall_mean_by_dist, log="xy")
+plot(est_lmr_overall, PGaep4$overall_mean_by_dist, log="xy")
+plot(est_lmr_overall, PGgno$overall_mean_by_dist, log="xy")
+plot(est_lmr_overall, PGkap$overall_mean_by_dist, log="xy")
 
 del1 <- log10(PGaep4$overall_mean_by_dist)-log10(est_lmr_overall)
 del2 <- log10(PGgno$overall_mean_by_dist)-log10(est_lmr_overall)
@@ -221,12 +239,19 @@ PGkap[ is.na(PGkap$site_no), ]
 # this is a type of leak detection, we don't want any -9999 left over
 for(i in 1:length(PGaep4$comid)) {
   for(j in 7:33) {
-    if(PGaep4[i,j] == -9999) PGaep4[i,j] <- NA
-    if(PGgno[i,j]  == -9999) PGgno[i,j] <- NA
-    if(PGkap[i,j]  == -9999) PGkap[i,j] <- NA
+    if(! is.na(PGaep4[i,j]) & PGaep4[i,j] == -9999) PGaep4[i,j] <- NA
+    if(! is.na(PGgno[i,j])  & PGgno[i,j]  == -9999) PGgno[i,j] <- NA
+    if(! is.na(PGkap[i,j])  & PGkap[i,j]  == -9999) PGkap[i,j] <- NA
   }
 }
 
+as.data.frame(PGaep4[! is.na(PGaep4$f99.98) & PGaep4$f99.98 == 0,])
+as.data.frame(PGgno[! is.na(PGgno$f99.98) & PGgno$f99.98 == 0,])
+as.data.frame(PGkap[! is.na(PGkap$f99.98) & PGkap$f99.98 == 0,])
+
+as.data.frame(PGaep4[is.na(PGaep4$overall_mean_by_dist), ])
+as.data.frame(PGgno[is.na(PGgno$overall_mean_by_dist), ])
+as.data.frame(PGkap[is.na(PGkap$overall_mean_by_dist), ])
 
 write_feather(PGaep4, "all_gage_fdclmr_aep.feather")
 write_feather(PGgno,  "all_gage_fdclmr_gno.feather")
@@ -242,6 +267,35 @@ PGkap  <- PGkap[ PGkap$site_no  != "02341500",]
 Gtmp <- G[G$site_no != "02341500",]
 
 lmr_overall <- (1-Gtmp$pplo)*Gtmp$L1
-plot(lmr_overall, est_lmr_overall, log="xy")
+plot(lmr_overall, PGaep4$overall_mean_by_pploubL1, log="xy", pch=21, lwd=0.5, bg=8, cex=0.5)
+points(lmr_overall, PGaep4$overall_mean_by_dist, col=2, lwd=0.5)
+points(lmr_overall, PGgno$overall_mean_by_dist, col=3, lwd=0.5)
+points(lmr_overall, PGkap$overall_mean_by_dist, col=4, lwd=0.5)
+
+PGaep4 <- read_feather("all_gage_fdclmr_aep.feather")
+PGgno  <- read_feather("all_gage_fdclmr_gno.feather")
+PGkap  <- read_feather("all_gage_fdclmr_kap.feather")
+
+spPGaep4 <- SpatialPointsDataFrame(cbind(PGaep4$dec_long_va,
+                                       PGaep4$dec_lat_va),
+                        data=PGaep4, proj4string=LATLONG)
+spPGaep4 <- spTransform(spPGaep4, ALBEA)
+spPGgno <- SpatialPointsDataFrame(cbind(PGgno$dec_long_va,
+                                       PGgno$dec_lat_va),
+                        data=PGgno, proj4string=LATLONG)
+spPGgno <- spTransform(spPGgno, ALBEA)
+spPGkap <- SpatialPointsDataFrame(cbind(PGkap$dec_long_va,
+                                       PGkap$dec_lat_va),
+                        data=PGkap, proj4string=LATLONG)
+spPGkap <- spTransform(spPGkap, ALBEA)
+
+pdf("junk.pdf", useDingbats=FALSE)
+  plot(spPGgno, lwd=0.2, pch=1, cex=0.5); mtext("AEP4 distribution")
+  plot(spPGaep4[is.na(spPGaep4$overall_mean_by_dist),], add=TRUE, col=2, pch=2, cex=4)
+  plot(spPGgno, lwd=0.2, pch=1, cex=0.5); mtext("GNO distribution")
+  plot(spPGgno[is.na(spPGgno$overall_mean_by_dist),], add=TRUE, col=3, pch=3, cex=4)
+  plot(spPGgno, lwd=0.2, pch=1, cex=0.5); mtext("KAP distribution")
+  plot(spPGkap[is.na(spPGkap$overall_mean_by_dist),], add=TRUE, col=4, pch=4, cex=4)
+dev.off()
 
 
