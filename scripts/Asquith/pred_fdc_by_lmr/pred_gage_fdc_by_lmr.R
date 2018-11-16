@@ -272,6 +272,17 @@ points(lmr_overall, PGaep4$overall_mean_by_dist, col=2, lwd=0.5)
 points(lmr_overall, PGgno$overall_mean_by_dist, col=3, lwd=0.5)
 points(lmr_overall, PGkap$overall_mean_by_dist, col=4, lwd=0.5)
 
+
+plot(Gtmp$f10, PGaep4$f10, log="xy")
+plot(Gtmp$f90, PGaep4$f90, log="xy")
+plot(Gtmp$f10, PGgno$f10, log="xy")
+plot(Gtmp$f10, PGgno$f90, log="xy")
+plot(Gtmp$f10, PGkap$f10, log="xy")
+plot(Gtmp$f10, PGkap$f90, log="xy")
+
+
+
+
 PGaep4 <- read_feather("all_gage_fdclmr_aep.feather")
 PGgno  <- read_feather("all_gage_fdclmr_gno.feather")
 PGkap  <- read_feather("all_gage_fdclmr_kap.feather")
