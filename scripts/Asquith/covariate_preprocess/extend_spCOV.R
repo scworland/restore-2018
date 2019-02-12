@@ -237,7 +237,7 @@ integrate(comboMu, lower=0, upper=1, combo=df)
 
 mtext(paste0("COMID: ",comid))
 txt <- c("Asymmetric exponential power distribution (four parameter)",
-         "Generalized normal distribution (three parameter log-Normal)",
+         "Generalized normal distribution (three parameter log-normal)",
          "Kappa distribution (four parameter)")
 legend(-3.5, 300, txt, col=c(2,3,4), bty="n", lwd=1, cex=0.7)
 suppressWarnings(par(opts))

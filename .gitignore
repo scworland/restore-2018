@@ -45,3 +45,5 @@ results/huc12/gam/SBcols_huc12.log
 results/huc12/gam/SBcols_huc12.aux
 scripts/Asquith/fdc_model/svm_rvm_inactivegages.pdf
 scripts/Asquith/fdc_model/PPLOfit_junk.pdf
+scripts/Asquith/networkwrapper/networktest.pdf
+scripts/Asquith/networkwrapper/networktest_all.pdf
