@@ -1,0 +1,1 @@
+Crowley-Ornelas, E.R., Asquith, W.H., Worland, S.C., and Knight, R.R., 2019, Summary of streamflow statistics for USGS streamgages in the southeastern United States, 1950--2010: U.S. Geological Survey data release, https://doi.org/10.5066/P91DOYCJ.  [all_gage_flow_stats.csv]
