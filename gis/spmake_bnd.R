@@ -16,6 +16,7 @@ huc_outline <- spTransform(huc_outline, ALBEA)
 # exists by micro islands of polygons.
 # These were removed and the restore_mgcv_bnd resaved.
 
+plot(huc_outline)
 h <- huc_outline
 hp <- slot(h, "polygons")
 hh <- hp[[1]]
