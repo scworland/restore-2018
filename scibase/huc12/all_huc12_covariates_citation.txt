@@ -1,0 +1,1 @@
+Crowley-Ornelas, E.R., Worland, S.C., Wieczorek, M.E., Asquith, W.H., Knight, R.R., 2019, Summary of basin characteristics for National Hydrography Dataset, version 2 catchments in the Southeastern United States, 1950--2010: U.S. Geological Survey data release, https://doi.org/10.5066/P9KXTDU4. [all_huc12_covariates.csv]
