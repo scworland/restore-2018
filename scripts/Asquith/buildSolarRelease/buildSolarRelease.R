@@ -1,9 +1,9 @@
 library(feather)
 library(sp)
 
-load(file.choose())                # spDNI_1998to2009.RData
-FDC <- read_feather(file.choose()) # "all_gage_covariates.feather"
-COV <- read_feather(file.choose()) # "all_huc12_covariates.feather"
+load("../../../gis/solar/spDNI_1998to2009.RData") # spDNI_1998to2009.RData
+FDC <- read_feather("../../../data/gage/all_gage_covariates.feather") # "all_gage_covariates.feather"
+COV <- read_feather("../../../data/huc12/all_huc12_covariates.feather") # "all_huc12_covariates.feather"
 
 sites <- unique(FDC$site_no)
 sitefile <- dataRetrieval::readNWISsite(sites)
@@ -14,8 +14,8 @@ for(site in FDC$site_no) {
   FDC$dec_lat_va[FDC$site_no == site] <- sitefile$dec_lat_va[sitefile$site_no == site]
   FDC$dec_long_va[FDC$site_no == site] <- sitefile$dec_long_va[sitefile$site_no == site]
 }
-summary(abs(FDC$dec_lat_va  - FDC$lat))
-summary(abs(FDC$dec_long_va - FDC$lon))
+summary(abs(FDC$dec_lat_va  - FDC$dec_lat_va ))
+summary(abs(FDC$dec_long_va - FDC$dec_long_va))
 
 LATLONG <- paste0("+proj=longlat +ellps=GRS80 ",
                   "+datum=NAD83 +no_defs +towgs84=0,0,0")
@@ -27,12 +27,12 @@ ALBEA <- sp::CRS(ALBEA)
 nFDC <- data.frame(comid=FDC$comid,
                    site_no=FDC$site_no,
                    huc12=FDC$huc12,
-                   dec_long_va=FDC$lon,
-                   dec_lat_va=FDC$lat,
+                   dec_long_va=FDC$dec_long_va,
+                   dec_lat_va=FDC$dec_lat_va,
                    decade=FDC$decade,
                    stringsAsFactors=FALSE)
 nFDC <- SpatialPointsDataFrame(cbind(nFDC$dec_long_va, nFDC$dec_lat_va), nFDC,
-                             proj4string=LATLONG)
+                               proj4string=LATLONG)
 nFDC <- spTransform(nFDC, ALBEA)
 SO <- over(nFDC, spDNI_1998to2009)
 nFDC$dni_ann <- SO$ANN_DNI
@@ -46,8 +46,8 @@ rm(SO)
 
 nCOV <- data.frame(comid=COV$comid,
                    huc12=COV$huc12,
-                   dec_long_va=COV$lon,
-                   dec_lat_va=COV$lat,
+                   dec_long_va=COV$dec_long_va,
+                   dec_lat_va=COV$dec_lat_va,
                    decade=COV$decade,
                    stringsAsFactors=FALSE)
 nCOV <- SpatialPointsDataFrame(cbind(nCOV$dec_long_va,nCOV$dec_lat_va), data=nCOV,
