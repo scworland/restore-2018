@@ -5,16 +5,18 @@ library(GISTools)
 library(RColorBrewer)
 library(lmomco)
 
+# Script has been superceeded?
+
 # Transformation and Retransformation Functions for the Sin Transformation of
 # Percentile data
 dotransin <- function(p) 2*asin(sqrt(p/100))
 retransin <- function(p) sin(p/2)^2*100
 
-load("DEMO.RData")
-load("Models.RData")
-load(file.choose()) # GulfStates.RData
-load(file.choose()) # spDNI_1998to2009.RData
-load(file.choose()) # spRESTORE_MGCV_BND.RData
+#load("../fdc_model/DEMO.RData")
+load("../fdc_model/Models.RData")
+load("../../../gis/GulfStates.RData") # GulfStates.RData
+load("../../../gis/solar/spDNI_1998to2009.RData") # spDNI_1998to2009.RData
+load("../../../gis/RESTORE_MGCV_BND.RData") # RESTORE_MGCV_BND.RData
 
 LATLONG <- paste0("+proj=longlat +ellps=GRS80 ",
                   "+datum=NAD83 +no_defs +towgs84=0,0,0")
@@ -43,14 +45,14 @@ text(XY[,1],XY[,2], ix)
 GL <- GL[-c(1,3:9, 12, 14:20, 23, 34, 45)]
 
 
-COV <- COVo <- read_feather(file.choose()) # "all_huc12_covariates.feather"
+COV <- COVo <- read_feather("../../../data/huc12/all_huc12_covariates.feather") # "all_huc12_covariates.feather"
 length(COVo$comid)                           # [1] 55128
 length(COV$comid[is.na(COV$comid)])          # [1] 0
 COV <- COV[! is.na(COV$comid),]
 length(COV$comid[is.na(COV$basin_area)])     # [1] 0
 COV <- COV[! is.na(COV$basin_area), ]
 
-spCOV <- SpatialPointsDataFrame(cbind(COV$lon,COV$lat), data=COV,
+spCOV <- SpatialPointsDataFrame(cbind(COV$dec_long_va,COV$dec_lat_va), data=COV,
                                 proj4string=LATLONG)
 spCOV <- spTransform(spCOV, ALBEA)
 XY <- coordinates(spCOV)
@@ -69,20 +71,19 @@ spCOV$dni_nov <- SO$NOV; spCOV$dni_dec <- SO$DEC
 rm(SO)
 
 SO <- data.frame(comid=spCOV$comid,  huc12=spCOV$huc12,
-                 dec_long_va=spCOV$lon, dec_lat_va=spCOV$lat, decade=spCOV$decade,
+                 dec_long_va=spCOV$dec_long_va, dec_lat_va=spCOV$dec_lat_va, decade=spCOV$decade,
                  dni_ann=spCOV$dni_ann, dni_jan=spCOV$dni_jan, dni_feb=spCOV$dni_feb, dni_mar=spCOV$dni_mar, dni_apr=spCOV$dni_apr,
                  dni_may=spCOV$dni_may, dni_jun=spCOV$dni_jun, dni_jul=spCOV$dni_jul, dni_aug=spCOV$dni_aug, dni_sep=spCOV$dni_sep,
                  dni_oct=spCOV$dni_oct, dni_nov=spCOV$dni_nov, dni_dec=spCOV$dni_dec, stringsAsFactors=FALSE)
 
 
-COV$acc_nid_storage[COV$acc_basin_area == 0]
-COV$acc_norm_storage[COV$acc_basin_area == 0]
+COV$nid_storage[COV$basin_area == 0]
+COV$norm_storage[COV$basin_area == 0]
 
 
-# storages are in acre-ft
-# 1 km2 = 247.104393047 acres
-spCOV$flood_storage <- spCOV$acc_nid_storage - spCOV$acc_norm_storage
-spCOV$flood_storage <- spCOV$flood_storage/(spCOV$acc_basin_area*247.104393047)
+# storages are in square kilometer-meters
+spCOV$flood_storage <- spCOV$nid_storage - spCOV$norm_storage
+spCOV$flood_storage <- spCOV$flood_storage/(spCOV$basin_area)
 spCOV$flood_storage[is.na(spCOV$flood_storage)] <- 0
 spCOV[spCOV$flood_storage < 0,]; # plot(spCOV); plot(spCOV[spCOV$flood_storage < 0,], add=TRUE, col=2)
 spCOV$flood_storage <- abs(spCOV$flood_storage)
@@ -90,28 +91,24 @@ spCOV$flood_storage <- log10(spCOV$flood_storage+.01)
 plot(qnorm(pp(spCOV$flood_storage)), sort(spCOV$flood_storage), type="l")
 #lines(qnorm(pp(DD$flood_storage)), sort(DD$flood_storage), col=2)
 length(spCOV$comid[spCOV$flood_storage >= 0.52]) # This is about 3.3 feet of watershed depth storage
-# [1] 35
+# [1] 8
 #summary(spCOV$flood_storage[spCOV$flood_storage >= 0.52])
 #   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
-# 0.5228  0.5546  0.7193  0.7827  0.8425  1.5351
+# 0.5300  0.5300  0.5300  0.5937  0.5350  1.0194
 
 spCOV <- spCOV[spCOV$flood_storage < 0.52,]
 
-
-spCOV$acc_basin_slope[spCOV$acc_basin_slope == 0] <- 0.0005
-
-length(spCOV$comid[spCOV$acc_basin_area == 0])
-spCOV <- spCOV[spCOV$acc_basin_area != 0,]
+length(spCOV$comid[spCOV$basin_area == 0])
+spCOV <- spCOV[spCOV$basin_area != 0,]
 
 spCOV$ppt_mean        <- log10(spCOV$ppt_mean)
 spCOV$temp_mean       <- log10(spCOV$temp_mean)
-spCOV$acc_basin_area  <- log10(spCOV$acc_basin_area)
-spCOV$acc_basin_slope <- log10(spCOV$acc_basin_slope)
+spCOV$basin_area  <- log10(spCOV$basin_area)
+spCOV$basin_slope <- log10(spCOV$basin_slope)
 length(spCOV$comid[! is.finite(spCOV$ppt_mean)])
 length(spCOV$comid[! is.finite(spCOV$temp_mean)])
-length(spCOV$comid[! is.finite(spCOV$acc_basin_area)])
-length(spCOV$comid[! is.finite(spCOV$acc_basin_slope)])
-
+length(spCOV$comid[! is.finite(spCOV$basin_area)])
+length(spCOV$comid[! is.finite(spCOV$basin_slope)])
 
 
 spCOV$decade <- as.factor(spCOV$decade)
@@ -132,24 +129,21 @@ spCOV$grassland           <- dotransin(spCOV$grassland)
 spCOV$hay_pasture         <- dotransin(spCOV$hay_pasture)
 spCOV$herbaceous_wetland  <- dotransin(spCOV$herbaceous_wetland)
 spCOV$mixed_forest        <- dotransin(spCOV$mixed_forest)
-# Note perennial_ice_snow is 0.00 throughout
-spCOV$perennial_ice_snow  <- dotransin(spCOV$perennial_ice_snow)
 spCOV$shrubland           <- dotransin(spCOV$shrubland)
 spCOV$water               <- dotransin(spCOV$water)
 spCOV$woody_wetland       <- dotransin(spCOV$woody_wetland)
 
 message("REMOVING nodata (Bed Permeability)")
-length(spCOV$comid[spCOV$bedperm == "nodata"]) # [1] 198
+length(spCOV$comid[spCOV$bedperm == "nodata"]) #
 spCOV <- spCOV[spCOV$bedperm != "nodata",]
 
 message("REMOVING ecol3_37, ecol3_72, nodata (Ecoregion)")
-length(spCOV$comid[spCOV$ecol3 == "ecol3_37"]) # [1] 198
-length(spCOV$comid[spCOV$ecol3 == "ecol3_72"]) # [1] 12
-length(spCOV$comid[spCOV$ecol3 == "nodata"])   # [1] 30
+length(spCOV$comid[spCOV$ecol3 == "ecol3_37"]) #
+length(spCOV$comid[spCOV$ecol3 == "ecol3_72"]) #
+length(spCOV$comid[spCOV$ecol3 == "nodata"])   #
 spCOV <- spCOV[spCOV$bedperm != "ecol3_37",]
 spCOV <- spCOV[spCOV$bedperm != "ecol3_72",]
 spCOV <- spCOV[spCOV$bedperm != "nodata",]
-
 
 
 map_annotation <- function() {
@@ -429,6 +423,8 @@ T6CutsSE <- function(x, n=9, ...) {
   cuts <- cuts[labs]; names(cuts) <- paste("#", labs, sep=""); cuts
 }
 
+# Should fail here because Q50 is not present.
+
 EQ50 <- predict(Q50, newdata=spCOV, se.fit=TRUE)
 EQ50$fit[is.na(EQ50$fit)] <- mean(EQ50$fit, na.rm=TRUE)
 EQ50$se.fit[is.na(EQ50$se.fit)] <- mean(EQ50$se.fit, na.rm=TRUE)
@@ -597,6 +593,7 @@ pdf("PPLOfit_junk.pdf", useDingbats=FALSE, width=11, height=10)
   plot(spRESTORE_MGCV_BND)
   usr <- par()$usr
 dev.off()
+unlink("PPLOfit_junk.pdf")
 pdf("PPLOfit.pdf", useDingbats=FALSE, width=11, height=10)
   for(d in sort(unique(D$decade))) {
     map_base(xlim=usr[1:2], ylim=usr[3:4])

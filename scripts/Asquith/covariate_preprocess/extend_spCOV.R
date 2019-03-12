@@ -126,8 +126,8 @@ for(i in 1:10) {
 
 
 load("spCOV.Rdata")
-load("DEMO.RData")
-load("Models.RData")
+#load("DEMO.RData")
+load("../fdc_model/Models.RData")
 library(lmomco)
 pdf("test_fdc.pdf", useDingbats=FALSE, height=6, width=7)
 opts <- par(); par(las=1, mgp=c(3,0.5,0))
