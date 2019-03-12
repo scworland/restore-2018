@@ -1,0 +1,1 @@
+Shapefiles are identified herein with ending .zip extensions. These are inflated on the fly and then deleted by the RData building scripts in R that can be identified by the spmake_ in their names. The subordinate directory contains the solar radiation data that can be built therein into the RData format.
