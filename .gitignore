@@ -56,3 +56,4 @@ gis/restore_huc12.RData
 gis/RESTORE_MGCV_BND.RData
 gis/solar/spDNI_1998to2005.RData
 gis/solar/spDNI_1998to2009.RData
+gis/testHUC12.pdf
