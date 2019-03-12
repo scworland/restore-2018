@@ -1,0 +1,1 @@
+Crowley-Ornelas, E.R., Asquith, W.H., Knight, R.R., and Worland, S.C., 2019, Solar radiation for National Hydrography Dataset, version 2 catchments in the southeastern United States, 1950--2010 at USGS streamflow-gaging stations:U.S. Geological Survey data release, https://doi.org/10.5066/P9OD7FAL. [all_gage_solar.csv]
