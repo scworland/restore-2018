@@ -4,10 +4,10 @@ library(rgdal)
 library(GISTools)
 library(feather)
 
-load("../../../../GIS/RESTOREstreams.RData") # RESTOREstreams.RData
-load("../../../../GIS/GulfStates.RData") # GulfStates.RData
-load("../../../../GIS/RESTORE_MGCV_BND.RData") # spRESTORE_MGCV_BND.RData
-load("../../../../GIS/edwards_aquifer_outcrop.RData") # Edwards
+load("../../../../gisbig/RESTOREstreams.RData") # RESTOREstreams.RData
+load("../../../gis/GulfStates.RData") # GulfStates.RData
+load("../../../gis/RESTORE_MGCV_BND.RData") # spRESTORE_MGCV_BND.RData
+load("../../../gis/EdwardsAquiferOutcrop.RData") # Edwards
 load("../fdc_model/FDCEST.RData") # to get bnd
 MM <- read_feather("../../../data/gage/all_gage_data.feather") # all_gage_data.feather
 MM$ed_rch_zone[MM$site_no == "08155300"] <- 0 # WHA 09/28/2018
@@ -39,9 +39,6 @@ MM <- SpatialPointsDataFrame(cbind(MM$dec_long_va, MM$dec_lat_va), data=MM, proj
 MM <- spTransform(MM, ALBEA)
 
 
-
-
-
 pdf("SiteMap_junk.pdf", useDingbats=FALSE, width=11, height=10)
   plot(spRESTORE_MGCV_BND)
   usr <- par()$usr
@@ -51,9 +48,9 @@ unlink("SiteMap_junk.pdf")  # just quietly throw the file away
 pdf("SiteMapA.pdf", useDingbats=FALSE, width=11, height=10)
   plot(GulfStates_modified, lty=0, col=grey(0.95), xlim=usr[1:2], ylim=usr[3:4])
   polygon(bnd[[1]]$x*1000,bnd[[1]]$y*1000, col=grey(1), lwd=1.7, lty=0)
-  plot(edwards_aquifer_outcrop, col="#F99B00", lty=0, add=TRUE)
+  plot(EdwardsAquiferOutcrop, col="#F99B00", lty=0, add=TRUE)
   plot(StreamsOutRESTORE, add=TRUE, lwd=.20, col="#91B0BD")
-  plot(StreamsInRESTORE, add=TRUE, lwd=.25, col="#6AC3F2")
+  plot(StreamsInRESTORE,  add=TRUE, lwd=.25, col="#6AC3F2")
   lines(bnd[[1]]$x*1000,bnd[[1]]$y*1000, col=1, lwd=1.7, lty=1)
   #plot(GulfStates_modified, add=TRUE, lwd=.4, lty=2, col=NA)
   tmp <- MM[MM$ed_rch_zone == 1,]
@@ -70,9 +67,9 @@ dev.off()
 pdf("SiteMapB.pdf", useDingbats=FALSE, width=11, height=10)
   plot(GulfStates_modified, lty=0, col=grey(0.95), xlim=usr[1:2], ylim=usr[3:4])
   polygon(bnd[[1]]$x*1000,bnd[[1]]$y*1000, col=grey(1), lwd=1.7, lty=0)
-  plot(edwards_aquifer_outcrop, col="#F99B00", lty=0, add=TRUE)
+  plot(EdwardsAquiferOutcrop, col="#F99B00", lty=0, add=TRUE)
   plot(StreamsOutRESTORE, add=TRUE, lwd=.20, col="#91B0BD")
-  plot(StreamsInRESTORE, add=TRUE, lwd=.25, col="#6AC3F2")
+  plot(StreamsInRESTORE,  add=TRUE, lwd=.25, col="#6AC3F2")
   lines(bnd[[1]]$x*1000,bnd[[1]]$y*1000, col=1, lwd=1.7, lty=1)
 
   #plot(GulfStates_modified, lty=0, col=grey(0.95), xlim=usr[1:2], ylim=usr[3:4])
