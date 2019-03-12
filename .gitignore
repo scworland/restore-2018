@@ -14,6 +14,8 @@
 **/*.DS_Store
 **/*.remake
 **/*.makefile
+
+
 .Rproj.user
 scripts/Asquith/fdc_model/DEMO.RData
 scripts/Asquith/fdc_model/L1.pdf
@@ -47,3 +49,10 @@ scripts/Asquith/fdc_model/svm_rvm_inactivegages.pdf
 scripts/Asquith/fdc_model/PPLOfit_junk.pdf
 scripts/Asquith/networkwrapper/networktest.pdf
 scripts/Asquith/networkwrapper/networktest_all.pdf
+gis/EdwardsAquiferOutcrop.RData
+gis/GulfStates.RData
+gis/RESTORE_BND.RData
+gis/restore_huc12.RData
+gis/RESTORE_MGCV_BND.RData
+gis/solar/spDNI_1998to2005.RData
+gis/solar/spDNI_1998to2009.RData
