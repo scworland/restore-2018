@@ -1,0 +1,2 @@
+The *.zip are from Elena Crowley-Ornelas (2019-03-13) and represent a join to the 2017 WBD to acquire new HUC12 numbers. ECO used the ScienceBase versions as the basis. The fixHUCnos.R reads these and then the then current .feathers in the repository and replaced the huc12 columns and rewrites the .feathers in this directory.
+ 
