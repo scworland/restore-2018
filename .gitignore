@@ -58,3 +58,9 @@ gis/solar/spDNI_1998to2005.RData
 gis/solar/spDNI_1998to2009.RData
 gis/testHUC12.pdf
 scripts/Asquith/sitefile/DVbangP.RData
+scripts/Asquith/fixHUCnos/birdskins/all_gage_covariates.feather
+scripts/Asquith/fixHUCnos/birdskins/all_gage_data.feather
+scripts/Asquith/fixHUCnos/birdskins/all_gage_flow_stats.feather
+scripts/Asquith/fixHUCnos/birdskins/all_gage_solar.feather
+scripts/Asquith/fixHUCnos/birdskins/all_huc12_covariates.feather
+scripts/Asquith/fixHUCnos/birdskins/all_huc12_solar.feather
