@@ -77,7 +77,7 @@ opts <- par(); par(las=1, mgp=c(3,0.5,0))
 
 plot(1,1, xlim=qnorm(c(0.0001, 0.9999)), ylim=c(0.001,500), xaxt="n", yaxt="n", xlab="",
           log="y", type="n", xaxs="i", yaxs="i",
-          ylab="Projected and estimated mean streamflow, cms")
+          ylab="Transferred and estimated mean streamflow, cms")
 add.lmomco.axis(las=2, tcl=0.5, side.type="NPP", cex=0.8, case="lower")
 add.log.axis(side=2, tcl=0.8*abs(par()$tcl), two.sided=TRUE)
 #add.log.axis(logs=c(1),   tcl=-0.5*abs(par()$tcl), side=2, two.sided=TRUE)
@@ -95,7 +95,7 @@ for(i in 1:length(names(fdc))) {
 
 text(-3.4, 300, paste0("USGS streamgage ",site," ('next to' COMID ",comid," has area of ",gage_area," square kilometers"), pos=4, cex=0.7)
 text(-3.4, 200, paste0("COMID ",comid," has area of ",cmp_area," square kilometers"), pos=4, cex=0.7)
-text(-3.4, 60, paste0("'Projected' flow-duration curve (FDC) for COMID = \n   gaged FDC * ",
+text(-3.4, 60, paste0("'Transferred' flow-duration curve (FDC) for COMID = \n   gaged FDC * ",
                        "(COMID basin_area / streamgage basin_area)^0.9 = flow,\n   in cubic meters per second (cms)"),
                 pos=4, cex=0.7)
 text(-1.0,.003, paste0("A Duan smearing estimator (Helsel and Hirsch, 2002) of ",
@@ -103,7 +103,7 @@ text(-1.0,.003, paste0("A Duan smearing estimator (Helsel and Hirsch, 2002) of "
                      "used to correct retransformation bias in the mean (first L-moment)\n",
                      "prior to fitting of the distributions to the L-moments."),
              pos=4, cex=0.7)
-txt <- c(paste0("Projected decadal FDC where circle size and greyness increases\n",
+txt <- c(paste0("Transferred decadal FDC where circle size and greyness increases\n",
                 "by decade from 1950s to 2000s"))
 legend(-3.3, 40, txt, pt.bg=grey(0.7), bty="n", lwd=0.7, pch=21, cex=0.7, pt.cex=0.9)
 
@@ -179,7 +179,7 @@ for(decade in cmp$decade) {
 }
 mtext(paste0("COMID: ",comid))
 txt <- c("Asymmetric exponential power distribution (four parameter)",
-         "Generalized normal distribution (three parameter log-Normal)",
+         "Generalized normal distribution (three parameter log-normal)",
          "Kappa distribution (four parameter)")
 legend(-3.4, 16, txt, col=c("red","#006F41","blue"), bty="n", lwd=1, cex=0.7)
 text(-3.0, 1.9, paste0("Solid lines are 1980s to 2000s, dashed lines are 1950s to 1970s,\n",
