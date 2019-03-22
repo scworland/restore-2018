@@ -179,9 +179,9 @@ map_base <- function(xlim=NA, ylim=NA) {
 }
 
 
-map_sebase <- function() {
+map_sebase <- function(data) {
   k <- 0; ks <- c(0.6,0.8,1.0,1.2,1.4,1.6)
-  for(d in sort(unique(D$decade))) {
+  for(d in sort(unique(data$decade))) {
     k <- k + 1
     plot(D[D$decade == d,], pch=1, lwd=0.7, cex=ks[k], col=grey(0.72), add=TRUE)
   }
@@ -323,7 +323,7 @@ legend_est <- function(gage="", title="", note=TRUE, shades=NULL,
          cex=.6, pos=4)
     abb <- paste0("Abbreviations: ",
                   "USGS, U.S. Geological Survey",
-                  "; NHD+, National Hydrolgraph Dataset plus version 2,\n     ",
+                  "; NHD+, National Hydrography Dataset plus version 2,\n     ",
                   "locations by Crowley-Ornelas and others (2018) ")
     if(! is.na(more)) {
       abb <- paste0(abb,more)
