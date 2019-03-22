@@ -18,8 +18,9 @@ ALBEA <- paste0("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +
 ALBEA <- sp::CRS(ALBEA)
 
 COV <- COVo <- read_feather("../../../data/huc12/all_huc12_covariates.feather")
-length(COVo$comid)                           # [1] 55128
+length(COVo$comid)                           # [1] 55320 (20190311)
 SO <- read_feather("../../../data/huc12/all_huc12_solar.feather")
+length(SO$comid)                             # [1] 55320 (20190311)
 COV <- cbind(COV, SO)
 
 spCOV <- SpatialPointsDataFrame(cbind(COV$dec_long_va,COV$dec_lat_va), data=COV,
@@ -396,12 +397,20 @@ OverL1Cuts <- function(x, n=9, ...) {
 }
 
 
+message(" NOW CONSIDER COPYING THESE FEATHERS TO ROOT/results/huc12/gam")
+message(" writing all_huc12_overL1.feather")
 write_feather(slot(OverL1df,  "data"), "all_huc12_overL1.feather")
+message(" writing all_huc12_pplo.feather")
 write_feather(slot(H12PPLOdf, "data"), "all_huc12_pplo.feather")
+message(" writing all_huc12_L1.feather")
 write_feather(slot(H12L1df,   "data"),   "all_huc12_L1.feather")
+message(" writing all_huc12_T2.feather")
 write_feather(slot(H12T2df,   "data"),   "all_huc12_T2.feather")
+message(" writing all_huc12_T3.feather")
 write_feather(slot(H12T3df,   "data"),   "all_huc12_T3.feather")
+message(" writing all_huc12_T4.feather")
 write_feather(slot(H12T4df,   "data"),   "all_huc12_T4.feather")
+message(" writing all_huc12_T5.feather")
 write_feather(slot(H12T5df,   "data"),   "all_huc12_T5.feather")
 
 # source("a_plot_huc12.R")
