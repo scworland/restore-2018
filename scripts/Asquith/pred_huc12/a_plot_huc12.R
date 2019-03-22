@@ -28,7 +28,7 @@ file <- "PPLOsefit"
 if(! manypdfs) pdf(paste0(file,".pdf"), useDingbats=FALSE, width=11, height=10)
   for(d in sort(unique(D$decade))) {
     if(manypdfs) pdf(paste0(file,"_",d,".pdf"), useDingbats=FALSE, width=11, height=10)
-    map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase()
+    map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase(D)
     shades <- choropleth_cov(H12PPLOdf, decade=d, x="se.fit_flowtime", cuts=pploCutsSE, rev=TRUE)
     legend_est(gage=setxt1,
                title=paste0(d," decade\n",setxt1),
@@ -48,7 +48,7 @@ if(! manypdfs) pdf(paste0(file,".pdf"), useDingbats=FALSE, width=11, height=10)
     shades <- choropleth_cov(H12L1df, decade=d, x="est_L1_log10", cuts=L1Cuts)
     legend_est(gage="mean nonzero streamflow",
                title=paste0(d," decade\n","mean nonzero streamflow,\n","in log10(cms)"),
-               note=TRUE, shades=shades, more="; cms, cubic feet per second")
+               note=TRUE, shades=shades, more="; cms, cubic meters per second")
     map_annotation()
     if(manypdfs) dev.off()
   }
@@ -58,7 +58,7 @@ file <- "L1sefit"
 if(! manypdfs) pdf(paste0(file,".pdf"), useDingbats=FALSE, width=11, height=10)
   for(d in sort(unique(D$decade))) {
     if(manypdfs) pdf(paste0(file,"_",d,".pdf"), useDingbats=FALSE, width=11, height=10)
-    map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase()
+    map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase(D)
     shades <- choropleth_cov(H12L1df, decade=d, x="se.fit_L1", cuts=L1CutsSE, rev=TRUE)
     legend_est(gage=setxt1,
                title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
@@ -85,7 +85,7 @@ file <- "T2sefit"
 if(! manypdfs) pdf(paste0(file,".pdf"), useDingbats=FALSE, width=11, height=10)
   for(d in sort(unique(D$decade))) {
     if(manypdfs) pdf(paste0(file,"_",d,".pdf"), useDingbats=FALSE, width=11, height=10)
-    map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase()
+    map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase(D)
     shades <- choropleth_cov(H12T2df, decade=d, x="se.fit_T2", cuts=T2CutsSE, rev=TRUE)
     legend_est(gage=setxt1,
                title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
@@ -120,7 +120,7 @@ file <- "T3sefit"
 if(! manypdfs) pdf(paste0(file,".pdf"), useDingbats=FALSE, width=11, height=10)
   for(d in sort(unique(D$decade))) {
     if(manypdfs) pdf(paste0(file,"_",d,".pdf"), useDingbats=FALSE, width=11, height=10)
-    map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase()
+    map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase(D)
     shades <- choropleth_cov(H12T3df, decade=d, x="se.fit_T3", cuts=T3CutsSE, rev=TRUE)
     legend_est(gage=setxt1,
                title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
@@ -147,7 +147,7 @@ file <- "T4sefit"
 if(! manypdfs) pdf(paste0(file,".pdf"), useDingbats=FALSE, width=11, height=10)
   for(d in sort(unique(D$decade))) {
     if(manypdfs) pdf(paste0(file,"_",d,".pdf"), useDingbats=FALSE, width=11, height=10)
-    map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase()
+    map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase(D)
     shades <- choropleth_cov(H12T4df, decade=d, x="se.fit_T4", cuts=T4CutsSE, rev=TRUE)
     legend_est(gage=setxt1,
                title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
@@ -174,7 +174,7 @@ file <- "T5sefit"
 if(! manypdfs) pdf(paste0(file,".pdf"), useDingbats=FALSE, width=11, height=10)
   for(d in sort(unique(D$decade))) {
     if(manypdfs) pdf(paste0(file,"_",d,".pdf"), useDingbats=FALSE, width=11, height=10)
-    map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase()
+    map_base(xlim=usr[1:2], ylim=usr[3:4]); map_sebase(D)
     shades <- choropleth_cov(H12T5df, decade=d, x="se.fit_T5", cuts=T5CutsSE, rev=TRUE)
     legend_est(gage=setxt1,
                title=paste0(d," decade\n",setxt1), note=FALSE, shades=shades, itgage=FALSE)
@@ -195,7 +195,7 @@ if(! manypdfs) pdf(paste0(file,".pdf"), useDingbats=FALSE, width=11, height=10)
     shades <- choropleth_cov(OverL1df, decade=d, x="est_overL1_log10", cuts=OverL1Cuts)
     legend_est(gage="mean streamflow",
                title=paste0(d," decade\n","mean streamflow,\n","in log10(cms)"),
-               note=TRUE, shades=shades, more="; cms, cubic feet per second")
+               note=TRUE, shades=shades, more="; cms, cubic meters per second")
     map_annotation()
     if(manypdfs) dev.off()
   }
